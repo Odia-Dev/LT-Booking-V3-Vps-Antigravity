@@ -124,7 +124,15 @@ async function verifyAll() {
 
     // Edge Case Tests:
     
-    // 1. Invalid OTP
+    // 1. Health check endpoint
+    const healthRes = await query("/health");
+    if (healthRes.status === 200 && JSON.parse(healthRes.body).success === true) {
+      console.log("✓ /health endpoint returns 200");
+    } else {
+      throw new Error(`Health check failed: Status ${healthRes.status}, Body: ${healthRes.body}`);
+    }
+
+    // 2. Invalid OTP
     console.log("Testing Invalid OTP...");
     await query("/api/auth/send-otp", "POST", { phone: "+919876543211" });
     const invalidOtpRes = await query("/api/auth/verify-otp", "POST", {
@@ -137,7 +145,7 @@ async function verifyAll() {
       throw new Error(`Failed Invalid OTP test: status ${invalidOtpRes.status}`);
     }
 
-    // 2. Expired OTP
+    // 3. Expired OTP
     console.log("Testing Expired OTP...");
     const otpRecord = mockOtps.find(o => o.phone === "+919876543211");
     if (otpRecord) {

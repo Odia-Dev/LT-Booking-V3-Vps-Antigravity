@@ -24,7 +24,7 @@ export async function sendOtp(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error("sendOtp error:", error);
-    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    res.status(500).json({ success: false, message: "Unable to process OTP request. Please try again." });
   }
 }
 
@@ -53,7 +53,8 @@ export async function verifyOtp(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error("verifyOtp error:", error);
-    res.status(400).json({ success: false, message: error.message || "Invalid OTP verification attempt" });
+    const msg = error.message && !error.message.includes("Prisma") ? error.message : "OTP verification failed. Please try again.";
+    res.status(400).json({ success: false, message: msg });
   }
 }
 
@@ -82,7 +83,8 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error("adminLogin error:", error);
-    res.status(401).json({ success: false, message: error.message || "Invalid credentials" });
+    const msg = error.message && !error.message.includes("Prisma") ? error.message : "Invalid credentials";
+    res.status(401).json({ success: false, message: msg });
   }
 }
 

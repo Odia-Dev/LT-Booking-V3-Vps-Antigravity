@@ -27,7 +27,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({ status: "ok", timestamp: new Date() });
+  res.status(200).json({ success: true });
 });
 
 // Route Mounts
