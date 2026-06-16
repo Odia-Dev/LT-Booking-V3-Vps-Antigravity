@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./modules/auth/authRoutes";
+import profileRoutes from "./modules/profile/profileRoutes";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 // Route Mounts
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Error handler middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

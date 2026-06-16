@@ -1,29 +1,10 @@
 import { prisma } from "../../config/db";
 import { User, OtpVerification } from "@prisma/client";
-import bcrypt from "bcrypt";
-
-// -----------------------------------------------------------------------------
-// In-Memory Fallback Collections for Offline Development
-// -----------------------------------------------------------------------------
-const mockUsers: User[] = [
-  {
-    id: "admin-id",
-    email: "admin@laxmitoyota.co.in",
-    phone: null,
-    passwordHash: bcrypt.hashSync("admin123", 10),
-    name: "Toyota Admin",
-    role: "ADMIN",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-];
-const mockOtps: OtpVerification[] = [];
-
-let isOfflineMode = false;
+import { mockUsers, mockOtps, offlineState } from "../../config/mockDb";
 
 export class AuthRepository {
   private async runWithFallback<T>(dbOp: () => Promise<T>, fallbackOp: () => Promise<T>): Promise<T> {
-    if (isOfflineMode) {
+    if (offlineState.isOfflineMode) {
       return fallbackOp();
     }
     try {
@@ -37,7 +18,7 @@ export class AuthRepository {
         error.code === "P1001"
       ) {
         console.warn("⚠️ Database unreachable. Falling back to In-Memory Offline Mode for development.");
-        isOfflineMode = true;
+        offlineState.isOfflineMode = true;
         return fallbackOp();
       }
       throw error;
@@ -68,6 +49,8 @@ export class AuthRepository {
           phone: data.phone || null,
           passwordHash: data.passwordHash || null,
           name: data.name || null,
+          city: null,
+          state: null,
           role: data.role || "CUSTOMER",
           createdAt: new Date(),
           updatedAt: new Date(),

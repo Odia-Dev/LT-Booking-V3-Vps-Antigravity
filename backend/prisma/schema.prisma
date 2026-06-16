@@ -132,6 +132,8 @@ model User {
   phone        String?  @unique
   passwordHash String?  // Only for ADMIN
   name         String?
+  city         String?
+  state        String?
   role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

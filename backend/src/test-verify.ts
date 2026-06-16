@@ -1,78 +1,8 @@
 import http from "http";
-import { AuthRepository } from "./modules/auth/authRepository";
-import { User, OtpVerification } from "@prisma/client";
-import bcrypt from "bcrypt";
+import { mockUsers, mockOtps, offlineState } from "./config/mockDb";
 
-// -----------------------------------------------------------------------------
-// In-memory Database Mocks for Offline Verification
-// -----------------------------------------------------------------------------
-const mockUsers: User[] = [
-  {
-    id: "admin-id",
-    email: "admin@laxmitoyota.co.in",
-    phone: null,
-    passwordHash: bcrypt.hashSync("admin123", 10),
-    name: "Toyota Admin",
-    role: "ADMIN",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-];
-const mockOtps: OtpVerification[] = [];
-
-AuthRepository.prototype.findUserByPhone = async function (phone: string) {
-  return mockUsers.find((u) => u.phone === phone) || null;
-};
-
-AuthRepository.prototype.findUserByEmail = async function (email: string) {
-  return mockUsers.find((u) => u.email === email) || null;
-};
-
-AuthRepository.prototype.createUser = async function (data: any) {
-  const newUser: User = {
-    id: Math.random().toString(),
-    email: data.email || null,
-    phone: data.phone || null,
-    passwordHash: data.passwordHash || null,
-    name: data.name || null,
-    role: data.role || "CUSTOMER",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  mockUsers.push(newUser);
-  return newUser;
-};
-
-AuthRepository.prototype.findOtp = async function (phone: string) {
-  return mockOtps.find((o) => o.phone === phone) || null;
-};
-
-AuthRepository.prototype.saveOtp = async function (phone: string, code: string, expiresAt: Date) {
-  const existing = mockOtps.find((o) => o.phone === phone);
-  if (existing) {
-    existing.code = code;
-    existing.expiresAt = expiresAt;
-    existing.updatedAt = new Date();
-    return existing;
-  }
-  const newOtp: OtpVerification = {
-    id: Math.random().toString(),
-    phone,
-    code,
-    expiresAt,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  mockOtps.push(newOtp);
-  return newOtp;
-};
-
-AuthRepository.prototype.deleteOtp = async function (phone: string) {
-  const index = mockOtps.findIndex((o) => o.phone === phone);
-  if (index !== -1) {
-    mockOtps.splice(index, 1);
-  }
-};
+// Enable offline development fallback mode dynamically for the test environment
+offlineState.isOfflineMode = true;
 
 import app from "./app";
 
@@ -217,6 +147,54 @@ async function verifyAll() {
       console.log("✓ Logout flow clears secure session cookies correctly");
     } else {
       throw new Error(`Failed Logout flow check: ${JSON.stringify(setCookieHeader)}`);
+    }
+
+    // 8. User Profile retrieval and updates
+    console.log("Testing Profile APIs...");
+    const custOtpSendRes = await query("/api/auth/send-otp", "POST", { phone: "+919876543220" });
+    const custOtpBody = JSON.parse(custOtpSendRes.body);
+    const custOtpVerifyRes = await query("/api/auth/verify-otp", "POST", {
+      phone: "+919876543220",
+      code: custOtpBody.code,
+    });
+    const custCookie = custOtpVerifyRes.headers["set-cookie"]?.[0];
+    if (!custCookie) {
+      throw new Error("Customer cookie missing");
+    }
+
+    // GET /api/profile (Authorized)
+    const getProfileRes = await query("/api/profile", "GET", undefined, {
+      cookie: custCookie,
+    });
+    const getProfileBody = JSON.parse(getProfileRes.body);
+    if (getProfileRes.status === 200 && getProfileBody.success && getProfileBody.profile.phone === "+919876543220") {
+      console.log("✓ GET /api/profile retrieves own profile details");
+    } else {
+      throw new Error(`Failed GET profile: Status ${getProfileRes.status}, Body: ${getProfileRes.body}`);
+    }
+
+    // PUT /api/profile (Authorized update)
+    const updateProfileRes = await query("/api/profile", "PUT", {
+      name: "John Customer",
+      email: "john@example.com",
+      city: "Cuttack",
+      state: "Odisha",
+    }, {
+      cookie: custCookie,
+    });
+    const updateProfileBody = JSON.parse(updateProfileRes.body);
+    if (updateProfileRes.status === 200 && updateProfileBody.success && updateProfileBody.profile.name === "John Customer" && updateProfileBody.profile.city === "Cuttack") {
+      console.log("✓ PUT /api/profile updates profile parameters successfully");
+    } else {
+      throw new Error(`Failed PUT profile: Status ${updateProfileRes.status}, Body: ${updateProfileRes.body}`);
+    }
+
+    // GET /api/profile (Unauthorized / missing JWT)
+    const unauthProfileRes = await query("/api/profile", "GET");
+    if (unauthProfileRes.status === 401) {
+      console.log("✓ Unauthorized profile requests correctly rejected with 401");
+    } else {
+      throw new Error(`Failed Unauthorized profile check: Status ${unauthProfileRes.status}`);
     }
 
     console.log("\nAll security and audit checks PASSED successfully!");
