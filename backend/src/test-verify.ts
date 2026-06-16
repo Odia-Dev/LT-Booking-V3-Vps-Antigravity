@@ -1,13 +1,107 @@
 import http from "http";
-import { mockUsers, mockOtps, offlineState } from "./config/mockDb";
+import { AuthRepository } from "./modules/auth/authRepository";
+import { ProfileRepository } from "./modules/profile/profileRepository";
+import { User, OtpVerification } from "@prisma/client";
+import bcrypt from "bcrypt";
 
-// Enable offline development fallback mode dynamically for the test environment
-offlineState.isOfflineMode = true;
+// -----------------------------------------------------------------------------
+// Isolated Test Environment Mock Database (No impact on production code paths)
+// -----------------------------------------------------------------------------
+const mockUsers: User[] = [
+  {
+    id: "admin-id",
+    email: "admin@laxmitoyota.co.in",
+    phone: null,
+    passwordHash: bcrypt.hashSync("admin123", 10),
+    name: "Toyota Admin",
+    city: "Bhubaneswar",
+    state: "Odisha",
+    role: "ADMIN",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+];
+const mockOtps: OtpVerification[] = [];
+
+// Overriding prototype methods for offline test isolation
+AuthRepository.prototype.findUserByPhone = async function (phone: string) {
+  return mockUsers.find((u) => u.phone === phone) || null;
+};
+
+AuthRepository.prototype.findUserByEmail = async function (email: string) {
+  return mockUsers.find((u) => u.email === email) || null;
+};
+
+AuthRepository.prototype.createUser = async function (data: any) {
+  const newUser: User = {
+    id: Math.random().toString(),
+    email: data.email || null,
+    phone: data.phone || null,
+    passwordHash: data.passwordHash || null,
+    name: data.name || null,
+    city: null,
+    state: null,
+    role: data.role || "CUSTOMER",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  mockUsers.push(newUser);
+  return newUser;
+};
+
+AuthRepository.prototype.findOtp = async function (phone: string) {
+  return mockOtps.find((o) => o.phone === phone) || null;
+};
+
+AuthRepository.prototype.saveOtp = async function (phone: string, code: string, expiresAt: Date) {
+  const existing = mockOtps.find((o) => o.phone === phone);
+  if (existing) {
+    existing.code = code;
+    existing.expiresAt = expiresAt;
+    existing.updatedAt = new Date();
+    return existing;
+  }
+  const newOtp: OtpVerification = {
+    id: Math.random().toString(),
+    phone,
+    code,
+    expiresAt,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  mockOtps.push(newOtp);
+  return newOtp;
+};
+
+AuthRepository.prototype.deleteOtp = async function (phone: string) {
+  const index = mockOtps.findIndex((o) => o.phone === phone);
+  if (index !== -1) {
+    mockOtps.splice(index, 1);
+  }
+};
+
+ProfileRepository.prototype.findUserById = async function (id: string) {
+  return mockUsers.find((u) => u.id === id) || null;
+};
+
+ProfileRepository.prototype.updateProfile = async function (id: string, data: any) {
+  const user = mockUsers.find((u) => u.id === id);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  if (data.name !== undefined) user.name = data.name;
+  if (data.email !== undefined) user.email = data.email;
+  if (data.phone !== undefined) user.phone = data.phone;
+  if (data.city !== undefined) user.city = data.city;
+  if (data.state !== undefined) user.state = data.state;
+  user.updatedAt = new Date();
+  return user;
+};
 
 import app from "./app";
 
 async function verifyAll() {
-  console.log("Starting production-grade security and API audit tests (M02)...\n");
+  console.log("Starting production-grade security and API audit tests (M02/M03)...\n");
 
   let server: http.Server | null = null;
   const PORT = 5001;
@@ -52,8 +146,6 @@ async function verifyAll() {
       });
     };
 
-    // Edge Case Tests:
-    
     // 1. Health check endpoint
     const healthRes = await query("/health");
     if (healthRes.status === 200 && JSON.parse(healthRes.body).success === true) {
@@ -62,6 +154,8 @@ async function verifyAll() {
       throw new Error(`Health check failed: Status ${healthRes.status}, Body: ${healthRes.body}`);
     }
 
+    // Edge Case Tests:
+    
     // 2. Invalid OTP
     console.log("Testing Invalid OTP...");
     await query("/api/auth/send-otp", "POST", { phone: "+919876543211" });
