@@ -55,11 +55,11 @@ model Variant {
   id           String   @id @default(uuid())
   vehicleId    String
   name         String // e.g. "2.8L 4x4 AT"
+  price        Float // Ex-Showroom price for this variant
   fuelType     String // Petrol, Diesel, Hybrid, Electric
   transmission String // Manual, Automatic
-  price        Float // Ex-Showroom price for this variant
-  specs        Json // Key-value specs (engine CC, mileage, seats, etc.)
-  isActive     Boolean  @default(true)
+  seating      Int      @default(5) // seating capacity
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

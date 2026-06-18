@@ -14,6 +14,19 @@ interface Vehicle {
   seoDescription: string;
 }
 
+interface Variant {
+  id: string;
+  vehicleId: string;
+  name: string;
+  price: number;
+  fuelType: string;
+  transmission: string;
+  seating: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function AdminVehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +47,23 @@ export default function AdminVehiclesPage() {
   const [formStatus, setFormStatus] = useState("ACTIVE");
   const [formSeoTitle, setFormSeoTitle] = useState("");
   const [formSeoDescription, setFormSeoDescription] = useState("");
+
+  // Variants CMS State
+  const [showVariantsModal, setShowVariantsModal] = useState(false);
+  const [selectedVehicleForVariants, setSelectedVehicleForVariants] = useState<Vehicle | null>(null);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [variantError, setVariantError] = useState("");
+  const [variantSuccess, setVariantSuccess] = useState("");
+
+  // Variant Form State
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [varFormName, setVarFormName] = useState("");
+  const [varFormPrice, setVarFormPrice] = useState(0);
+  const [varFormFuel, setVarFormFuel] = useState("Petrol");
+  const [varFormTrans, setVarFormTrans] = useState("Manual");
+  const [varFormSeat, setVarFormSeat] = useState(5);
+  const [varFormStatus, setVarFormStatus] = useState("ACTIVE");
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -159,6 +189,134 @@ export default function AdminVehiclesPage() {
     }
   };
 
+  // Variant CRUD Handlers
+  const fetchVariants = useCallback(async (vehicleId: string) => {
+    setLoadingVariants(true);
+    setVariantError("");
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/variants`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to load variants");
+      setVariants(data.variants);
+    } catch (err: unknown) {
+      setVariantError((err as Error).message || "Failed to load variants.");
+    } finally {
+      setLoadingVariants(false);
+    }
+  }, [apiBaseUrl]);
+
+  const handleOpenVariants = (v: Vehicle) => {
+    setSelectedVehicleForVariants(v);
+    setEditingVariantId(null);
+    setVarFormName("");
+    setVarFormPrice(0);
+    setVarFormFuel("Petrol");
+    setVarFormTrans("Manual");
+    setVarFormSeat(5);
+    setVarFormStatus("ACTIVE");
+    setVariantError("");
+    setVariantSuccess("");
+    setShowVariantsModal(true);
+    fetchVariants(v.id);
+  };
+
+  const handleVariantSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVariantError("");
+    setVariantSuccess("");
+
+    if (!selectedVehicleForVariants) return;
+
+    const payload = {
+      vehicleId: selectedVehicleForVariants.id,
+      name: varFormName,
+      price: Number(varFormPrice),
+      fuelType: varFormFuel,
+      transmission: varFormTrans,
+      seating: Number(varFormSeat),
+      status: varFormStatus,
+    };
+
+    try {
+      const url = editingVariantId
+        ? `${apiBaseUrl}/api/admin/variants/${editingVariantId}`
+        : `${apiBaseUrl}/api/admin/variants`;
+
+      const method = editingVariantId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.errors?.[0]?.message || "Operation failed");
+      }
+
+      setVariantSuccess(editingVariantId ? "Variant updated!" : "Variant created!");
+      setEditingVariantId(null);
+      setVarFormName("");
+      setVarFormPrice(0);
+      setVarFormFuel("Petrol");
+      setVarFormTrans("Manual");
+      setVarFormSeat(5);
+      setVarFormStatus("ACTIVE");
+      fetchVariants(selectedVehicleForVariants.id);
+    } catch (err: unknown) {
+      setVariantError((err as Error).message || "Operation failed.");
+    }
+  };
+
+  const handleVariantDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this variant?")) return;
+    setVariantError("");
+    setVariantSuccess("");
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/variants/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Deletion failed");
+      }
+
+      setVariantSuccess("Variant deleted successfully!");
+      if (selectedVehicleForVariants) {
+        fetchVariants(selectedVehicleForVariants.id);
+      }
+    } catch (err: unknown) {
+      setVariantError((err as Error).message || "Deletion failed.");
+    }
+  };
+
+  const handleStartEditVariant = (v: Variant) => {
+    setEditingVariantId(v.id);
+    setVarFormName(v.name);
+    setVarFormPrice(v.price);
+    setVarFormFuel(v.fuelType);
+    setVarFormTrans(v.transmission);
+    setVarFormSeat(v.seating);
+    setVarFormStatus(v.status || "ACTIVE");
+  };
+
+  const handleCancelEditVariant = () => {
+    setEditingVariantId(null);
+    setVarFormName("");
+    setVarFormPrice(0);
+    setVarFormFuel("Petrol");
+    setVarFormTrans("Manual");
+    setVarFormSeat(5);
+    setVarFormStatus("ACTIVE");
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header section */}
@@ -270,6 +428,12 @@ export default function AdminVehiclesPage() {
                     {v.seoTitle || <span className="text-neutral-700 italic">None</span>}
                   </td>
                   <td className="py-4 px-6 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenVariants(v)}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded transition-colors"
+                    >
+                      Variants
+                    </button>
                     <button
                       onClick={() => handleOpenEdit(v)}
                       className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded transition-colors"
@@ -406,6 +570,242 @@ export default function AdminVehiclesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Variants CMS Modal */}
+      {showVariantsModal && selectedVehicleForVariants && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#18181b] border border-neutral-800 w-full max-w-4xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto flex flex-col gap-6">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-4">
+              <div>
+                <h2 className="text-2xl font-black text-white">
+                  Manage Variants
+                </h2>
+                <p className="text-xs text-[#eb0a1e] font-mono mt-1">
+                  Model: {selectedVehicleForVariants.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowVariantsModal(false)}
+                className="text-neutral-400 hover:text-white font-bold text-sm uppercase tracking-wider px-3 py-1.5 border border-neutral-800 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+
+            {variantError && (
+              <div className="p-3 rounded-lg bg-red-950/40 border border-red-900/40 text-red-400 text-xs text-center">
+                {variantError}
+              </div>
+            )}
+
+            {variantSuccess && (
+              <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/40 text-emerald-400 text-xs text-center">
+                {variantSuccess}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Variant creation / edit form */}
+              <form onSubmit={handleVariantSubmit} className="lg:col-span-4 space-y-4 bg-neutral-950/40 border border-neutral-800/80 p-5 rounded-xl">
+                <h3 className="text-xs uppercase font-extrabold tracking-wider text-neutral-400 border-b border-neutral-900 pb-2 mb-3">
+                  {editingVariantId ? "Edit Variant Details" : "Add New Variant"}
+                </h3>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                    Variant Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. E MT or 2.8L 4x4 AT"
+                    value={varFormName}
+                    onChange={(e) => setVarFormName(e.target.value)}
+                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                    Ex-Showroom Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    placeholder="e.g. 1114000"
+                    value={varFormPrice || ""}
+                    onChange={(e) => setVarFormPrice(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                      Fuel Type
+                    </label>
+                    <select
+                      value={varFormFuel}
+                      onChange={(e) => setVarFormFuel(e.target.value)}
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                    >
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Hybrid">Hybrid</option>
+                      <option value="Electric">Electric</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                      Transmission
+                    </label>
+                    <select
+                      value={varFormTrans}
+                      onChange={(e) => setVarFormTrans(e.target.value)}
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                    >
+                      <option value="Manual">Manual</option>
+                      <option value="Automatic">Automatic</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                      Seats
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      placeholder="e.g. 5"
+                      value={varFormSeat || ""}
+                      onChange={(e) => setVarFormSeat(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={varFormStatus}
+                      onChange={(e) => setVarFormStatus(e.target.value)}
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                    >
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                      <option value="ARCHIVED">ARCHIVED</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-3">
+                  {editingVariantId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEditVariant}
+                      className="flex-1 py-2 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-white rounded text-xs font-bold uppercase transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="flex-1 py-2 bg-white hover:bg-neutral-200 text-black rounded text-xs font-bold uppercase transition-colors"
+                  >
+                    {editingVariantId ? "Update" : "Add Variant"}
+                  </button>
+                </div>
+              </form>
+
+              {/* Variants List Section */}
+              <div className="lg:col-span-8 space-y-4">
+                <h3 className="text-xs uppercase font-extrabold tracking-wider text-neutral-400 border-b border-neutral-800 pb-2">
+                  Existing Variants list
+                </h3>
+
+                {loadingVariants ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
+                    <div className="w-5 h-5 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mb-3" />
+                    <span className="text-[10px] uppercase font-mono">Fetching variants...</span>
+                  </div>
+                ) : variants.length === 0 ? (
+                  <div className="p-8 border border-neutral-800/60 rounded-xl text-center text-neutral-500 border-dashed">
+                    <p className="text-xs font-bold text-white mb-1">No Variants Configured</p>
+                    <p className="text-[10px] text-neutral-500">Add variants to make them selectables during booking.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-neutral-800/60 rounded-xl bg-neutral-950/20">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-neutral-800 font-bold uppercase tracking-wider text-neutral-500 bg-neutral-950/40">
+                          <th className="py-3 px-4">Name</th>
+                          <th className="py-3 px-4">Specs</th>
+                          <th className="py-3 px-4">Price</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-850 text-neutral-300 font-light">
+                        {variants.map((v) => (
+                          <tr key={v.id} className="hover:bg-neutral-900/20 transition-colors">
+                            <td className="py-3 px-4 font-bold text-white">{v.name}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-850 text-[9px] uppercase font-mono text-neutral-400">
+                                  {v.fuelType}
+                                </span>
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-850 text-[9px] uppercase font-mono text-neutral-400">
+                                  {v.transmission}
+                                </span>
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-850 text-[9px] uppercase font-mono text-neutral-400">
+                                  {v.seating} Str
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-mono font-semibold text-white">
+                              ₹{v.price.toLocaleString("en-IN")}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold ${
+                                  v.status === "ACTIVE"
+                                    ? "bg-emerald-950/40 text-emerald-400"
+                                    : "bg-neutral-800/40 text-neutral-400"
+                                }`}
+                              >
+                                {v.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right space-x-1.5">
+                              <button
+                                onClick={() => handleStartEditVariant(v)}
+                                className="px-2 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded text-[10px] transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleVariantDelete(v.id)}
+                                className="px-2 py-1 bg-red-950/45 hover:bg-red-900/40 text-red-400 font-semibold rounded text-[10px] transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

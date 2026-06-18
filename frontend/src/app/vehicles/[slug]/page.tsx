@@ -16,11 +16,25 @@ interface Vehicle {
   seoDescription: string;
 }
 
+interface Variant {
+  id: string;
+  name: string;
+  price: number;
+  fuelType: string;
+  transmission: string;
+  seating: number;
+  status: string;
+}
+
 export default function CustomerVehicleDetailPage() {
   const { slug } = useParams();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [variantError, setVariantError] = useState("");
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -43,6 +57,28 @@ export default function CustomerVehicleDetailPage() {
 
     fetchVehicle();
   }, [slug, apiBaseUrl]);
+
+  // Fetch variants once vehicle is resolved
+  useEffect(() => {
+    if (!vehicle) return;
+
+    const fetchVariants = async () => {
+      setLoadingVariants(true);
+      setVariantError("");
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicle.id}/variants`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to load variants");
+        setVariants(data.variants || []);
+      } catch (err: unknown) {
+        setVariantError((err as Error).message || "Failed to load variants.");
+      } finally {
+        setLoadingVariants(false);
+      }
+    };
+
+    fetchVariants();
+  }, [vehicle, apiBaseUrl]);
 
   // Inject Custom SEO headers dynamically for page crawlers
   useEffect(() => {
@@ -151,6 +187,54 @@ export default function CustomerVehicleDetailPage() {
               <span className="block text-xs text-neutral-500 font-medium">Availability</span>
               <span className="text-sm font-bold text-white uppercase">{vehicle.status}</span>
             </div>
+          </div>
+
+          {/* Variants and Trim levels */}
+          <div className="border-t border-[#27272a]/40 pt-6 space-y-4">
+            <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider">
+              Available Trims & Specifications
+            </h3>
+            
+            {loadingVariants ? (
+              <div className="space-y-3">
+                <div className="h-10 bg-neutral-900 border border-neutral-800 rounded animate-pulse" />
+                <div className="h-10 bg-neutral-900 border border-neutral-800 rounded animate-pulse" />
+              </div>
+            ) : variantError ? (
+              <p className="text-xs text-neutral-500 font-mono italic">Failed to load trims.</p>
+            ) : variants.length === 0 ? (
+              <p className="text-xs text-neutral-500 font-mono italic">Contact dealership for custom configurations.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {variants.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex justify-between items-center p-4 bg-[#18181b]/30 border border-neutral-800/80 rounded-xl hover:border-neutral-700/60 transition-all duration-300"
+                  >
+                    <div>
+                      <span className="text-sm font-bold text-white block">{v.name}</span>
+                      <div className="flex gap-2 mt-1.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-850 text-neutral-400">
+                          {v.fuelType}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-850 text-neutral-400">
+                          {v.transmission}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-850 text-neutral-400">
+                          {v.seating} Seater
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-neutral-500 block uppercase tracking-wider font-semibold">Ex-Showroom</span>
+                      <span className="text-sm font-black text-[#eb0a1e] font-mono">
+                        ₹{v.price.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Booking call-to-actions */}

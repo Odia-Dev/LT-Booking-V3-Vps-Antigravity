@@ -143,13 +143,58 @@ async function main() {
     },
   ];
 
+  const variantsMap: Record<string, Array<{ name: string; price: number; fuelType: string; transmission: string; seating: number }>> = {
+    "urban-cruiser-hyryder": [
+      { name: "E NeoDrive", price: 1114000, fuelType: "Petrol", transmission: "Manual", seating: 5 },
+      { name: "S E-Drive Hybrid", price: 1666000, fuelType: "Hybrid", transmission: "Automatic", seating: 5 },
+      { name: "G NeoDrive AT", price: 1569000, fuelType: "Petrol", transmission: "Automatic", seating: 5 },
+      { name: "V E-Drive Hybrid", price: 2019000, fuelType: "Hybrid", transmission: "Automatic", seating: 5 },
+    ],
+    "rumion": [
+      { name: "S MT", price: 1044000, fuelType: "Petrol", transmission: "Manual", seating: 7 },
+      { name: "G MT", price: 1160000, fuelType: "Petrol", transmission: "Manual", seating: 7 },
+      { name: "S AT", price: 1194000, fuelType: "Petrol", transmission: "Automatic", seating: 7 },
+      { name: "V AT", price: 1373000, fuelType: "Petrol", transmission: "Automatic", seating: 7 },
+    ],
+    "glanza": [
+      { name: "E MT", price: 686000, fuelType: "Petrol", transmission: "Manual", seating: 5 },
+      { name: "S AMT", price: 825000, fuelType: "Petrol", transmission: "Automatic", seating: 5 },
+      { name: "G MT", price: 878000, fuelType: "Petrol", transmission: "Manual", seating: 5 },
+      { name: "V AMT", price: 999000, fuelType: "Petrol", transmission: "Automatic", seating: 5 },
+    ],
+    "fortuner": [
+      { name: "2.7L 4x2 MT", price: 3343000, fuelType: "Petrol", transmission: "Manual", seating: 7 },
+      { name: "2.8L 4x2 AT", price: 3821000, fuelType: "Diesel", transmission: "Automatic", seating: 7 },
+      { name: "2.8L 4x4 MT", price: 4003000, fuelType: "Diesel", transmission: "Manual", seating: 7 },
+      { name: "2.8L 4x4 AT", price: 4235000, fuelType: "Diesel", transmission: "Automatic", seating: 7 },
+    ],
+    "camry": [
+      { name: "2.5L Hybrid AT", price: 4617000, fuelType: "Hybrid", transmission: "Automatic", seating: 5 },
+    ]
+  };
+
+  let variantsCount = 0;
   for (const v of vehiclesData) {
-    await prisma.vehicle.create({
+    const createdVehicle = await prisma.vehicle.create({
       data: v,
     });
+
+    const variants = variantsMap[v.slug];
+    if (variants) {
+      for (const varData of variants) {
+        await prisma.variant.create({
+          data: {
+            ...varData,
+            vehicleId: createdVehicle.id,
+            status: "ACTIVE",
+          },
+        });
+        variantsCount++;
+      }
+    }
   }
 
-  console.log(`Successfully seeded ${vehiclesData.length} vehicles.`);
+  console.log(`Successfully seeded ${vehiclesData.length} vehicles and ${variantsCount} variants.`);
   console.log("Seeding completed successfully.");
 }
 
