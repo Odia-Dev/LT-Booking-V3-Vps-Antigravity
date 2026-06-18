@@ -61,7 +61,7 @@ export default function CustomerLoginPage() {
 
       setSuccess("Authenticated successfully. Redirecting...");
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/dashboard/profile";
       }, 1500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid code. Please check and try again.";
