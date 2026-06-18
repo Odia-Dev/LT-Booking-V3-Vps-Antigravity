@@ -32,21 +32,20 @@ model Branch {
 // Vehicle Model: Car Lineups (e.g. Fortuner, Innova Crysta, Glanza)
 // -----------------------------------------------------------------------------
 model Vehicle {
-  id            String   @id @default(uuid())
-  name          String
-  slug          String   @unique
-  brand         String   @default("Toyota")
-  tagline       String?
-  description   String?
-  exShowroomMin Float // Starting price
-  exShowroomMax Float // Ending price
-  brochureUrl   String? // Cloudinary PDF link
-  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, UPCOMING
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  slug           String   @unique
+  category       String
+  description    String?
+  heroImage      String?
+  status         String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED, UPCOMING
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  variants Variant[]
-  colors   VehicleColor[]
+  variants       Variant[]
+  colors         VehicleColor[]
 }
 
 // -----------------------------------------------------------------------------

@@ -1,25 +1,414 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
+
+interface Vehicle {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  heroImage: string;
+  status: string;
+  seoTitle: string;
+  seoDescription: string;
+}
 
 export default function AdminVehiclesPage() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Search & Filters
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  // Modal Form State
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formCategory, setFormCategory] = useState("SUV");
+  const [formDescription, setFormDescription] = useState("");
+  const [formHeroImage, setFormHeroImage] = useState("");
+  const [formStatus, setFormStatus] = useState("ACTIVE");
+  const [formSeoTitle, setFormSeoTitle] = useState("");
+  const [formSeoDescription, setFormSeoDescription] = useState("");
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const fetchVehicles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (categoryFilter) params.append("category", categoryFilter);
+      if (search) params.append("search", search);
+
+      const res = await fetch(`${apiBaseUrl}/api/vehicles?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to load vehicles");
+      setVehicles(data.vehicles);
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load vehicles.");
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryFilter, search, apiBaseUrl]);
+
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchVehicles();
+  };
+
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setFormName("");
+    setFormCategory("SUV");
+    setFormDescription("");
+    setFormHeroImage("https://res.cloudinary.com/demo/image/upload/v1611234567/sample.png");
+    setFormStatus("ACTIVE");
+    setFormSeoTitle("");
+    setFormSeoDescription("");
+    setError("");
+    setSuccess("");
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (v: Vehicle) => {
+    setEditingId(v.id);
+    setFormName(v.name);
+    setFormCategory(v.category);
+    setFormDescription(v.description || "");
+    setFormHeroImage(v.heroImage || "");
+    setFormStatus(v.status || "ACTIVE");
+    setFormSeoTitle(v.seoTitle || "");
+    setFormSeoDescription(v.seoDescription || "");
+    setError("");
+    setSuccess("");
+    setShowModal(true);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    const payload = {
+      name: formName,
+      category: formCategory,
+      description: formDescription,
+      heroImage: formHeroImage,
+      status: formStatus,
+      seoTitle: formSeoTitle,
+      seoDescription: formSeoDescription,
+    };
+
+    try {
+      const url = editingId
+        ? `${apiBaseUrl}/api/admin/vehicles/${editingId}`
+        : `${apiBaseUrl}/api/admin/vehicles`;
+
+      const method = editingId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.errors?.[0]?.message || "Operation failed");
+      }
+
+      setSuccess(editingId ? "Vehicle updated successfully!" : "Vehicle created successfully!");
+      setShowModal(false);
+      fetchVehicles();
+    } catch (err: unknown) {
+      setError((err as Error).message || "Operation failed.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/vehicles/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Deletion failed");
+      }
+
+      setSuccess("Vehicle deleted successfully!");
+      fetchVehicles();
+    } catch (err: unknown) {
+      setError((err as Error).message || "Deletion failed.");
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-black tracking-tight text-white mb-2">Vehicles CMS</h1>
-        <p className="text-neutral-400 text-sm">Manage car models, pricing, detailed specifications, variants, and colors.</p>
-      </div>
-
-      <div className="bg-[#18181b]/35 border border-neutral-800/80 rounded-xl p-8 text-center flex flex-col items-center justify-center min-h-[40vh] border-dashed">
-        <span className="text-4xl mb-4">🚗</span>
-        <h3 className="text-lg font-bold text-white mb-2">Vehicle CMS Console</h3>
-        <p className="text-neutral-500 text-sm max-w-sm mb-6 leading-relaxed">
-          The database has been initialized with the Toyota catalog (Hyryder, Taisor, Rumion, Glanza). CRUD operations will be integrated next.
-        </p>
-        <button className="px-6 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold rounded-lg transition-colors text-xs uppercase tracking-wider disabled:opacity-40" disabled>
-          + Add New Vehicle
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-white mb-2">Vehicles CMS</h1>
+          <p className="text-neutral-400 text-sm">Add, update, or remove fleet inventory items.</p>
+        </div>
+        <button
+          onClick={handleOpenCreate}
+          className="px-5 py-3 bg-[#eb0a1e] hover:bg-[#c00717] text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-colors"
+        >
+          + Add Vehicle
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-lg bg-red-950/50 border border-red-900/50 text-red-400 text-sm text-center">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="p-4 rounded-lg bg-emerald-950/50 border border-emerald-900/50 text-emerald-400 text-sm text-center">
+          {success}
+        </div>
+      )}
+
+      {/* Filter and Search Panel */}
+      <div className="bg-[#18181b]/35 border border-neutral-800/80 rounded-xl p-6">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="w-full sm:w-72 relative">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-4 pr-10 py-2.5 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500 transition-colors"
+            />
+            <button type="submit" className="absolute right-3 top-3 text-neutral-600 hover:text-white">
+              🔍
+            </button>
+          </div>
+
+          <div className="flex gap-3 w-full sm:w-auto">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-4 py-2.5 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-neutral-400 focus:outline-none focus:border-neutral-500 transition-colors"
+            >
+              <option value="">All Categories</option>
+              <option value="SUV">SUV</option>
+              <option value="MPV">MPV</option>
+              <option value="Hatchback">Hatchback</option>
+              <option value="Sedan">Sedan</option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      {/* Vehicles Table / Grid */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-neutral-500">
+          <div className="w-8 h-8 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mb-4" />
+          <span className="text-xs uppercase tracking-wider font-mono">Fetching fleet...</span>
+        </div>
+      ) : vehicles.length === 0 ? (
+        <div className="bg-[#18181b]/15 border border-neutral-800/60 rounded-xl p-12 text-center text-neutral-500 border-dashed">
+          <span className="text-3xl mb-3 block">🚗</span>
+          <p className="text-sm font-bold text-white mb-1">No Vehicles Configured</p>
+          <p className="text-xs text-neutral-500 max-w-xs mx-auto">Get started by creating your first Toyota model record.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-neutral-800/80 rounded-xl bg-[#18181b]/20">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-neutral-800 text-xs font-bold uppercase tracking-wider text-neutral-500 bg-neutral-950/40">
+                <th className="py-4 px-6">Vehicle</th>
+                <th className="py-4 px-6">Category</th>
+                <th className="py-4 px-6">Status</th>
+                <th className="py-4 px-6">SEO Title</th>
+                <th className="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-800 text-sm font-light text-neutral-300">
+              {vehicles.map((v) => (
+                <tr key={v.id} className="hover:bg-neutral-900/30 transition-colors">
+                  <td className="py-4 px-6">
+                    <div className="font-bold text-white">{v.name}</div>
+                    <div className="text-xs text-neutral-500 font-mono mt-0.5">{v.slug}</div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-neutral-800 text-neutral-300">
+                      {v.category}
+                    </span>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span
+                      className={`px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded ${
+                        v.status === "ACTIVE"
+                          ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/50"
+                          : "bg-neutral-800/40 text-neutral-400 border border-neutral-800"
+                      }`}
+                    >
+                      {v.status}
+                    </span>
+                  </td>
+                  <td className="py-4 px-6 max-w-xs truncate" title={v.seoTitle || ""}>
+                    {v.seoTitle || <span className="text-neutral-700 italic">None</span>}
+                  </td>
+                  <td className="py-4 px-6 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenEdit(v)}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(v.id)}
+                      className="px-3 py-1.5 bg-red-950/45 hover:bg-red-900/40 text-red-400 text-xs font-bold rounded transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Create / Edit Modal Dialog */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#18181b] border border-neutral-800 w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-black text-white mb-6">
+              {editingId ? "Edit Vehicle Config" : "Add Vehicle Model"}
+            </h2>
+
+            <form onSubmit={handleFormSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                    Model Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Fortuner"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={formCategory}
+                    onChange={(e) => setFormCategory(e.target.value)}
+                    className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                  >
+                    <option value="SUV">SUV</option>
+                    <option value="MPV">MPV</option>
+                    <option value="Hatchback">Hatchback</option>
+                    <option value="Sedan">Sedan</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                  Hero Image URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://cloudinary.com/..."
+                  value={formHeroImage}
+                  onChange={(e) => setFormHeroImage(e.target.value)}
+                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Details of vehicle specifications and performance..."
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                />
+              </div>
+
+              <div className="border-t border-neutral-800 pt-6">
+                <h4 className="text-xs uppercase font-extrabold tracking-widest text-[#eb0a1e] mb-4">
+                  SEO Configuration
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                      Meta Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Book Toyota Fortuner Online | Laxmi Toyota"
+                      value={formSeoTitle}
+                      onChange={(e) => setFormSeoTitle(e.target.value)}
+                      className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                      Meta Description
+                    </label>
+                    <textarea
+                      placeholder="e.g. Secure your SUV online with deposit payment."
+                      value={formSeoDescription}
+                      onChange={(e) => setFormSeoDescription(e.target.value)}
+                      rows={2}
+                      className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6 border-t border-neutral-800 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-3 border border-neutral-800 text-neutral-400 hover:text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-white text-black hover:bg-neutral-200 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  Save Vehicle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

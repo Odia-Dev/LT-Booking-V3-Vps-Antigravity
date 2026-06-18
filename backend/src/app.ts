@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./modules/auth/authRoutes";
 import profileRoutes from "./modules/profile/profileRoutes";
+import { publicRouter as vehicleRoutes, adminRouter as adminVehicleRoutes } from "./modules/vehicle/vehicleRoutes";
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.get("/health", (req: Request, res: Response) => {
 // Route Mounts
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/admin/vehicles", adminVehicleRoutes);
 
 // Error handler middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
