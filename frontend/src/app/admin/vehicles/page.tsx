@@ -27,6 +27,16 @@ interface Variant {
   updatedAt: string;
 }
 
+interface VehicleColor {
+  id: string;
+  vehicleId: string;
+  name: string;
+  colorCode: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function AdminVehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +74,20 @@ export default function AdminVehiclesPage() {
   const [varFormTrans, setVarFormTrans] = useState("Manual");
   const [varFormSeat, setVarFormSeat] = useState(5);
   const [varFormStatus, setVarFormStatus] = useState("ACTIVE");
+
+  // Colors CMS State
+  const [showColorsModal, setShowColorsModal] = useState(false);
+  const [selectedVehicleForColors, setSelectedVehicleForColors] = useState<Vehicle | null>(null);
+  const [colors, setColors] = useState<VehicleColor[]>([]);
+  const [loadingColors, setLoadingColors] = useState(false);
+  const [colorError, setColorError] = useState("");
+  const [colorSuccess, setColorSuccess] = useState("");
+
+  // Color Form State
+  const [editingColorId, setEditingColorId] = useState<string | null>(null);
+  const [colFormName, setColFormName] = useState("");
+  const [colFormCode, setColFormCode] = useState("#1C1C1E");
+  const [colFormStatus, setColFormStatus] = useState("ACTIVE");
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -317,6 +341,119 @@ export default function AdminVehiclesPage() {
     setVarFormStatus("ACTIVE");
   };
 
+  // Color CRUD Handlers
+  const fetchColors = useCallback(async (vehicleId: string) => {
+    setLoadingColors(true);
+    setColorError("");
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/colors`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to load colors");
+      setColors(data.colors);
+    } catch (err: unknown) {
+      setColorError((err as Error).message || "Failed to load colors.");
+    } finally {
+      setLoadingColors(false);
+    }
+  }, [apiBaseUrl]);
+
+  const handleOpenColors = (v: Vehicle) => {
+    setSelectedVehicleForColors(v);
+    setEditingColorId(null);
+    setColFormName("");
+    setColFormCode("#1C1C1E");
+    setColFormStatus("ACTIVE");
+    setColorError("");
+    setColorSuccess("");
+    setShowColorsModal(true);
+    fetchColors(v.id);
+  };
+
+  const handleColorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setColorError("");
+    setColorSuccess("");
+
+    if (!selectedVehicleForColors) return;
+
+    const payload = {
+      vehicleId: selectedVehicleForColors.id,
+      name: colFormName,
+      colorCode: colFormCode,
+      status: colFormStatus,
+    };
+
+    try {
+      const url = editingColorId
+        ? `${apiBaseUrl}/api/admin/colors/${editingColorId}`
+        : `${apiBaseUrl}/api/admin/colors`;
+
+      const method = editingColorId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.errors?.[0]?.message || "Operation failed");
+      }
+
+      setColorSuccess(editingColorId ? "Color updated!" : "Color added!");
+      setEditingColorId(null);
+      setColFormName("");
+      setColFormCode("#1C1C1E");
+      setColFormStatus("ACTIVE");
+      fetchColors(selectedVehicleForColors.id);
+    } catch (err: unknown) {
+      setColorError((err as Error).message || "Operation failed.");
+    }
+  };
+
+  const handleColorDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this color?")) return;
+    setColorError("");
+    setColorSuccess("");
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/colors/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Deletion failed");
+      }
+
+      setColorSuccess("Color deleted successfully!");
+      if (selectedVehicleForColors) {
+        fetchColors(selectedVehicleForColors.id);
+      }
+    } catch (err: unknown) {
+      setColorError((err as Error).message || "Deletion failed.");
+    }
+  };
+
+  const handleStartEditColor = (c: VehicleColor) => {
+    setEditingColorId(c.id);
+    setColFormName(c.name);
+    setColFormCode(c.colorCode);
+    setColFormStatus(c.status || "ACTIVE");
+  };
+
+  const handleCancelEditColor = () => {
+    setEditingColorId(null);
+    setColFormName("");
+    setColFormCode("#1C1C1E");
+    setColFormStatus("ACTIVE");
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header section */}
@@ -428,6 +565,12 @@ export default function AdminVehiclesPage() {
                     {v.seoTitle || <span className="text-neutral-700 italic">None</span>}
                   </td>
                   <td className="py-4 px-6 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenColors(v)}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded transition-colors"
+                    >
+                      Colors
+                    </button>
                     <button
                       onClick={() => handleOpenVariants(v)}
                       className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded transition-colors"
@@ -802,6 +945,194 @@ export default function AdminVehiclesPage() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Colors CMS Modal */}
+      {showColorsModal && selectedVehicleForColors && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#18181b] border border-neutral-800 w-full max-w-4xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto flex flex-col gap-6">
+            <div className="flex justify-between items-center border-b border-neutral-800 pb-4">
+              <div>
+                <h2 className="text-2xl font-black text-white">Manage Colors</h2>
+                <p className="text-xs text-[#eb0a1e] font-mono mt-1">
+                  Model: {selectedVehicleForColors.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowColorsModal(false)}
+                className="text-neutral-400 hover:text-white font-bold text-sm uppercase tracking-wider px-3 py-1.5 border border-neutral-800 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+
+            {colorError && (
+              <div className="p-3 rounded-lg bg-red-950/40 border border-red-900/40 text-red-400 text-xs text-center">
+                {colorError}
+              </div>
+            )}
+
+            {colorSuccess && (
+              <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/40 text-emerald-400 text-xs text-center">
+                {colorSuccess}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Color creation / edit form */}
+              <form onSubmit={handleColorSubmit} className="lg:col-span-4 space-y-4 bg-neutral-950/40 border border-neutral-800/80 p-5 rounded-xl">
+                <h3 className="text-xs uppercase font-extrabold tracking-wider text-neutral-400 border-b border-neutral-900 pb-2 mb-3">
+                  {editingColorId ? "Edit Color" : "Add New Color"}
+                </h3>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                    Color Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Attitude Black"
+                    value={colFormName}
+                    onChange={(e) => setColFormName(e.target.value)}
+                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                    Hex Color Code
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <div className="relative">
+                      <input
+                        type="color"
+                        value={colFormCode}
+                        onChange={(e) => setColFormCode(e.target.value)}
+                        className="w-10 h-10 rounded cursor-pointer border border-neutral-700 bg-transparent p-0.5"
+                        title="Pick color"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="#1C1C1E"
+                      value={colFormCode}
+                      onChange={(e) => setColFormCode(e.target.value)}
+                      pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                      title="Valid hex color e.g. #1C1C1E"
+                      className="flex-1 px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs font-mono focus:outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  {/* Live swatch preview */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <div
+                      className="w-6 h-6 rounded-full border border-neutral-700 flex-shrink-0"
+                      style={{ background: colFormCode }}
+                    />
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Preview: {colFormName || "(no name)"}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={colFormStatus}
+                    onChange={(e) => setColFormStatus(e.target.value)}
+                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-white text-xs focus:outline-none focus:border-neutral-500"
+                  >
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                    <option value="ARCHIVED">ARCHIVED</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 pt-3">
+                  {editingColorId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEditColor}
+                      className="flex-1 py-2 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-white rounded text-xs font-bold uppercase transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="flex-1 py-2 bg-white hover:bg-neutral-200 text-black rounded text-xs font-bold uppercase transition-colors"
+                  >
+                    {editingColorId ? "Update" : "Add Color"}
+                  </button>
+                </div>
+              </form>
+
+              {/* Colors List */}
+              <div className="lg:col-span-8 space-y-4">
+                <h3 className="text-xs uppercase font-extrabold tracking-wider text-neutral-400 border-b border-neutral-800 pb-2">
+                  Available Colors
+                </h3>
+
+                {loadingColors ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
+                    <div className="w-5 h-5 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mb-3" />
+                    <span className="text-[10px] uppercase font-mono">Fetching colors...</span>
+                  </div>
+                ) : colors.length === 0 ? (
+                  <div className="p-8 border border-neutral-800/60 rounded-xl text-center text-neutral-500 border-dashed">
+                    <p className="text-xs font-bold text-white mb-1">No Colors Configured</p>
+                    <p className="text-[10px] text-neutral-500">Add color swatches for this vehicle model.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {colors.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center gap-3 p-3 bg-neutral-950/30 border border-neutral-800/60 rounded-xl hover:border-neutral-700 transition-all"
+                      >
+                        {/* Color Swatch */}
+                        <div
+                          className="w-10 h-10 rounded-full border-2 border-neutral-700 flex-shrink-0 shadow-lg"
+                          style={{ background: c.colorCode }}
+                          title={c.colorCode}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{c.name}</p>
+                          <p className="text-[9px] font-mono text-neutral-500 uppercase">{c.colorCode}</p>
+                          <span
+                            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold ${
+                              c.status === "ACTIVE"
+                                ? "bg-emerald-950/40 text-emerald-400"
+                                : "bg-neutral-800/40 text-neutral-400"
+                            }`}
+                          >
+                            {c.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => handleStartEditColor(c)}
+                            className="px-2 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded text-[10px] transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleColorDelete(c.id)}
+                            className="px-2 py-1 bg-red-950/45 hover:bg-red-900/40 text-red-400 font-semibold rounded text-[10px] transition-colors"
+                          >
+                            Del
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

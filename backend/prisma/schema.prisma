@@ -68,14 +68,14 @@ model Variant {
 }
 
 // -----------------------------------------------------------------------------
-// VehicleColor Model: Color swatches and image configuration
+// VehicleColor Model: Color swatches for Toyota vehicle lineup
 // -----------------------------------------------------------------------------
 model VehicleColor {
   id        String   @id @default(uuid())
   vehicleId String
-  name      String // e.g., "Attitude Black"
-  hexCode   String // e.g., "#000000"
-  imageUrl  String // Cloudinary URL for the vehicle in this specific color
+  name      String   // e.g., "Attitude Black"
+  colorCode String   // e.g., "#1C1C1E" — hex color code for CSS swatch
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

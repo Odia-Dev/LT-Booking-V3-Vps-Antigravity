@@ -173,7 +173,65 @@ async function main() {
     ]
   };
 
+  // Colors map: real Toyota color codes per model
+  const colorsMap: Record<string, Array<{ name: string; colorCode: string }>> = {
+    "urban-cruiser-hyryder": [
+      { name: "Café White", colorCode: "#F5F0E8" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Sportin Red", colorCode: "#C0392B" },
+      { name: "Silver Metallic", colorCode: "#C0C0C0" },
+      { name: "Grey Metallic", colorCode: "#6B7280" },
+    ],
+    "urban-cruiser-taisor": [
+      { name: "Café White", colorCode: "#F5F0E8" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Sportin Red", colorCode: "#C0392B" },
+      { name: "Enticing Silver", colorCode: "#A8A9AD" },
+    ],
+    "rumion": [
+      { name: "Pearl White", colorCode: "#F8F8F2" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Grey Metallic", colorCode: "#6B7280" },
+    ],
+    "glanza": [
+      { name: "Sportin Red", colorCode: "#C0392B" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Café White", colorCode: "#F5F0E8" },
+      { name: "Silver Metallic", colorCode: "#C0C0C0" },
+    ],
+    "fortuner": [
+      { name: "Phantom Brown", colorCode: "#4A3728" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "White Pearl", colorCode: "#F8F8F2" },
+      { name: "Silver Metallic", colorCode: "#C0C0C0" },
+    ],
+    "fortuner-legender": [
+      { name: "Super White", colorCode: "#FAFAFA" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Phantom Brown", colorCode: "#4A3728" },
+    ],
+    "innova-crysta": [
+      { name: "White Crystal", colorCode: "#F2F2F2" },
+      { name: "Avant-Garde Bronze", colorCode: "#8B6914" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Silver Metallic", colorCode: "#C0C0C0" },
+    ],
+    "innova-hycross": [
+      { name: "Super White", colorCode: "#FAFAFA" },
+      { name: "Midnight Black", colorCode: "#0D0D0D" },
+      { name: "Silver Metallic", colorCode: "#C0C0C0" },
+      { name: "Precious Bronze", colorCode: "#7D6134" },
+    ],
+    "camry": [
+      { name: "Platinum White Pearl", colorCode: "#FFFFF0" },
+      { name: "Attitude Black", colorCode: "#1C1C1E" },
+      { name: "Avant-garde Bronze", colorCode: "#8B6914" },
+    ],
+  };
+
   let variantsCount = 0;
+  let colorsCount = 0;
+
   for (const v of vehiclesData) {
     const createdVehicle = await prisma.vehicle.create({
       data: v,
@@ -192,9 +250,23 @@ async function main() {
         variantsCount++;
       }
     }
+
+    const colors = colorsMap[v.slug];
+    if (colors) {
+      for (const colorData of colors) {
+        await prisma.vehicleColor.create({
+          data: {
+            ...colorData,
+            vehicleId: createdVehicle.id,
+            status: "ACTIVE",
+          },
+        });
+        colorsCount++;
+      }
+    }
   }
 
-  console.log(`Successfully seeded ${vehiclesData.length} vehicles and ${variantsCount} variants.`);
+  console.log(`Successfully seeded ${vehiclesData.length} vehicles, ${variantsCount} variants, and ${colorsCount} colors.`);
   console.log("Seeding completed successfully.");
 }
 
@@ -206,3 +278,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

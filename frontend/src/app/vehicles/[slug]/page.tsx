@@ -26,6 +26,13 @@ interface Variant {
   status: string;
 }
 
+interface VehicleColor {
+  id: string;
+  name: string;
+  colorCode: string;
+  status: string;
+}
+
 export default function CustomerVehicleDetailPage() {
   const { slug } = useParams();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -35,6 +42,9 @@ export default function CustomerVehicleDetailPage() {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [loadingVariants, setLoadingVariants] = useState(false);
   const [variantError, setVariantError] = useState("");
+
+  const [colors, setColors] = useState<VehicleColor[]>([]);
+  const [loadingColors, setLoadingColors] = useState(false);
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -78,6 +88,27 @@ export default function CustomerVehicleDetailPage() {
     };
 
     fetchVariants();
+  }, [vehicle, apiBaseUrl]);
+
+  // Fetch colors once vehicle is resolved
+  useEffect(() => {
+    if (!vehicle) return;
+
+    const fetchColors = async () => {
+      setLoadingColors(true);
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicle.id}/colors`);
+        const data = await res.json();
+        if (!res.ok) throw new Error("Failed to load colors");
+        setColors(data.colors || []);
+      } catch {
+        setColors([]);
+      } finally {
+        setLoadingColors(false);
+      }
+    };
+
+    fetchColors();
   }, [vehicle, apiBaseUrl]);
 
   // Inject Custom SEO headers dynamically for page crawlers
@@ -142,7 +173,6 @@ export default function CustomerVehicleDetailPage() {
         {/* Left Column: Media Presentation */}
         <div className="space-y-6">
           <div className="border border-[#27272a]/60 bg-[#18181b]/25 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[45vh]">
-            {/* Vector representation/Wireframe block of the luxury car */}
             <span className="text-6xl mb-6 select-none animate-pulse">🏎️</span>
             <div className="text-center">
               <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-widest bg-[#eb0a1e]/15 border border-[#eb0a1e]/25 text-[#eb0a1e] px-3 py-1 rounded-full mb-3">
@@ -155,6 +185,7 @@ export default function CustomerVehicleDetailPage() {
 
         {/* Right Column: Specification details */}
         <div className="space-y-8">
+          {/* Title */}
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-xs uppercase font-extrabold tracking-widest text-[#eb0a1e]">
@@ -168,9 +199,10 @@ export default function CustomerVehicleDetailPage() {
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">{vehicle.name}</h1>
           </div>
 
+          {/* Description */}
           <div className="p-6 rounded-xl bg-[#18181b]/35 border border-neutral-800/80">
             <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider mb-3">
-              Description & Performance Overview
+              Description &amp; Performance Overview
             </h3>
             <p className="text-sm text-neutral-300 font-light leading-relaxed">
               {vehicle.description || "No description provided."}
@@ -192,9 +224,9 @@ export default function CustomerVehicleDetailPage() {
           {/* Variants and Trim levels */}
           <div className="border-t border-[#27272a]/40 pt-6 space-y-4">
             <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider">
-              Available Trims & Specifications
+              Available Trims &amp; Specifications
             </h3>
-            
+
             {loadingVariants ? (
               <div className="space-y-3">
                 <div className="h-10 bg-neutral-900 border border-neutral-800 rounded animate-pulse" />
@@ -231,6 +263,37 @@ export default function CustomerVehicleDetailPage() {
                         ₹{v.price.toLocaleString("en-IN")}
                       </span>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Available Colors */}
+          <div className="border-t border-[#27272a]/40 pt-6 space-y-4">
+            <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider">
+              Available Colors
+            </h3>
+
+            {loadingColors ? (
+              <div className="flex gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 animate-pulse" />
+                ))}
+              </div>
+            ) : colors.length === 0 ? (
+              <p className="text-xs text-neutral-500 font-mono italic">Contact dealership for available color options.</p>
+            ) : (
+              <div className="flex flex-wrap gap-4">
+                {colors.filter((c) => c.status === "ACTIVE").map((c) => (
+                  <div key={c.id} className="group flex flex-col items-center gap-1.5" title={c.name}>
+                    <div
+                      className="w-10 h-10 rounded-full border-2 border-neutral-700 group-hover:border-neutral-400 transition-all duration-300 shadow-md cursor-pointer"
+                      style={{ background: c.colorCode }}
+                    />
+                    <span className="text-[9px] font-medium text-neutral-400 text-center max-w-[56px] leading-tight">
+                      {c.name}
+                    </span>
                   </div>
                 ))}
               </div>
