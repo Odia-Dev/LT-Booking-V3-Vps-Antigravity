@@ -1,7 +1,7 @@
-"use client";
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
+import { Metadata } from "next";
+import CatalogFilters from "@/components/CatalogFilters";
 
 interface Vehicle {
   id: string;
@@ -13,43 +13,57 @@ interface Vehicle {
   status: string;
 }
 
-export default function CustomerCatalogPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+export const metadata: Metadata = {
+  title: "Toyota Showroom & Vehicle Catalog | Laxmi Toyota",
+  description: "Browse the full lineup of Toyota vehicles, SUVs, hatchbacks, and sedans available at Laxmi Toyota. Filter by fuel, category, and find variant details.",
+  alternates: {
+    canonical: "https://laxmitoyota.com/vehicles",
+  },
+  openGraph: {
+    title: "Toyota Showroom & Vehicle Catalog | Laxmi Toyota",
+    description: "Browse the full lineup of Toyota vehicles, SUVs, hatchbacks, and sedans available at Laxmi Toyota.",
+    url: "https://laxmitoyota.com/vehicles",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Toyota Showroom & Vehicle Catalog | Laxmi Toyota",
+    description: "Browse the full lineup of Toyota vehicles, SUVs, hatchbacks, and sedans available at Laxmi Toyota.",
+  },
+};
 
+interface PageProps {
+  searchParams: Promise<{
+    category?: string;
+    search?: string;
+  }>;
+}
+
+async function fetchVehicles(category?: string, search?: string) {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  try {
+    const params = new URLSearchParams();
+    if (category) params.append("category", category);
+    if (search) params.append("search", search);
 
-  const fetchCatalog = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (search) params.append("search", search);
+    const res = await fetch(`${apiBaseUrl}/api/vehicles?${params.toString()}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to fetch vehicles");
+    const data = await res.json();
+    return data.vehicles as Vehicle[];
+  } catch (err) {
+    console.error("Error loading vehicles on server:", err);
+    return [];
+  }
+}
 
-      const res = await fetch(`${apiBaseUrl}/api/vehicles?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok) {
-        setVehicles(data.vehicles);
-      }
-    } catch (err) {
-      console.error("Failed to load catalog:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, search, apiBaseUrl]);
+export default async function CustomerCatalogPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const category = resolvedSearchParams.category;
+  const search = resolvedSearchParams.search;
 
-  useEffect(() => {
-    fetchCatalog();
-  }, [fetchCatalog]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchCatalog();
-  };
-
-  const categories = ["SUV", "MPV", "Hatchback", "Sedan"];
+  const vehicles = await fetchVehicles(category, search);
 
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans antialiased selection:bg-[#eb0a1e] selection:text-white pb-24">
@@ -73,7 +87,7 @@ export default function CustomerCatalogPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 pt-16">
+      <main className="max-w-7xl mx-auto px-6 main-content pt-16">
         {/* Banner Section */}
         <div className="text-center md:text-left mb-16">
           <span className="text-xs uppercase font-extrabold text-[#eb0a1e] tracking-widest mb-3 inline-block">
@@ -85,57 +99,13 @@ export default function CustomerCatalogPage() {
           </p>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="bg-[#18181b]/30 border border-[#27272a]/60 rounded-xl p-6 mb-12 flex flex-col md:flex-row gap-4 justify-between items-center">
-          {/* Categories select pills */}
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            <button
-              onClick={() => setSelectedCategory("")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${
-                selectedCategory === ""
-                  ? "bg-white text-black border-white"
-                  : "bg-transparent text-neutral-400 border-neutral-800 hover:text-white hover:border-neutral-700"
-              }`}
-            >
-              All Vehicles
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all ${
-                  selectedCategory === cat
-                    ? "bg-white text-black border-white"
-                    : "bg-transparent text-neutral-400 border-neutral-800 hover:text-white hover:border-neutral-700"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Search form */}
-          <form onSubmit={handleSearchSubmit} className="w-full md:w-80 relative">
-            <input
-              type="text"
-              placeholder="Search vehicles..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-4 pr-10 py-2.5 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-600 placeholder:text-neutral-600 transition-colors"
-            />
-            <button type="submit" className="absolute right-3 top-3 text-neutral-600 hover:text-white">
-              🔍
-            </button>
-          </form>
-        </div>
+        {/* Filters: Wrapped in Suspense because it uses searchParams hooks */}
+        <Suspense fallback={<div className="h-20 bg-neutral-900/20 border border-neutral-800 rounded-xl animate-pulse mb-12" />}>
+          <CatalogFilters />
+        </Suspense>
 
         {/* Catalog Grid */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 text-neutral-500">
-            <div className="w-8 h-8 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mb-4" />
-            <span className="text-xs uppercase tracking-wider font-mono">Loading Showroom...</span>
-          </div>
-        ) : vehicles.length === 0 ? (
+        {vehicles.length === 0 ? (
           <div className="bg-[#18181b]/15 border border-[#27272a]/40 rounded-xl p-16 text-center text-neutral-500 border-dashed">
             <span className="text-4xl mb-4 block">🚗</span>
             <p className="text-sm font-bold text-white mb-1">No Matching Vehicles</p>

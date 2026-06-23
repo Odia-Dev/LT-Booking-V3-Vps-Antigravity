@@ -1,7 +1,8 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import { Metadata } from "next";
+import FeaturedVehicles from "@/components/FeaturedVehicles";
+import FaqSection from "@/components/FaqSection";
 
 interface Vehicle {
   name: string;
@@ -106,19 +107,60 @@ const FAQS: FAQItem[] = [
   },
 ];
 
+export const metadata: Metadata = {
+  title: "Laxmi Toyota Odisha | Official Online Booking & Dealership Portal",
+  description: "Explore and book the latest Toyota models online at Laxmi Toyota Odisha. Book test drives, calculate finance options, and secure allocations for Innova, Fortuner, Hyryder, and Glanza.",
+  alternates: {
+    canonical: "https://laxmitoyota.com",
+  },
+  openGraph: {
+    title: "Laxmi Toyota Odisha | Official Online Booking & Dealership Portal",
+    description: "Explore and book the latest Toyota models online at Laxmi Toyota Odisha. Book test drives, calculate finance options, and secure allocations.",
+    url: "https://laxmitoyota.com",
+    type: "website",
+    images: [
+      {
+        url: "https://laxmitoyota.com/og-banner.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Laxmi Toyota Showroom",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Laxmi Toyota Odisha | Official Online Booking & Dealership Portal",
+    description: "Explore and book the latest Toyota models online at Laxmi Toyota Odisha.",
+    images: ["https://laxmitoyota.com/og-banner.jpg"],
+  },
+};
+
 export default function PremiumHomepage() {
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [selectedVehicleColors, setSelectedVehicleColors] = useState<Record<string, string>>(
-    VEHICLES.reduce((acc, v) => ({ ...acc, [v.name]: v.colors[0].name }), {})
-  );
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": FAQS.map((faq) => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer,
+      },
+    })),
+  };
 
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans antialiased selection:bg-[#eb0a1e] selection:text-white">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       {/* 1. Header/Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Toyota Badge Silhouette representation */}
             <span className="w-9 h-6 rounded-full border-2 border-[#eb0a1e] flex items-center justify-center font-black text-[10px] tracking-widest text-[#eb0a1e]">
               T
             </span>
@@ -148,7 +190,6 @@ export default function PremiumHomepage() {
 
       {/* 2. Hero Banner */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#27272a]/50">
-        {/* Background Gradients */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#eb0a1e]/10 via-transparent to-transparent opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-[#09090b]/60" />
 
@@ -189,99 +230,7 @@ export default function PremiumHomepage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {VEHICLES.map((vehicle) => (
-            <div
-              key={vehicle.name}
-              className="group relative rounded-xl border border-[#27272a]/60 bg-[#18181b]/30 p-8 flex flex-col justify-between hover:border-[#eb0a1e]/40 transition-all hover:shadow-2xl"
-            >
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className="text-xs uppercase tracking-wider font-semibold text-[#eb0a1e]">
-                      {vehicle.type}
-                    </span>
-                    <h3 className="text-2xl font-bold mt-1 text-white">{vehicle.name}</h3>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-[#a1a1aa]">Starting at</span>
-                    <p className="text-lg font-extrabold text-white">{vehicle.price}</p>
-                  </div>
-                </div>
-
-                <p className="text-[#a1a1aa] text-sm font-light mb-6">{vehicle.tagline}</p>
-
-                {/* Mock Vehicle Swatch Preview Frame */}
-                <div
-                  className={`w-full h-44 rounded-lg border border-dashed flex flex-col items-center justify-center gap-2 mb-6 transition-all ${
-                    vehicle.imageColor
-                  }`}
-                >
-                  <span className="text-xs text-[#a1a1aa] tracking-widest font-mono">
-                    COLOR SWATCH: {selectedVehicleColors[vehicle.name]?.toUpperCase()}
-                  </span>
-                  <div
-                    className="w-24 h-3 rounded-full shadow-inner"
-                    style={{
-                      backgroundColor:
-                        vehicle.colors.find((c) => c.name === selectedVehicleColors[vehicle.name])?.hex || "#fff",
-                    }}
-                  />
-                </div>
-
-                {/* Specs List */}
-                <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-8 text-xs text-[#a1a1aa]">
-                  {vehicle.specs.map((spec) => (
-                    <div key={spec} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#eb0a1e]" />
-                      {spec}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                {/* Swatch Controls */}
-                <div className="flex items-center justify-between pt-6 border-t border-[#27272a]/40 mb-6">
-                  <span className="text-xs text-[#71717a] font-medium">Select Swatch</span>
-                  <div className="flex gap-2.5">
-                    {vehicle.colors.map((color) => (
-                      <button
-                        key={color.name}
-                        title={color.name}
-                        onClick={() =>
-                          setSelectedVehicleColors((prev) => ({ ...prev, [vehicle.name]: color.name }))
-                        }
-                        className={`w-6 h-6 rounded-full border transition-all ${
-                          selectedVehicleColors[vehicle.name] === color.name
-                            ? "border-white scale-110"
-                            : "border-[#27272a] hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card CTA Actions */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Link
-                    href="/login"
-                    className="text-center text-xs font-bold uppercase tracking-wider bg-white text-black py-3 rounded hover:bg-neutral-200 transition-colors"
-                  >
-                    Configure
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="text-center text-xs font-bold uppercase tracking-wider border border-[#27272a] text-white py-3 rounded hover:bg-[#27272a]/40 transition-colors"
-                  >
-                    Test Drive
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <FeaturedVehicles vehicles={VEHICLES} />
       </section>
 
       {/* 4. Why Book Online */}
@@ -406,29 +355,7 @@ export default function PremiumHomepage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {FAQS.map((faq, index) => (
-            <div
-              key={index}
-              className="rounded-lg border border-[#27272a]/60 bg-[#18181b]/10 overflow-hidden"
-            >
-              <button
-                onClick={() => setActiveFaq((prev) => (prev === index ? null : index))}
-                className="w-full text-left p-6 font-semibold flex justify-between items-center text-white hover:bg-[#18181b]/30 transition-colors"
-              >
-                <span>{faq.question}</span>
-                <span className="text-xl text-[#71717a]">
-                  {activeFaq === index ? "−" : "+"}
-                </span>
-              </button>
-              {activeFaq === index && (
-                <div className="p-6 pt-0 border-t border-[#27272a]/30 text-sm text-[#a1a1aa] font-light leading-relaxed">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <FaqSection faqs={FAQS} />
       </section>
 
       {/* 8. Footer */}

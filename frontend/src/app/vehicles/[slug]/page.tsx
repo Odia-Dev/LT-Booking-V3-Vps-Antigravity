@@ -1,8 +1,6 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { Metadata } from "next";
 
 interface Vehicle {
   id: string;
@@ -33,112 +31,106 @@ interface VehicleColor {
   status: string;
 }
 
-export default function CustomerVehicleDetailPage() {
-  const { slug } = useParams();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface PageProps {
+  params: Promise<{
+    slug: string;
+  }>;
+}
 
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [loadingVariants, setLoadingVariants] = useState(false);
-  const [variantError, setVariantError] = useState("");
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  const [colors, setColors] = useState<VehicleColor[]>([]);
-  const [loadingColors, setLoadingColors] = useState(false);
+async function getVehicle(slug: string): Promise<Vehicle | null> {
+  try {
+    const res = await fetch(`${apiBaseUrl}/api/vehicles/${slug}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.vehicle;
+  } catch (err) {
+    console.error("Failed to load vehicle:", err);
+    return null;
+  }
+}
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+async function getVariants(vehicleId: string): Promise<Variant[]> {
+  try {
+    const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/variants`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.variants || [];
+  } catch (err) {
+    console.error("Failed to load variants:", err);
+    return [];
+  }
+}
 
-  useEffect(() => {
-    if (!slug) return;
+async function getColors(vehicleId: string): Promise<VehicleColor[]> {
+  try {
+    const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/colors`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.colors || [];
+  } catch (err) {
+    console.error("Failed to load colors:", err);
+    return [];
+  }
+}
 
-    const fetchVehicle = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${apiBaseUrl}/api/vehicles/${slug}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load vehicle details");
-        setVehicle(data.vehicle);
-      } catch (err: unknown) {
-        setError((err as Error).message || "Failed to load vehicle.");
-      } finally {
-        setLoading(false);
-      }
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const vehicle = await getVehicle(slug);
+
+  if (!vehicle) {
+    return {
+      title: "Vehicle Not Found | Laxmi Toyota",
     };
-
-    fetchVehicle();
-  }, [slug, apiBaseUrl]);
-
-  // Fetch variants once vehicle is resolved
-  useEffect(() => {
-    if (!vehicle) return;
-
-    const fetchVariants = async () => {
-      setLoadingVariants(true);
-      setVariantError("");
-      try {
-        const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicle.id}/variants`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load variants");
-        setVariants(data.variants || []);
-      } catch (err: unknown) {
-        setVariantError((err as Error).message || "Failed to load variants.");
-      } finally {
-        setLoadingVariants(false);
-      }
-    };
-
-    fetchVariants();
-  }, [vehicle, apiBaseUrl]);
-
-  // Fetch colors once vehicle is resolved
-  useEffect(() => {
-    if (!vehicle) return;
-
-    const fetchColors = async () => {
-      setLoadingColors(true);
-      try {
-        const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicle.id}/colors`);
-        const data = await res.json();
-        if (!res.ok) throw new Error("Failed to load colors");
-        setColors(data.colors || []);
-      } catch {
-        setColors([]);
-      } finally {
-        setLoadingColors(false);
-      }
-    };
-
-    fetchColors();
-  }, [vehicle, apiBaseUrl]);
-
-  // Inject Custom SEO headers dynamically for page crawlers
-  useEffect(() => {
-    if (vehicle) {
-      document.title = vehicle.seoTitle || `${vehicle.name} | Laxmi Toyota`;
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) {
-        metaDesc.setAttribute("content", vehicle.seoDescription || vehicle.description);
-      }
-    }
-  }, [vehicle]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center text-[#f4f4f5]">
-        <div className="w-8 h-8 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mb-4" />
-        <span className="text-xs uppercase tracking-widest font-mono text-neutral-500">
-          Loading vehicle specifications...
-        </span>
-      </div>
-    );
   }
 
-  if (error || !vehicle) {
+  const title = vehicle.seoTitle || `${vehicle.name} Specifications & Booking | Laxmi Toyota`;
+  const description = vehicle.seoDescription || vehicle.description || `Book the Toyota ${vehicle.name} online at Laxmi Toyota. Check variants, ex-showroom pricing, color options, and specs.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `https://laxmitoyota.com/vehicles/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://laxmitoyota.com/vehicles/${slug}`,
+      type: "website",
+      images: [
+        {
+          url: vehicle.heroImage || "https://laxmitoyota.com/og-banner.jpg",
+          alt: vehicle.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [vehicle.heroImage || "https://laxmitoyota.com/og-banner.jpg"],
+    },
+  };
+}
+
+export default async function CustomerVehicleDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const vehicle = await getVehicle(slug);
+
+  if (!vehicle) {
     return (
       <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col items-center justify-center gap-4">
         <span className="text-4xl">⚠️</span>
         <h2 className="text-xl font-bold text-white">Vehicle Not Found</h2>
-        <p className="text-sm text-neutral-500">{error || "The requested vehicle slug does not exist."}</p>
+        <p className="text-sm text-neutral-500">The requested vehicle slug does not exist.</p>
         <Link href="/vehicles" className="text-xs uppercase tracking-wider font-bold text-[#eb0a1e] hover:underline mt-4">
           ← Back to Catalog
         </Link>
@@ -146,8 +138,49 @@ export default function CustomerVehicleDetailPage() {
     );
   }
 
+  // Parallel data fetching for variants and colors
+  const [variants, colors] = await Promise.all([
+    getVariants(vehicle.id),
+    getColors(vehicle.id),
+  ]);
+
+  const priceBounds = variants.length > 0 
+    ? {
+        minPrice: Math.min(...variants.map(v => v.price)),
+        maxPrice: Math.max(...variants.map(v => v.price))
+      }
+    : null;
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": vehicle.name,
+    "description": vehicle.description,
+    "image": vehicle.heroImage,
+    "brand": {
+      "@type": "Brand",
+      "name": "Toyota"
+    },
+    ...(priceBounds && {
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "INR",
+        "lowPrice": priceBounds.minPrice,
+        "highPrice": priceBounds.maxPrice,
+        "offerCount": variants.length,
+        "priceValuedOnly": "true"
+      }
+    })
+  };
+
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans antialiased pb-24">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -227,14 +260,7 @@ export default function CustomerVehicleDetailPage() {
               Available Trims &amp; Specifications
             </h3>
 
-            {loadingVariants ? (
-              <div className="space-y-3">
-                <div className="h-10 bg-neutral-900 border border-neutral-800 rounded animate-pulse" />
-                <div className="h-10 bg-neutral-900 border border-neutral-800 rounded animate-pulse" />
-              </div>
-            ) : variantError ? (
-              <p className="text-xs text-neutral-500 font-mono italic">Failed to load trims.</p>
-            ) : variants.length === 0 ? (
+            {variants.length === 0 ? (
               <p className="text-xs text-neutral-500 font-mono italic">Contact dealership for custom configurations.</p>
             ) : (
               <div className="space-y-2.5">
@@ -275,13 +301,7 @@ export default function CustomerVehicleDetailPage() {
               Available Colors
             </h3>
 
-            {loadingColors ? (
-              <div className="flex gap-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 animate-pulse" />
-                ))}
-              </div>
-            ) : colors.length === 0 ? (
+            {colors.length === 0 ? (
               <p className="text-xs text-neutral-500 font-mono italic">Contact dealership for available color options.</p>
             ) : (
               <div className="flex flex-wrap gap-4">
