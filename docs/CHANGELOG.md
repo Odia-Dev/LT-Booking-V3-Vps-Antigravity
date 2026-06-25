@@ -13,9 +13,14 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 * **Milestone M04 Admin Dashboard Shell**: Built admin landing panels and sidebar navigation controls.
 * **Milestone M05 Vehicle Management**: Configured main catalog CMS.
 * **Milestone M06 Vehicle Variant Management**: Extended variant pricing and spec customization options.
+  * Added dynamic `specs` JSON column to model.
+  * ImplementedSafety/Comfort/Exterior/Interior/Technology/Performance features.
+  * Integrated dimension specifications (Length, Width, Height, Wheelbase, Ground Clearance, Boot Space, Fuel Tank, Tyres, Brakes, Suspension) into Admin CRUD.
+  * Configured public SEO APIs (`/api/public/vehicles/:slug/variants` and `/api/public/variants/:slug`) with JSON-LD, Open Graph, and Canonical URL tags.
 * **Milestone M07 Vehicle Color Management**: Added real Toyota color swatch selectors and hex swatches.
 * **Milestone M07B SEO Architecture Refactor**: Standardized metadata tags and Schema.org JSON-LD structures.
 * **Milestone M08 Branch Management (Current)**:
   * Database schema extended with required fields (`code`, `city`, `district`, `state`, `pincode`, coordinates, status, manager phone).
   * Backend API endpoints configured with Zod schema verification and authentication middleware protection.
   * Tagged database configuration release: `production-db-ready`.
+
