@@ -91,14 +91,72 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
   }
   ```
 
+### GET `/api/vehicles/:id` (Public Detail)
+* **Description**: Query details for a specific vehicle by database UUID.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicle": {
+      "id": "vehicle-uuid",
+      "name": "Urban Cruiser Hyryder",
+      "slug": "urban-cruiser-hyryder",
+      "category": "SUV",
+      "description": "Strong Hybrid technology..."
+    }
+  }
+  ```
+
+### GET `/api/vehicles/slug/:slug` (Public Detail)
+* **Description**: Query details for a specific vehicle by unique slug.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicle": { ... }
+  }
+  ```
+
 ### POST `/api/admin/vehicles` (Protected Create)
 * **Description**: Add a new vehicle model.
-* **Response (210 Created)**:
+* **Response (201 Created)**:
   ```json
   {
     "success": true,
     "message": "Vehicle created successfully",
     "vehicle": { ... }
+  }
+  ```
+
+### PUT `/api/admin/vehicles/:id` (Protected Update)
+* **Description**: Update details for a specific vehicle by database UUID.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Vehicle updated successfully",
+    "vehicle": { ... }
+  }
+  ```
+
+### PATCH `/api/admin/vehicles/:id/status` (Protected Status Update)
+* **Description**: Update a specific vehicle status.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Vehicle status updated successfully",
+    "vehicle": { ... }
+  }
+  ```
+
+### DELETE `/api/admin/vehicles/:id` (Protected Delete)
+* **Description**: Soft delete a specific vehicle by upgrading status to ARCHIVED.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Vehicle deleted successfully"
   }
   ```
 

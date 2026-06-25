@@ -17,3 +17,7 @@ export const createVehicleSchema = z.object({
 });
 
 export const updateVehicleSchema = createVehicleSchema.partial();
+
+export const updateVehicleStatusSchema = z.object({
+  status: z.enum(statuses),
+});
