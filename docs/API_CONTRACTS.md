@@ -328,6 +328,68 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
 
 ---
 
+## 3b. Public Branch APIs (`/api/public/branches`)
+
+### GET `/api/public/branches`
+* **Description**: Returns all active public branches in the system, sorted by `sortOrder` ascending.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "branches": [
+      {
+        "id": "uuid",
+        "name": "Berhampur Showroom",
+        "slug": "berhampur-showroom",
+        "code": "BRH01",
+        "address": "NH-16 Bypass Road",
+        "city": "Berhampur",
+        "district": "Ganjam",
+        "state": "Odisha",
+        "pincode": "760001",
+        "phone": "+91 94370 12345",
+        "email": "berhampur@laxmitoyota.co.in",
+        "googleMapsUrl": "https://maps.google.com/...",
+        "workingHours": "9:00 AM - 7:00 PM",
+        "status": "ACTIVE",
+        "salesManager": "Manoj Patnaik",
+        "serviceManager": "Arakhita Das",
+        "sortOrder": 1
+      }
+    ]
+  }
+  ```
+
+### GET `/api/public/branches/:slug`
+* **Description**: Retrieves active branch details by unique slug.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "branch": {
+      "id": "uuid",
+      "name": "Berhampur Showroom",
+      "slug": "berhampur-showroom",
+      "code": "BRH01",
+      "address": "NH-16 Bypass Road",
+      "city": "Berhampur",
+      "district": "Ganjam",
+      "state": "Odisha",
+      "pincode": "760001",
+      "phone": "+91 94370 12345",
+      "email": "berhampur@laxmitoyota.co.in",
+      "googleMapsUrl": "https://maps.google.com/...",
+      "workingHours": "9:00 AM - 7:00 PM",
+      "status": "ACTIVE",
+      "salesManager": "Manoj Patnaik",
+      "serviceManager": "Arakhita Das",
+      "sortOrder": 1
+    }
+  }
+  ```
+
+---
+
 ## 4. Health Check Service (`/health`)
 
 ### GET `/health`

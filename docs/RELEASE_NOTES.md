@@ -6,6 +6,15 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.0.0-m08-production-ready` (2026-06-25)
+* **Goal**: Establish production-ready dealership branch management API, admin CMS, and public website location pages.
+* **Commit**: `feat(m08): production ready`
+* **Details**:
+  - Implemented Branch CRUD repository and service methods with validation rules (pincode, email, phone validations).
+  - Admin Branch CMS dashboard (`/admin/branches`) supporting paginated location tables, name/code searches, status PATCH toggles, and deletion.
+  - Public location showroom selectors (`/branches`) and custom dynamic metadata profile pages (`/branches/[slug]`) rendering embedded map embeds and auto-localizing coordinates.
+  - Public branch JSON-LD structured schemas (`AutoDealer` type) and Open Graph parameters.
+
 ### `production-db-ready` (2026-06-25)
 * **Goal**: Establish the base branch schema migrations and configurations for physical showrooms.
 * **Commit**: Pushed onto origin branch `develop` containing backend Prisma schema upgrades and code specifications.

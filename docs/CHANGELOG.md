@@ -23,8 +23,11 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
   * Configured public SEO APIs (`/api/public/vehicles/:slug/variants` and `/api/public/variants/:slug`) with JSON-LD, Open Graph, and Canonical URL tags.
 * **Milestone M07 Vehicle Color Management**: Added real Toyota color swatch selectors and hex swatches.
 * **Milestone M07B SEO Architecture Refactor**: Standardized metadata tags and Schema.org JSON-LD structures.
-* **Milestone M08 Branch Management (Current)**:
-  * Database schema extended with required fields (`code`, `city`, `district`, `state`, `pincode`, coordinates, status, manager phone).
+* **Milestone M08 Branch Management**:
+  * Database schema extended with required fields (`code`, `city`, `district`, `state`, `pincode`, coordinates, status, manager phone, salesManager, serviceManager, sortOrder).
   * Backend API endpoints configured with Zod schema verification and authentication middleware protection.
   * Tagged database configuration release: `production-db-ready`.
+  * Created public Branch APIs (`GET /api/public/branches`, `GET /api/public/branches/:slug`).
+  * Built complete Admin Branch CMS dashboard console under `/admin/branches` for full CRUD, search, pagination, and status toggles.
+  * Built public directory listings page (`/branches`) and detail pages (`/branches/[slug]`) displaying embedded map previews, manager cards, contact CTAs, and dynamic SEO / JSON-LD schemas.
 
