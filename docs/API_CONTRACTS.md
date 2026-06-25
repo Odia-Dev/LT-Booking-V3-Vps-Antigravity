@@ -161,3 +161,34 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
 
 ### DELETE `/api/admin/branches/:id` (Protected Archive/Delete)
 * **Description**: Remove a branch from the database physically.
+
+---
+
+## 4. Health Check Service (`/health`)
+
+### GET `/health`
+* **Description**: Returns detailed live diagnostics of the backend application and its database connection.
+* **Response (200 OK - Healthy)**:
+  ```json
+  {
+    "success": true,
+    "application": "LT-Booking-V3",
+    "version": "v1.0.0",
+    "commit": "ca2bc65",
+    "branch": "develop",
+    "environment": "production",
+    "uptime": 24.5,
+    "nodeVersion": "v20.12.2",
+    "database": "connected",
+    "timestamp": "2026-06-25T13:43:00.000Z"
+  }
+  ```
+* **Response (503 Service Unavailable - Database Down)**:
+  ```json
+  {
+    "success": false,
+    "database": "disconnected",
+    "timestamp": "2026-06-25T13:43:00.000Z",
+    "message": "Database connection failed."
+  }
+  ```

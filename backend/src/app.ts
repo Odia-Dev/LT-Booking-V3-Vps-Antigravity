@@ -2,6 +2,9 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import { execSync } from "child_process";
+import { prisma } from "./config/db";
+import packageJson from "../package.json";
 import authRoutes from "./modules/auth/authRoutes";
 import profileRoutes from "./modules/profile/profileRoutes";
 import { publicRouter as vehicleRoutes, adminRouter as adminVehicleRoutes } from "./modules/vehicle/vehicleRoutes";
@@ -30,8 +33,50 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Health check endpoint
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({ success: true });
+app.get("/health", async (req: Request, res: Response): Promise<void> => {
+  let dbStatus = "connected";
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (error) {
+    dbStatus = "disconnected";
+  }
+
+  const timestamp = new Date().toISOString();
+
+  if (dbStatus === "disconnected") {
+    res.status(503).json({
+      success: false,
+      database: "disconnected",
+      timestamp,
+      message: "Database connection failed.",
+    });
+    return;
+  }
+
+  let commit = "unknown";
+  try {
+    commit = execSync("git rev-parse --short HEAD").toString().trim();
+  } catch (e) {}
+
+  let branch = "unknown";
+  try {
+    branch = execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
+  } catch (e) {}
+
+  const version = packageJson.version || "v1.0.0";
+
+  res.status(200).json({
+    success: true,
+    application: "LT-Booking-V3",
+    version,
+    commit,
+    branch,
+    environment: process.env.NODE_ENV || "development",
+    uptime: process.uptime(),
+    nodeVersion: process.version,
+    database: "connected",
+    timestamp,
+  });
 });
 
 // Route Mounts
