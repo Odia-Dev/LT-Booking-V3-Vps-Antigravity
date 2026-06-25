@@ -38,6 +38,7 @@ model Branch {
   updatedAt     DateTime @updatedAt
 
   leads Lead[]
+  testDrives TestDrive[]
 }
 
 // -----------------------------------------------------------------------------
@@ -65,6 +66,7 @@ model Vehicle {
 
   variants       Variant[]
   colors         VehicleColor[]
+  testDrives     TestDrive[]
 }
 
 // -----------------------------------------------------------------------------
@@ -85,6 +87,7 @@ model Variant {
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   leads   Lead[]
+  testDrives TestDrive[]
 }
 
 // -----------------------------------------------------------------------------
@@ -124,6 +127,7 @@ model Lead {
   branch  Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
   variant Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   booking Booking?
+  testDrives TestDrive[]
 }
 
 // -----------------------------------------------------------------------------
@@ -157,6 +161,7 @@ model User {
   role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  testDrives   TestDrive[]
 }
 
 // -----------------------------------------------------------------------------
@@ -169,4 +174,30 @@ model OtpVerification {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// TestDrive Model: Dealership test drive appointments
+// -----------------------------------------------------------------------------
+model TestDrive {
+  id                String   @id @default(uuid())
+  testDriveId       String   @unique
+  customerId        String
+  leadId            String?
+  vehicleId         String
+  variantId         String
+  branchId          String
+  preferredDate     DateTime
+  preferredTime     String
+  status            String   @default("REQUESTED") // REQUESTED, CONFIRMED, COMPLETED, BOOKED, CANCELLED, NO_SHOW
+  assignedExecutive String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customer User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  variant  Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }
