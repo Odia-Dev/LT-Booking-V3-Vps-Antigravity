@@ -23,3 +23,7 @@ export const createBranchSchema = z.object({
 });
 
 export const updateBranchSchema = createBranchSchema.partial();
+
+export const updateBranchStatusSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]),
+});

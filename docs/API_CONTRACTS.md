@@ -283,11 +283,48 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
   }
   ```
 
+### GET `/api/branches/slug/:slug` (Public Slug Detail)
+* **Description**: Retrieve detailed records of a specific branch by its unique slug.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "branch": {
+      "id": "uuid",
+      "name": "Berhampur Showroom",
+      "slug": "berhampur-showroom",
+      "code": "BRH01",
+      "address": "NH-16 Bypass Road",
+      "city": "Berhampur",
+      "district": "Ganjam",
+      "state": "Odisha",
+      "pincode": "760001",
+      "phone": "+91 94370 12345",
+      "email": "berhampur@laxmitoyota.co.in",
+      "googleMapsUrl": "https://maps.google.com/...",
+      "workingHours": "9:00 AM - 7:00 PM",
+      "status": "ACTIVE",
+      "salesManager": "Manoj Patnaik",
+      "serviceManager": "Arakhita Das",
+      "sortOrder": 1
+    }
+  }
+  ```
+
 ### PUT `/api/admin/branches/:id` (Protected Edit)
 * **Description**: Update fields of a specific branch. Accepts partial payloads.
 
+### PATCH `/api/admin/branches/:id/status` (Protected Status Update)
+* **Description**: Toggle branch status (ACTIVE, INACTIVE, ARCHIVED).
+* **Payload**:
+  ```json
+  {
+    "status": "INACTIVE"
+  }
+  ```
+
 ### DELETE `/api/admin/branches/:id` (Protected Archive/Delete)
-* **Description**: Remove a branch from the database physically.
+* **Description**: Soft delete/archive a branch by updating its status to ARCHIVED.
 
 ---
 

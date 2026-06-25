@@ -10,6 +10,7 @@ import profileRoutes from "./modules/profile/profileRoutes";
 import { publicRouter as vehicleRoutes, adminRouter as adminVehicleRoutes, publicVehiclesRouter } from "./modules/vehicle/vehicleRoutes";
 import { publicRouter as variantRoutes, variantsRouter, adminRouter as adminVariantRoutes } from "./modules/variant/variantRoutes";
 import { publicRouter as colorRoutes, adminRouter as adminColorRoutes } from "./modules/color/colorRoutes";
+import { publicRouter as branchRoutes, adminRouter as adminBranchRoutes } from "./modules/branch/branchRoutes";
 
 dotenv.config();
 
@@ -92,6 +93,8 @@ app.use("/api/admin/vehicles", adminVehicleRoutes);
 app.use("/api/admin/variants", adminVariantRoutes);
 app.use("/api/vehicles", colorRoutes);
 app.use("/api/admin/colors", adminColorRoutes);
+app.use("/api/branches", branchRoutes);
+app.use("/api/admin/branches", adminBranchRoutes);
 
 // Error handler middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
