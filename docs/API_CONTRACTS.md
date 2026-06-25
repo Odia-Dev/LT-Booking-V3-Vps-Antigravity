@@ -875,3 +875,41 @@ All endpoints below require authentication.
     "message": "Test drive cancelled successfully"
   }
   ```
+
+---
+
+## 8. Test Drive Notification & Calendar Event System Architecture
+
+### 8.1 Notification Delivery Systems
+The Test Drive module triggers automated alerts across multiple channels upon scheduling, confirming, or updating appointments:
+
+* **Email Confirmation**: Sends HTML/text confirmation detailing the model, variant, showroom location, date, and selected time slot.
+* **SMS Gateway Hook**: Dispatches transactional SMS reminders specifying the Test Drive Ref ID, driver license requirements, and showroom contact info.
+* **WhatsApp Cloud API Hook**: Sends structured templates (`test_drive_confirmation`) with interactive quick-replies (e.g., reschedule, cancel).
+* **Push Notification Hook**: Triggers silent/visible web pushes to registered customer browsers and native app views.
+
+### 8.2 Calendar Synchronization Contracts
+To facilitate executive scheduling and customer diaries, the system persists calendar states locally and prepares hooks for external providers (Google Calendar, Microsoft Outlook):
+
+#### 8.2.1 Event Types
+1. **APPOINTMENT**: Created when a slot is booked. Set as a 60-minute duration block.
+2. **REMINDER**: Created 24 hours prior to the appointment.
+3. **COMPLETION**: Logged immediately when the status changes to `COMPLETED`.
+
+#### 8.2.2 Service Provider Mocks & Interfaces
+Future external synchronization is built on the `ICalendarProvider` interface, allowing hot-swapping between `GoogleCalendarProvider` and `OutlookCalendarProvider`.
+Local DB stores state in the `CalendarEvent` table with the following schema contract:
+```json
+{
+  "id": "event-uuid",
+  "testDriveId": "td-uuid",
+  "type": "APPOINTMENT | REMINDER | COMPLETION",
+  "title": "Test Drive Appointment: TD-2026-0001",
+  "description": "Text details with vehicle specifications...",
+  "eventDate": "2026-06-28T10:00:00.000Z",
+  "provider": "LOCAL | GOOGLE | OUTLOOK | GOOGLE_OUTLOOK_MOCK",
+  "externalId": "gcal-id|outlook-id",
+  "status": "PENDING | SYNCED | COMPLETED | CANCELLED"
+}
+```
+

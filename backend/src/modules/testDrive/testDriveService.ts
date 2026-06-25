@@ -1,6 +1,8 @@
 import { TestDriveRepository, TestDriveFilters } from "./testDriveRepository";
 import { TestDrive } from "@prisma/client";
 import { prisma } from "../../config/db";
+import { CalendarService } from "../../services/calendarService";
+import { NotificationService } from "../../services/notificationService";
 
 export class TestDriveService {
   private repo = new TestDriveRepository();
@@ -167,11 +169,34 @@ export class TestDriveService {
     // 9. Generate unique Test Drive ID
     const testDriveId = await this.generateUniqueTestDriveId();
 
-    return this.repo.createTestDrive({
+    const created = await this.repo.createTestDrive({
       ...data,
       testDriveId,
       status: data.status || "REQUESTED",
     });
+
+    try {
+      const calendarService = new CalendarService();
+      await calendarService.createAppointmentEvent(created);
+
+      // Create reminder event 24h prior to preferred date
+      const reminderTime = new Date(created.preferredDate);
+      reminderTime.setDate(reminderTime.getDate() - 1);
+      await calendarService.createReminderEvent(created, reminderTime);
+    } catch (err) {
+      console.error("[TestDriveService] Failed to create calendar events:", err);
+    }
+
+    try {
+      await NotificationService.sendTestDriveEmailConfirmation(created);
+      await NotificationService.sendTestDriveSMS(created);
+      await NotificationService.sendTestDriveWhatsApp(created);
+      await NotificationService.sendTestDrivePushNotification(created);
+    } catch (err) {
+      console.error("[TestDriveService] Failed to trigger notifications:", err);
+    }
+
+    return created;
   }
 
   async createPublicTestDrive(data: {
@@ -339,7 +364,18 @@ export class TestDriveService {
       throw new Error("Invalid status type");
     }
 
-    return this.repo.updateStatus(id, status);
+    const updated = await this.repo.updateStatus(id, status);
+
+    if (status === "COMPLETED") {
+      try {
+        const calendarService = new CalendarService();
+        await calendarService.createCompletionEvent(updated);
+      } catch (err) {
+        console.error("[TestDriveService] Failed to create completion calendar event:", err);
+      }
+    }
+
+    return updated;
   }
 
   async assignExecutive(id: string, executiveName: string): Promise<TestDrive> {
