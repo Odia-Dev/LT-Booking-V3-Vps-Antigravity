@@ -12,6 +12,13 @@ interface Vehicle {
   status: string;
   seoTitle: string;
   seoDescription: string;
+  thumbnail?: string;
+  gallery?: string[];
+  brochure?: string;
+  youtubeUrl?: string;
+  startingPrice?: number;
+  bookingAmount?: number;
+  variants?: Variant[];
 }
 
 interface Variant {
@@ -41,7 +48,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 async function getVehicle(slug: string): Promise<Vehicle | null> {
   try {
-    const res = await fetch(`${apiBaseUrl}/api/vehicles/${slug}`, {
+    const res = await fetch(`${apiBaseUrl}/api/public/vehicles/${slug}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -50,20 +57,6 @@ async function getVehicle(slug: string): Promise<Vehicle | null> {
   } catch (err) {
     console.error("Failed to load vehicle:", err);
     return null;
-  }
-}
-
-async function getVariants(vehicleId: string): Promise<Variant[]> {
-  try {
-    const res = await fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/variants`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.variants || [];
-  } catch (err) {
-    console.error("Failed to load variants:", err);
-    return [];
   }
 }
 
@@ -138,13 +131,10 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
     );
   }
 
-  // Parallel data fetching for variants and colors
-  const [variants, colors] = await Promise.all([
-    getVariants(vehicle.id),
-    getColors(vehicle.id),
-  ]);
+  const variants = vehicle.variants || [];
+  const colors = await getColors(vehicle.id);
 
-  const priceBounds = variants.length > 0 
+  const priceBounds = variants.length > 0
     ? {
         minPrice: Math.min(...variants.map(v => v.price)),
         maxPrice: Math.max(...variants.map(v => v.price))
@@ -156,7 +146,7 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
     "@type": "Product",
     "name": vehicle.name,
     "description": vehicle.description,
-    "image": vehicle.heroImage,
+    "image": vehicle.heroImage || vehicle.thumbnail,
     "brand": {
       "@type": "Brand",
       "name": "Toyota"
@@ -204,16 +194,59 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
       {/* Main vehicle profile */}
       <main className="max-w-7xl mx-auto px-6 pt-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
         {/* Left Column: Media Presentation */}
-        <div className="space-y-6">
-          <div className="border border-[#27272a]/60 bg-[#18181b]/25 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[45vh]">
-            <span className="text-6xl mb-6 select-none animate-pulse">🏎️</span>
-            <div className="text-center">
-              <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-widest bg-[#eb0a1e]/15 border border-[#eb0a1e]/25 text-[#eb0a1e] px-3 py-1 rounded-full mb-3">
-                {vehicle.category}
-              </span>
-              <p className="text-xs text-neutral-500 font-mono">HERO PREVIEW IMAGE ACTIVE</p>
+        <div className="space-y-8">
+          {vehicle.heroImage ? (
+            <div className="border border-[#27272a]/60 bg-[#18181b]/25 rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+              <img
+                src={vehicle.heroImage}
+                alt={vehicle.name}
+                className="w-full h-full object-cover"
+              />
             </div>
-          </div>
+          ) : (
+            <div className="border border-[#27272a]/60 bg-[#18181b]/25 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[45vh]">
+              <span className="text-6xl mb-6 select-none animate-pulse">🏎️</span>
+              <div className="text-center">
+                <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-widest bg-[#eb0a1e]/15 border border-[#eb0a1e]/25 text-[#eb0a1e] px-3 py-1 rounded-full mb-3">
+                  {vehicle.category}
+                </span>
+                <p className="text-xs text-neutral-500 font-mono">NO HERO PREVIEW IMAGE</p>
+              </div>
+            </div>
+          )}
+
+          {/* Gallery Images */}
+          {vehicle.gallery && vehicle.gallery.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider">Gallery</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {vehicle.gallery.map((imgUrl, idx) => (
+                  <div key={idx} className="border border-[#27272a]/60 rounded-xl overflow-hidden aspect-video bg-[#18181b]/40">
+                    <img
+                      src={imgUrl}
+                      alt={`${vehicle.name} gallery image ${idx + 1}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* YouTube Video embedding */}
+          {vehicle.youtubeUrl && (
+            <div className="space-y-4 pt-4">
+              <h3 className="text-xs uppercase font-extrabold text-neutral-400 tracking-wider">Video Walkthrough</h3>
+              <div className="border border-[#27272a]/60 rounded-xl overflow-hidden aspect-video">
+                <iframe
+                  className="w-full h-full"
+                  src={vehicle.youtubeUrl.includes("watch?v=") ? vehicle.youtubeUrl.replace("watch?v=", "embed/") : vehicle.youtubeUrl}
+                  title={`${vehicle.name} Video`}
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Specification details */}
@@ -252,6 +285,18 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
               <span className="block text-xs text-neutral-500 font-medium">Availability</span>
               <span className="text-sm font-bold text-white uppercase">{vehicle.status}</span>
             </div>
+            {vehicle.startingPrice && (
+              <div>
+                <span className="block text-xs text-neutral-500 font-medium">Starting Price</span>
+                <span className="text-sm font-bold text-white">₹{vehicle.startingPrice.toLocaleString("en-IN")}*</span>
+              </div>
+            )}
+            {vehicle.bookingAmount && (
+              <div>
+                <span className="block text-xs text-neutral-500 font-medium">Booking Deposit</span>
+                <span className="text-sm font-bold text-[#eb0a1e]">₹{vehicle.bookingAmount.toLocaleString("en-IN")}</span>
+              </div>
+            )}
           </div>
 
           {/* Variants and Trim levels */}
@@ -334,6 +379,16 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
             >
               Request Test Drive
             </Link>
+            {vehicle.brochure && (
+              <a
+                href={vehicle.brochure}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-center py-4 border border-[#eb0a1e]/40 hover:border-[#eb0a1e] text-[#eb0a1e] font-bold uppercase tracking-wider text-xs rounded hover:bg-[#eb0a1e]/10 transition-colors"
+              >
+                Download Brochure
+              </a>
+            )}
           </div>
         </div>
       </main>
