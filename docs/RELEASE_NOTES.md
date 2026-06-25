@@ -6,6 +6,19 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.0.0-m10-production-ready` (2026-06-26)
+* **Goal**: Launch the complete public Test Drive booking experience, dynamic CRM administrative consoles, notification hooks, and calendar scheduling support.
+* **Commit**: `feat(m10): production ready`
+* **Details**:
+  - Implemented backend Repository, Services, and REST controllers for Test Drive Scheduling with slot checks and duplicate prevention.
+  - Setup public API endpoint `POST /api/public/test-drives` for guest form submissions.
+  - Created public web page `/test-drive` with selectors for Vehicle, Variant, Branch, preferred date, time slot, and customer consents.
+  - Connected Vehicle Details CTA (`/test-drive?vehicle=${vehicle.slug}`) and Branch CTA (`/test-drive?branch=${branch.id}`) presets.
+  - Stored tracking metadata parameters (UTM campaign/source/medium, referrer, and landing page URLs).
+  - Deployed multi-channel notification architecture hooks (Email, SMS, WhatsApp templates, and push notifications).
+  - Implemented local DB `CalendarEvent` logs (Appointment, Reminder, Completion) and clean interfaces for Google Calendar and Microsoft Outlook synchronization.
+  - Passed complete verification checks, database schema validate, and Next.js production builds.
+
 ### `v1.0.0-m09-production-ready` (2026-06-25)
 * **Goal**: Establish production-ready Lead Management backend API, security middlewares, reusable customer-facing forms, and admin CRM console.
 * **Commit**: `feat(m09): production ready`

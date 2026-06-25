@@ -4,9 +4,18 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 
 ---
 
-## [1.0.0] - 2026-06-25
+## [1.0.0] - 2026-06-26
 
 ### Added
+* **Milestone M10 Test Drive Management**:
+  - Implemented backend Repository, Services, and REST controllers for Test Drive Scheduling.
+  - Setup slot conflict checking, double-booking prevention, and automatic customer User & Lead creation.
+  - Configured public scheduling endpoint `POST /api/public/test-drives` supporting guest form bookings.
+  - Built public web page `/test-drive` with selectors for Vehicle, Variant, Branch, preferred date, time slot, and customer consents.
+  - Integrated Vehicle Details CTA and Branch CTA presets to redirect with auto-selected queries.
+  - Configured tracking parameters (UTM campaign/source/medium, referrer, and landing page URLs).
+  - Implemented multi-channel notification architecture hooks (Email confirmations, SMS hooks, WhatsApp templates, and push notifications).
+  - Setup local DB `CalendarEvent` logs (Appointment, Reminder, Completion) and clean interfaces for Google Calendar and Microsoft Outlook synchronization.
 * **Milestone M01 Core Foundation**: Initialized Next.js project with TailwindCSS and custom configuration.
 * **Milestone M02 Authentication**: Implemented single-admin secure HTTP-only cookies token generation.
 * **Milestone M03 User Management**: Configured roles and database profile updates.
