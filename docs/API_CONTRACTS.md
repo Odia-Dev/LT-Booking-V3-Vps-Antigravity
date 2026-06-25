@@ -534,3 +534,161 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
   }
   ```
 
+---
+
+## 6. Lead Management APIs (`/api/leads`)
+
+### POST `/api/leads` (Public Inquiry Submission)
+* **Description**: Submits a customer lead/inquiry. Does not require authentication.
+* **Request Body**:
+  ```json
+  {
+    "name": "Arun Kumar",
+    "email": "arun@gmail.com",
+    "phone": "9876543210",
+    "type": "TEST_DRIVE",
+    "source": "ORGANIC",
+    "notes": "Interested in Hyryder Strong Hybrid",
+    "branchId": "branch-uuid",
+    "variantId": "variant-uuid",
+    "campaign": "Summer-Offer",
+    "medium": "Social",
+    "message": "Custom contact message"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead created successfully",
+    "lead": {
+      "id": "lead-uuid",
+      "name": "Arun Kumar",
+      "email": "arun@gmail.com",
+      "phone": "9876543210",
+      "type": "TEST_DRIVE",
+      "status": "NEW",
+      "source": "ORGANIC",
+      "notes": "{\"campaign\":\"Summer-Offer\",\"medium\":\"Social\",\"message\":\"Custom contact message\",\"leadScore\":75,\"priority\":\"HIGH\"}",
+      "branchId": "branch-uuid",
+      "variantId": "variant-uuid",
+      "createdAt": "2026-06-26T00:00:00.000Z",
+      "updatedAt": "2026-06-26T00:00:00.000Z"
+    }
+  }
+  ```
+
+### GET `/api/leads` (Protected Admin Lead CRM Console)
+* **Description**: Returns paginated list of leads with support for filtering, search, and date ranges.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Query Parameters**:
+  * `status`: Filter by status (`NEW`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`).
+  * `source`: Filter by source (`ORGANIC`, `GOOGLE_ADS`, `META_ADS`).
+  * `type`: Filter by type (`TEST_DRIVE`, `SERVICE`, `FINANCE`, `EXCHANGE`, `GENERAL`).
+  * `search`: Matches query string against name, email, or phone.
+  * `page`: Page number (default: 1).
+  * `limit`: Page limit (default: 10).
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "lead-uuid",
+        "name": "Arun Kumar",
+        "email": "arun@gmail.com",
+        "phone": "9876543210",
+        "type": "TEST_DRIVE",
+        "status": "NEW"
+      }
+    ],
+    "total": 1
+  }
+  ```
+
+### GET `/api/leads/:id` (Protected Admin Detail Lookup)
+* **Description**: Retrieves full lead details by ID.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "lead": {
+      "id": "lead-uuid",
+      "name": "Arun Kumar",
+      "email": "arun@gmail.com",
+      "phone": "9876543210",
+      "type": "TEST_DRIVE",
+      "status": "NEW",
+      "notes": "{...}"
+    }
+  }
+  ```
+
+### PUT `/api/leads/:id` (Protected Admin Lead Edit)
+* **Description**: Updates lead parameters.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Request Body**:
+  ```json
+  {
+    "name": "Arun Kumar Edit",
+    "status": "IN_PROGRESS"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead updated successfully",
+    "lead": {
+      "id": "lead-uuid",
+      "name": "Arun Kumar Edit",
+      "status": "IN_PROGRESS"
+    }
+  }
+  ```
+
+### PATCH `/api/leads/:id/status` (Protected Admin Status Change)
+* **Description**: Changes the lead status.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Request Body**:
+  ```json
+  {
+    "status": "COMPLETED"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead status updated successfully"
+  }
+  ```
+
+### PATCH `/api/leads/:id/assign` (Protected Admin Assign Lead)
+* **Description**: Assigns the lead to a sales executive.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Request Body**:
+  ```json
+  {
+    "executiveName": "Suresh Mohanty"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead assigned successfully"
+  }
+  ```
+
+### DELETE `/api/leads/:id` (Protected Admin Soft Delete)
+* **Description**: Soft deletes the lead by setting its status to `CANCELLED`.
+* **Headers**: `Cookie: token=<admin-jwt>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead deleted successfully"
+  }
+  ```
