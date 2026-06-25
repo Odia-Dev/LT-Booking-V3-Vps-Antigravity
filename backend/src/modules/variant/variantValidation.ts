@@ -11,6 +11,24 @@ export const createVariantSchema = z.object({
   bookingAmount: z.number().positive().optional(),
   engineSize: z.union([z.string(), z.number()]).optional(),
   waitingPeriodWeeks: z.number().int().nonnegative().optional(),
+  specs: z.object({
+    safetyFeatures: z.array(z.string()).optional(),
+    comfortFeatures: z.array(z.string()).optional(),
+    exteriorFeatures: z.array(z.string()).optional(),
+    interiorFeatures: z.array(z.string()).optional(),
+    technologyFeatures: z.array(z.string()).optional(),
+    performanceFeatures: z.array(z.string()).optional(),
+    length: z.string().optional(),
+    width: z.string().optional(),
+    height: z.string().optional(),
+    wheelbase: z.string().optional(),
+    groundClearance: z.string().optional(),
+    bootSpace: z.string().optional(),
+    fuelTank: z.string().optional(),
+    tyres: z.string().optional(),
+    brakes: z.string().optional(),
+    suspension: z.string().optional(),
+  }).optional(),
 });
 
 export const updateVariantSchema = createVariantSchema.partial();

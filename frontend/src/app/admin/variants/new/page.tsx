@@ -36,6 +36,25 @@ export default function CreateVariantPage() {
   const [waitingPeriodWeeks, setWaitingPeriodWeeks] = useState("4");
   const [sortOrder, setSortOrder] = useState("0");
 
+  // New Features and Specifications fields
+  const [safetyFeatures, setSafetyFeatures] = useState("");
+  const [comfortFeatures, setComfortFeatures] = useState("");
+  const [exteriorFeatures, setExteriorFeatures] = useState("");
+  const [interiorFeatures, setInteriorFeatures] = useState("");
+  const [technologyFeatures, setTechnologyFeatures] = useState("");
+  const [performanceFeatures, setPerformanceFeatures] = useState("");
+
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
+  const [wheelbase, setWheelbase] = useState("");
+  const [groundClearance, setGroundClearance] = useState("");
+  const [bootSpace, setBootSpace] = useState("");
+  const [fuelTank, setFuelTank] = useState("");
+  const [tyres, setTyres] = useState("");
+  const [brakes, setBrakes] = useState("");
+  const [suspension, setSuspension] = useState("");
+
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Auto-generate slug from name
@@ -80,6 +99,13 @@ export default function CreateVariantPage() {
       return;
     }
 
+    const parseFeatures = (text: string) => {
+      return text
+        .split(",")
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0);
+    };
+
     try {
       const res = await fetch(`${apiBaseUrl}/api/admin/variants`, {
         method: "POST",
@@ -95,6 +121,24 @@ export default function CreateVariantPage() {
           bookingAmount: bookingAmount ? Number(bookingAmount) : undefined,
           engineSize: engineSize ? String(engineSize) : undefined,
           waitingPeriodWeeks: waitingPeriodWeeks ? Number(waitingPeriodWeeks) : undefined,
+          specs: {
+            safetyFeatures: parseFeatures(safetyFeatures),
+            comfortFeatures: parseFeatures(comfortFeatures),
+            exteriorFeatures: parseFeatures(exteriorFeatures),
+            interiorFeatures: parseFeatures(interiorFeatures),
+            technologyFeatures: parseFeatures(technologyFeatures),
+            performanceFeatures: parseFeatures(performanceFeatures),
+            length,
+            width,
+            height,
+            wheelbase,
+            groundClearance,
+            bootSpace,
+            fuelTank,
+            tyres,
+            brakes,
+            suspension,
+          },
         }),
       });
 
@@ -348,6 +392,174 @@ export default function CreateVariantPage() {
               onChange={(e) => setTorque(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
             />
+          </div>
+        </div>
+
+        {/* Features Extension Section */}
+        <div className="border-t border-neutral-800 pt-6 space-y-6">
+          <h3 className="text-lg font-black tracking-tight text-white uppercase">Features</h3>
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Safety Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. 7 Airbags, ABS with EBD, Vehicle Stability Control, Hill Assist Control"
+                value={safetyFeatures}
+                onChange={(e) => setSafetyFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Comfort Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. Dual Zone Auto AC, Ventilated Seats, Cruise Control"
+                value={comfortFeatures}
+                onChange={(e) => setComfortFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Exterior Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. LED Projector Headlamps, R18 Alloy Wheels, Chrome Grille"
+                value={exteriorFeatures}
+                onChange={(e) => setExteriorFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Interior Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. Leather Seats, Soft Touch Dashboard, Ambient Lighting"
+                value={interiorFeatures}
+                onChange={(e) => setInteriorFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Technology Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. 9-inch Touchscreen Infotainment, Android Auto, Apple CarPlay, Connected Car Tech"
+                value={technologyFeatures}
+                onChange={(e) => setTechnologyFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Performance Features (comma separated)</label>
+              <textarea
+                placeholder="e.g. Eco/Power Drive Modes, Paddle Shifters, Active Traction Control"
+                value={performanceFeatures}
+                onChange={(e) => setPerformanceFeatures(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700 h-20"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Specifications Extension Section */}
+        <div className="border-t border-neutral-800 pt-6 space-y-6">
+          <h3 className="text-lg font-black tracking-tight text-white uppercase">Specifications</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Length (mm)</label>
+              <input
+                type="text"
+                placeholder="e.g. 4795"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Width (mm)</label>
+              <input
+                type="text"
+                placeholder="e.g. 1855"
+                value={width}
+                onChange={(e) => setWidth(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Height (mm)</label>
+              <input
+                type="text"
+                placeholder="e.g. 1835"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Wheelbase (mm)</label>
+              <input
+                type="text"
+                placeholder="e.g. 2745"
+                value={wheelbase}
+                onChange={(e) => setWheelbase(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Ground Clearance (mm)</label>
+              <input
+                type="text"
+                placeholder="e.g. 220"
+                value={groundClearance}
+                onChange={(e) => setGroundClearance(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Boot Space (Liters)</label>
+              <input
+                type="text"
+                placeholder="e.g. 296"
+                value={bootSpace}
+                onChange={(e) => setBootSpace(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Fuel Tank Capacity (Liters)</label>
+              <input
+                type="text"
+                placeholder="e.g. 80"
+                value={fuelTank}
+                onChange={(e) => setFuelTank(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Tyres</label>
+              <input
+                type="text"
+                placeholder="e.g. 265/60 R18 Radial tubeless"
+                value={tyres}
+                onChange={(e) => setTyres(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Brakes</label>
+              <input
+                type="text"
+                placeholder="e.g. Front & Rear Ventilated Disc Brakes"
+                value={brakes}
+                onChange={(e) => setBrakes(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Suspension</label>
+              <input
+                type="text"
+                placeholder="e.g. Double Wishbone with Stabilizer / 4-Link with Lateral Control Rod"
+                value={suspension}
+                onChange={(e) => setSuspension(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
           </div>
         </div>
 

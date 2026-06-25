@@ -51,6 +51,7 @@ export class VariantService {
     bookingAmount?: number;
     engineSize?: string | number;
     waitingPeriodWeeks?: number;
+    specs?: any;
   }): Promise<Variant> {
     // 1. Vehicle existence validation
     const vehicle = await this.vehicleRepo.findById(data.vehicleId);
@@ -118,6 +119,7 @@ export class VariantService {
       transmission: data.transmission,
       seating: data.seating,
       status: data.status || "ACTIVE",
+      specs: data.specs,
     });
   }
 
@@ -134,6 +136,7 @@ export class VariantService {
       bookingAmount?: number;
       engineSize?: string | number;
       waitingPeriodWeeks?: number;
+      specs?: any;
     }
   ): Promise<Variant> {
     const existing = await this.repo.findById(id);
@@ -200,6 +203,7 @@ export class VariantService {
       transmission: data.transmission,
       seating: data.seating,
       status: data.status,
+      specs: data.specs,
     });
   }
 

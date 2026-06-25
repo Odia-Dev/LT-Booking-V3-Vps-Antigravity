@@ -69,6 +69,7 @@ model Variant {
   transmission String // Manual, Automatic
   seating      Int      @default(5) // seating capacity
   status       String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  specs        Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
