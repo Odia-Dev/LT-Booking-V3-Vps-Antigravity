@@ -219,4 +219,40 @@ export class VehicleRepository {
       data: { sortOrder },
     });
   }
+
+  async findManyPublic(filters?: { category?: string; search?: string }): Promise<Vehicle[]> {
+    const whereClause: any = {
+      status: { in: ["ACTIVE", "UPCOMING"] }
+    };
+
+    if (filters?.category) {
+      whereClause.category = filters.category;
+    }
+
+    if (filters?.search) {
+      whereClause.OR = [
+        { name: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
+    return prisma.vehicle.findMany({
+      where: whereClause,
+      orderBy: { sortOrder: "asc" },
+    });
+  }
+
+  async findBySlugPublic(slug: string): Promise<any | null> {
+    return prisma.vehicle.findFirst({
+      where: {
+        slug,
+        status: { in: ["ACTIVE", "UPCOMING"] }
+      },
+      include: {
+        variants: {
+          where: { status: "ACTIVE" },
+        },
+      },
+    });
+  }
 }

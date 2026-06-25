@@ -124,3 +124,29 @@ export async function deleteVehicle(req: Request, res: Response): Promise<void> 
     });
   }
 }
+
+export async function getPublicVehicles(req: Request, res: Response): Promise<void> {
+  try {
+    const category = req.query.category as string;
+    const search = req.query.search as string;
+    const vehicles = await service.getPublicVehicles({ category, search });
+    res.status(200).json({ success: true, vehicles });
+  } catch (error: any) {
+    console.error("getPublicVehicles error:", error);
+    res.status(500).json({ success: false, message: "Failed to retrieve public vehicles" });
+  }
+}
+
+export async function getPublicVehicleBySlug(req: Request, res: Response): Promise<void> {
+  try {
+    const { slug } = req.params;
+    const vehicle = await service.getPublicVehicleBySlug(slug);
+    res.status(200).json({ success: true, vehicle });
+  } catch (error: any) {
+    console.error("getPublicVehicleBySlug error:", error);
+    res.status(error.message === "Vehicle not found" ? 404 : 400).json({
+      success: false,
+      message: error.message || "Failed to retrieve public vehicle",
+    });
+  }
+}

@@ -162,6 +162,75 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
 
 ---
 
+## 2b. Public Vehicle APIs (`/api/public/vehicles`)
+
+### GET `/api/public/vehicles`
+* **Description**: Query all active (ACTIVE/UPCOMING) public vehicles. Returns vehicle details sorted by `sortOrder` ascending.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicles": [
+      {
+        "id": "vehicle-uuid",
+        "name": "Urban Cruiser Hyryder",
+        "slug": "urban-cruiser-hyryder",
+        "category": "SUV",
+        "description": "Strong Hybrid technology...",
+        "heroImage": "https://...",
+        "thumbnail": "https://...",
+        "gallery": ["https://..."],
+        "brochure": "https://...",
+        "youtubeUrl": "https://...",
+        "startingPrice": 1114000,
+        "bookingAmount": 25000,
+        "sortOrder": 1,
+        "status": "ACTIVE",
+        "seoTitle": "...",
+        "seoDescription": "..."
+      }
+    ]
+  }
+  ```
+
+### GET `/api/public/vehicles/:slug`
+* **Description**: Retrieve active vehicle details by unique slug, including active Variants. Useful for rendering SEO metadata, Open Graph, Twitter Cards, JSON-LD schemas, and canonical links.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicle": {
+      "id": "vehicle-uuid",
+      "name": "Urban Cruiser Hyryder",
+      "slug": "urban-cruiser-hyryder",
+      "category": "SUV",
+      "description": "Strong Hybrid technology...",
+      "heroImage": "https://...",
+      "thumbnail": "https://...",
+      "gallery": ["https://..."],
+      "brochure": "https://...",
+      "youtubeUrl": "https://...",
+      "startingPrice": 1114000,
+      "bookingAmount": 25000,
+      "sortOrder": 1,
+      "status": "ACTIVE",
+      "seoTitle": "...",
+      "seoDescription": "...",
+      "variants": [
+        {
+          "id": "variant-uuid",
+          "name": "S E-Drive Hybrid",
+          "price": 1649000,
+          "fuelType": "Hybrid",
+          "transmission": "Automatic"
+        }
+      ]
+    }
+  }
+  ```
+
+---
+
 ## 3. Branch Management Services (`/api/branches` & `/api/admin/branches`)
 
 ### GET `/api/branches` (Public List)

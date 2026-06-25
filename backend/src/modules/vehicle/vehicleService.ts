@@ -217,4 +217,16 @@ export class VehicleService {
     }
     return this.repo.updateSortOrder(id, sortOrder);
   }
+
+  async getPublicVehicles(filters?: { category?: string; search?: string }): Promise<Vehicle[]> {
+    return this.repo.findManyPublic(filters);
+  }
+
+  async getPublicVehicleBySlug(slug: string): Promise<any> {
+    const vehicle = await this.repo.findBySlugPublic(slug);
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    return vehicle;
+  }
 }
