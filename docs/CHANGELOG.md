@@ -12,6 +12,10 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 * **Milestone M03 User Management**: Configured roles and database profile updates.
 * **Milestone M04 Admin Dashboard Shell**: Built admin landing panels and sidebar navigation controls.
 * **Milestone M05 Vehicle Management**: Configured main catalog CMS.
+  * Extended `Vehicle` schema with `startingPrice`, `bookingAmount`, `sortOrder`, and media fields (`thumbnail`, `gallery`, `brochure`, `youtubeUrl`).
+  * Created public vehicle APIs (`GET /api/public/vehicles`, `GET /api/public/vehicles/:slug`) returning aggregated variant data.
+  * Standardized dynamic SEO metadata (Open Graph, Twitter Cards, JSON-LD, Canonical URLs) on public vehicle detail pages.
+  * Added frontend image gallery sorting and removal management.
 * **Milestone M06 Vehicle Variant Management**: Extended variant pricing and spec customization options.
   * Added dynamic `specs` JSON column to model.
   * ImplementedSafety/Comfort/Exterior/Interior/Technology/Performance features.
