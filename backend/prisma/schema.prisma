@@ -29,6 +29,9 @@ model Branch {
   longitude     Float?
   managerName   String?
   managerPhone  String?
+  salesManager  String?
+  serviceManager String?
+  sortOrder     Int      @default(0)
   status        String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())

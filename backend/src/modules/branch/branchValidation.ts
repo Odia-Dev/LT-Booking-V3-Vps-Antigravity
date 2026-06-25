@@ -16,6 +16,9 @@ export const createBranchSchema = z.object({
   longitude: z.number().optional().nullable(),
   managerName: z.string().optional().nullable(),
   managerPhone: z.string().optional().nullable(),
+  salesManager: z.string().optional().nullable(),
+  serviceManager: z.string().optional().nullable(),
+  sortOrder: z.number().nonnegative().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
 });
 
