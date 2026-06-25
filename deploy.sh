@@ -53,32 +53,7 @@ fi
 log_success "Structure verification complete."
 
 # ------------------------------------------------------------------------------
-# 2. Git Synchronization
-# ------------------------------------------------------------------------------
-log_info "Running Git status checks..."
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-LATEST_COMMIT=$(git rev-parse --short HEAD)
-log_info "Current Branch: $CURRENT_BRANCH"
-log_info "Latest Commit Hash: $LATEST_COMMIT"
-
-log_info "Fetching update logs from origin..."
-git fetch origin
-
-log_info "Pulling updates from origin develop..."
-# Temporary disable set -e to handle pull failures gracefully
-set +e
-git pull origin develop
-PULL_STATUS=$?
-set -e
-
-if [ $PULL_STATUS -ne 0 ]; then
-    log_err "Git pull failed. Aborting deployment."
-    exit 1
-fi
-log_success "Git update pulled successfully."
-
-# ------------------------------------------------------------------------------
-# 3. Backend Deployment
+# 2. Backend Deployment
 # ------------------------------------------------------------------------------
 log_info "Deploying Backend applications..."
 cd backend
@@ -111,12 +86,12 @@ log_success "Backend build compiled successfully."
 cd ..
 
 # ------------------------------------------------------------------------------
-# 4. Frontend Deployment
+# 3. Frontend Deployment
 # ------------------------------------------------------------------------------
 log_info "Deploying Frontend applications..."
 cd frontend
 
-log_info "Installing frontend dependencies..."
+log_info "Installing frontend dependencies (including devDependencies for build)..."
 npm install --include=dev
 
 log_info "Building Next.js application..."
@@ -126,7 +101,7 @@ log_success "Frontend build compiled successfully."
 cd ..
 
 # ------------------------------------------------------------------------------
-# 5. PM2 Reload
+# 4. PM2 Reload
 # ------------------------------------------------------------------------------
 log_info "Reloading PM2 applications list..."
 set +e
@@ -142,7 +117,7 @@ pm2 save
 log_success "Processes reloaded and saved successfully."
 
 # ------------------------------------------------------------------------------
-# 6. Post-Deployment Verification Checks
+# 5. Post-Deployment Verification Checks
 # ------------------------------------------------------------------------------
 log_info "Performing integration tests checks..."
 
@@ -201,7 +176,7 @@ if [ "$PM2_STATUS_COUNT" -ge 2 ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# 7. Deployment Summary
+# 6. Deployment Summary
 # ------------------------------------------------------------------------------
 echo -e "\n===================================="
 echo -e "         Deployment Summary"

@@ -242,33 +242,12 @@ Add the cron statement:
 Perform these tasks sequentially for each code release:
 
 1. **SSH Connect**: Login to the production VPS.
-2. **Retrieve Code updates**:
+2. **Execute Deployment**:
    ```bash
    cd /var/www/LT-Booking-V3
    git pull origin main
+   ./deploy.sh
    ```
-3. **Deploy Backend**:
-   ```bash
-   cd backend
-   npm install --omit=dev
-   npx prisma generate
-   npx prisma migrate deploy
-   npm run build
-   cd ..
-   ```
-4. **Deploy Frontend**:
-   ```bash
-   cd frontend
-   npm install --omit=dev
-   npm run build
-   cd ..
-   ```
-5. **Reload Application Processes**:
-   ```bash
-   pm2 reload ecosystem.config.js
-   pm2 save
-   ```
-6. **Execute Verification**: Query health endpoints and verify front-end accessibility.
 
 ---
 
