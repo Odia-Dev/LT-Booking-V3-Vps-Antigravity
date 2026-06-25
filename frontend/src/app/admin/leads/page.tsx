@@ -57,25 +57,6 @@ export default function AdminLeadsPage() {
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkExecutive, setBulkExecutive] = useState("");
 
-  // Options lists
-  const [branches, setBranches] = useState<Branch[]>([]);
-
-  // Fetch branches
-  useEffect(() => {
-    async function fetchBranches() {
-      try {
-        const res = await fetch(`${apiBaseUrl}/api/public/branches`);
-        if (res.ok) {
-          const data = await res.json();
-          setBranches(data.branches || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch branches", err);
-      }
-    }
-    fetchBranches();
-  }, [apiBaseUrl]);
-
   // Fetch leads
   const fetchLeads = useCallback(async () => {
     setLoading(true);
