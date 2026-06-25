@@ -83,8 +83,17 @@ log_success "Git update pulled successfully."
 log_info "Deploying Backend applications..."
 cd backend
 
-log_info "Installing backend dependencies..."
-npm install --omit=dev
+log_info "Installing backend dependencies (including devDependencies for build)..."
+npm install --include=dev
+
+log_info "Verifying TypeScript installation..."
+if ! npm ls typescript >/dev/null 2>&1; then
+    log_err "TypeScript is missing from backend node_modules. Aborting deployment."
+    exit 1
+fi
+
+log_info "Verifying tsc compiler..."
+npx tsc --version
 
 log_info "Compiling Prisma database client..."
 npx prisma generate
@@ -108,7 +117,7 @@ log_info "Deploying Frontend applications..."
 cd frontend
 
 log_info "Installing frontend dependencies..."
-npm install --omit=dev
+npm install --include=dev
 
 log_info "Building Next.js application..."
 npm run build
@@ -142,32 +151,60 @@ FRONTEND_HEALTH="FAIL"
 PM2_HEALTH="FAIL"
 DATABASE_HEALTH="FAIL"
 
-# Verify Express API health check endpoint (Port 5000)
-set +e
-BACKEND_RESP=$(curl -s http://127.0.0.1:5000/health)
-if [[ "$BACKEND_RESP" == *"\"success\":true"* ]]; then
+log_info "Waiting for backend to start up (up to 30 seconds)..."
+retries=15
+backend_online=0
+while [ $retries -gt 0 ]; do
+    log_info "Waiting for backend..."
+    BACKEND_RESP=$(curl -s http://127.0.0.1:5000/health || echo "failed")
+    if [[ "$BACKEND_RESP" == *"\"success\":true"* ]]; then
+        backend_online=1
+        break
+    fi
+    sleep 2
+    retries=$((retries - 1))
+done
+
+if [ $backend_online -eq 1 ]; then
+    log_success "Backend online."
     BACKEND_HEALTH="PASS"
-    DATABASE_HEALTH="PASS" # Database queries pass if health check passes
+    DATABASE_HEALTH="PASS"
+else
+    log_err "Backend timeout expired."
 fi
 
-# Verify Next.js Server headers check (Port 3000)
-FRONTEND_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000)
-if [ "$FRONTEND_CODE" -eq 200 ] || [ "$FRONTEND_CODE" -eq 301 ]; then
+log_info "Waiting for frontend to start up (up to 30 seconds)..."
+retries=15
+frontend_online=0
+while [ $retries -gt 0 ]; do
+    log_info "Waiting for frontend..."
+    FRONTEND_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000 || echo "000")
+    if [ "$FRONTEND_CODE" -eq 200 ] || [ "$FRONTEND_CODE" -eq 301 ]; then
+        frontend_online=1
+        break
+    fi
+    sleep 2
+    retries=$((retries - 1))
+done
+
+if [ $frontend_online -eq 1 ]; then
+    log_success "Frontend online."
     FRONTEND_HEALTH="PASS"
+else
+    log_err "Frontend timeout expired."
 fi
 
 # Verify PM2 running state status
-PM2_STATUS_COUNT=$(pm2 status | grep -c "online" || true)
+PM2_STATUS_COUNT=$(pm2 status | grep -c "online" || echo "0")
 if [ "$PM2_STATUS_COUNT" -ge 2 ]; then
     PM2_HEALTH="PASS"
 fi
-set -e
 
 # ------------------------------------------------------------------------------
 # 7. Deployment Summary
 # ------------------------------------------------------------------------------
 echo -e "\n===================================="
-echo -e "         Deployment Complete"
+echo -e "         Deployment Summary"
 echo -e "===================================="
 
 if [ "$BACKEND_HEALTH" == "PASS" ]; then
@@ -194,12 +231,12 @@ else
     echo -e "Database: ${RED}FAIL${NC}"
 fi
 
-if [ "$BACKEND_HEALTH" == "PASS" ] && [ "$FRONTEND_HEALTH" == "PASS" ]; then
-    echo -e "Health:   ${GREEN}PASS${NC}"
+if [ "$BACKEND_HEALTH" == "PASS" ] && [ "$FRONTEND_HEALTH" == "PASS" ] && [ "$PM2_HEALTH" == "PASS" ] && [ "$DATABASE_HEALTH" == "PASS" ]; then
+    echo -e "Overall:  ${GREEN}PASS${NC}"
     log_success "System fully operational."
     exit 0
 else
-    echo -e "Health:   ${RED}FAIL${NC}"
+    echo -e "Overall:  ${RED}FAIL${NC}"
     log_err "Verification checks failed. Please check logs."
     exit 1
 fi
