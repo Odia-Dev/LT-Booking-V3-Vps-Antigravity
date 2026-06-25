@@ -1,6 +1,7 @@
 import { LeadRepository, LeadFilters } from "./leadRepository";
 import { Lead } from "@prisma/client";
 import { prisma } from "../../config/db";
+import { NotificationService } from "../../services/notificationService";
 
 export class LeadService {
   private repo = new LeadRepository();
@@ -179,7 +180,7 @@ export class LeadService {
       originalNotes: data.notes
     };
 
-    return this.repo.createLead({
+    const lead = await this.repo.createLead({
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -192,6 +193,14 @@ export class LeadService {
       branchId: data.branchId,
       variantId: data.variantId
     });
+
+    // Trigger async notification notifications
+    NotificationService.sendEmailNotification(lead).catch(console.error);
+    NotificationService.sendAdminNotification(lead).catch(console.error);
+    NotificationService.triggerWebhook(lead).catch(console.error);
+    NotificationService.triggerWhatsAppHook(lead).catch(console.error);
+
+    return lead;
   }
 
   async updateLead(

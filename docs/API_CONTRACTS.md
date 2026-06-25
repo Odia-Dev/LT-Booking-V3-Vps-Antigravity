@@ -578,6 +578,40 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
   }
   ```
 
+
+### POST `/api/public/leads` (Production Public Submission)
+* **Description**: Submits a customer lead/inquiry with duplicate checking, rate limiting, and spam keyword protections. Triggers notifications (Email, Admin, Webhook, and WhatsApp hooks).
+* **Request Body**: (Same format as POST `/api/leads`)
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Lead created successfully",
+    "lead": {
+      "id": "lead-uuid",
+      "name": "Arun Kumar",
+      "email": "arun@gmail.com",
+      "phone": "9876543210",
+      "type": "TEST_DRIVE",
+      "status": "NEW"
+    }
+  }
+  ```
+* **Response (429 Too Many Requests)**:
+  ```json
+  {
+    "success": false,
+    "message": "Too many requests. Please try again in a minute."
+  }
+  ```
+* **Response (400 Bad Request - Spam)**:
+  ```json
+  {
+    "success": false,
+    "message": "Request flagged as spam"
+  }
+  ```
+
 ### GET `/api/leads` (Protected Admin Lead CRM Console)
 * **Description**: Returns paginated list of leads with support for filtering, search, and date ranges.
 * **Headers**: `Cookie: token=<admin-jwt>`
