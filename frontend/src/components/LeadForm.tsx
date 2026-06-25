@@ -107,9 +107,11 @@ export default function LeadForm({
     const vehicle = vehicles.find((v) => v.id === selectedVehicle);
     if (!vehicle) return;
 
+    const vehicleSlug = vehicle.slug;
+
     async function fetchVariants() {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/public/vehicles/${vehicle.slug}/variants`);
+        const res = await fetch(`${apiBaseUrl}/api/public/vehicles/${vehicleSlug}/variants`);
         if (res.ok) {
           const data = await res.json();
           setVariants(data.variants || []);
