@@ -726,3 +726,152 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
     "message": "Lead deleted successfully"
   }
   ```
+
+---
+
+## 7. Test Drive Management APIs (`/api/test-drives`)
+
+All endpoints below require authentication.
+
+### GET `/api/test-drives` (Protected Listing)
+* **Description**: Returns all scheduled test drives with pagination, filters, and search.
+* **Query Parameters**:
+  * `status`: Filter by status (`REQUESTED`, `CONFIRMED`, `COMPLETED`, `BOOKED`, `CANCELLED`, `NO_SHOW`).
+  * `branchId`: Filter by physical branch showroom.
+  * `search`: Searches by customer name, phone, email, assigned coordinator, or readable TD ID.
+  * `startDate` & `endDate`: Filter by appointment range.
+  * `customerId`: List all appointments for specific customer.
+  * `vehicleId`: List appointments for specific vehicle model.
+  * `executiveName`: List appointments assigned to specific sales manager.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "td-uuid",
+        "testDriveId": "TD-2026-0001",
+        "customerId": "user-uuid",
+        "vehicleId": "vehicle-uuid",
+        "variantId": "variant-uuid",
+        "branchId": "branch-uuid",
+        "preferredDate": "2026-06-28T10:00:00.000Z",
+        "preferredTime": "10:00 AM - 11:30 AM",
+        "status": "REQUESTED",
+        "assignedExecutive": "Unassigned"
+      }
+    ],
+    "total": 1
+  }
+  ```
+
+### GET `/api/test-drives/:id` (Protected Details)
+* **Description**: Returns complete test drive details.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "appointment": {
+      "id": "td-uuid",
+      "testDriveId": "TD-2026-0001",
+      "customerId": "user-uuid",
+      "vehicleId": "vehicle-uuid",
+      "variantId": "variant-uuid",
+      "branchId": "branch-uuid",
+      "preferredDate": "2026-06-28T10:00:00.000Z",
+      "preferredTime": "10:00 AM - 11:30 AM",
+      "status": "REQUESTED",
+      "assignedExecutive": "Unassigned"
+    }
+  }
+  ```
+
+### POST `/api/test-drives` (Protected Schedule creation)
+* **Description**: Schedules a new test drive appointment. Requires customer profile checks and prevents double bookings.
+* **Request Body**:
+  ```json
+  {
+    "customerId": "user-uuid",
+    "vehicleId": "vehicle-uuid",
+    "variantId": "variant-uuid",
+    "branchId": "branch-uuid",
+    "preferredDate": "2026-06-28T10:00:00.000Z",
+    "preferredTime": "10:00 AM - 11:30 AM",
+    "notes": "Prefer strong hybrid model"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Test drive scheduled successfully",
+    "appointment": {
+      "id": "td-uuid",
+      "testDriveId": "TD-2026-0001",
+      "status": "REQUESTED"
+    }
+  }
+  ```
+
+### PUT `/api/test-drives/:id` (Protected Edit)
+* **Description**: Updates appointment fields.
+* **Request Body**:
+  ```json
+  {
+    "preferredTime": "1:00 PM - 2:30 PM",
+    "notes": "Updated remarks"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Appointment updated successfully",
+    "appointment": {
+      "id": "td-uuid",
+      "preferredTime": "1:00 PM - 2:30 PM"
+    }
+  }
+  ```
+
+### PATCH `/api/test-drives/:id/status` (Protected Status Transition)
+* **Description**: Updates appointment status.
+* **Request Body**:
+  ```json
+  {
+    "status": "CONFIRMED"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Appointment status updated successfully"
+  }
+  ```
+
+### PATCH `/api/test-drives/:id/assign` (Protected Executive Allocation)
+* **Description**: Assigns executive to lead the drive.
+* **Request Body**:
+  ```json
+  {
+    "executiveName": "Suresh Mohanty"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Executive assigned successfully"
+  }
+  ```
+
+### DELETE `/api/test-drives/:id` (Protected Cancel Appointment)
+* **Description**: Cancels appointment status.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Test drive cancelled successfully"
+  }
+  ```
