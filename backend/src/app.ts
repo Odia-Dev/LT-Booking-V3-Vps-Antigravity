@@ -8,7 +8,7 @@ import packageJson from "../package.json";
 import authRoutes from "./modules/auth/authRoutes";
 import profileRoutes from "./modules/profile/profileRoutes";
 import { publicRouter as vehicleRoutes, adminRouter as adminVehicleRoutes } from "./modules/vehicle/vehicleRoutes";
-import { publicRouter as variantRoutes, adminRouter as adminVariantRoutes } from "./modules/variant/variantRoutes";
+import { publicRouter as variantRoutes, variantsRouter, adminRouter as adminVariantRoutes } from "./modules/variant/variantRoutes";
 import { publicRouter as colorRoutes, adminRouter as adminColorRoutes } from "./modules/color/colorRoutes";
 
 dotenv.config();
@@ -84,6 +84,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
+app.use("/api/variants", variantsRouter);
 app.use("/api/admin/vehicles", adminVehicleRoutes);
 app.use("/api/admin/variants", adminVariantRoutes);
 app.use("/api/vehicles", colorRoutes);
