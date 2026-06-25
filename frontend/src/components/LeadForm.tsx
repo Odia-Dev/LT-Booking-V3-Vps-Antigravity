@@ -211,8 +211,9 @@ export default function LeadForm({
       if (onSuccess) {
         onSuccess();
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to submit enquiry.");
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to submit enquiry.";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
