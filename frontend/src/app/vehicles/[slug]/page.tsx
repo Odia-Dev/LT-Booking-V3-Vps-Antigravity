@@ -374,7 +374,7 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
               Book vehicle Online
             </Link>
             <Link
-              href="/login"
+              href={`/test-drive?vehicle=${vehicle.slug}`}
               className="flex-1 text-center py-4 border border-[#27272a] text-white font-bold uppercase tracking-wider text-xs rounded hover:bg-[#18181b]/50 transition-colors"
             >
               Request Test Drive

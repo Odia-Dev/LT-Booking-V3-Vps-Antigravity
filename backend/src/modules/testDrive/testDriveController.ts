@@ -5,6 +5,7 @@ import {
   updateTestDriveSchema,
   updateTestDriveStatusSchema,
   assignExecutiveSchema,
+  createPublicTestDriveSchema,
 } from "./testDriveValidation";
 
 const service = new TestDriveService();
@@ -156,5 +157,21 @@ export async function cancelTestDrive(req: Request, res: Response): Promise<void
       success: false,
       message: error.message || "Failed to cancel test drive appointment",
     });
+  }
+}
+
+export async function createPublicTestDrive(req: Request, res: Response): Promise<void> {
+  try {
+    const parseResult = createPublicTestDriveSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ success: false, errors: parseResult.error.errors });
+      return;
+    }
+
+    const appointment = await service.createPublicTestDrive(parseResult.data);
+    res.status(201).json({ success: true, message: "Test drive scheduled successfully", appointment });
+  } catch (error: any) {
+    console.error("createPublicTestDrive error:", error);
+    res.status(400).json({ success: false, message: error.message || "Failed to schedule test drive" });
   }
 }

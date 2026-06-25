@@ -261,7 +261,7 @@ export default async function CustomerBranchDetailPage({ params }: PageProps) {
           {/* Booking call-to-actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-[#27272a]/40">
             <Link
-              href="/login"
+              href={`/test-drive?branch=${branch.id}`}
               className="flex-1 text-center py-4 bg-white text-black font-bold uppercase tracking-wider text-xs rounded hover:bg-neutral-200 transition-colors"
             >
               Book Test Drive

@@ -174,6 +174,92 @@ export class TestDriveService {
     });
   }
 
+  async createPublicTestDrive(data: {
+    name: string;
+    email: string;
+    phone: string;
+    vehicleId: string;
+    variantId: string;
+    branchId: string;
+    preferredDate: Date;
+    preferredTime: string;
+    notes?: string | null;
+    campaign?: string;
+    medium?: string;
+    source?: string;
+    referrer?: string;
+    landingPageUrl?: string;
+  }): Promise<TestDrive> {
+    // 1. Find or create customer User
+    let customer = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: data.email },
+          { phone: data.phone }
+        ]
+      }
+    });
+
+    if (!customer) {
+      customer = await prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: "CUSTOMER"
+        }
+      });
+    }
+
+    // 2. Find or create Lead
+    let lead = await prisma.lead.findFirst({
+      where: {
+        phone: data.phone,
+        variantId: data.variantId,
+        status: { not: "CANCELLED" }
+      }
+    });
+
+    if (!lead) {
+      const notesPayload = {
+        campaign: data.campaign,
+        medium: data.medium,
+        originalNotes: data.notes,
+        referrer: data.referrer,
+        landingPageUrl: data.landingPageUrl,
+        leadScore: 75,
+        priority: "HIGH"
+      };
+
+      lead = await prisma.lead.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          type: "TEST_DRIVE",
+          source: data.source || "ORGANIC",
+          branchId: data.branchId,
+          variantId: data.variantId,
+          preferredDate: data.preferredDate,
+          preferredTime: data.preferredTime,
+          notes: JSON.stringify(notesPayload)
+        }
+      });
+    }
+
+    // 3. Create test drive linking to user and lead
+    return this.createTestDrive({
+      customerId: customer.id,
+      leadId: lead.id,
+      vehicleId: data.vehicleId,
+      variantId: data.variantId,
+      branchId: data.branchId,
+      preferredDate: data.preferredDate,
+      preferredTime: data.preferredTime,
+      notes: data.notes
+    });
+  }
+
   async updateTestDrive(
     id: string,
     data: {
