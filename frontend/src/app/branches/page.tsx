@@ -23,7 +23,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 async function getBranches(): Promise<Branch[]> {
   try {
-    const res = await fetch(`${apiBaseUrl}/api/branches`, {
+    const res = await fetch(`${apiBaseUrl}/api/public/branches`, {
       cache: "no-store",
     });
     if (!res.ok) return [];

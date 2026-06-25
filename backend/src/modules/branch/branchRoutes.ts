@@ -3,6 +3,8 @@ import {
   getBranches,
   getBranchById,
   getBranchBySlug,
+  getPublicBranches,
+  getPublicBranchBySlug,
   createBranch,
   updateBranch,
   updateBranchStatus,
@@ -15,6 +17,10 @@ publicRouter.get("/", getBranches);
 publicRouter.get("/slug/:slug", getBranchBySlug);
 publicRouter.get("/:id", getBranchById);
 
+const publicBranchesRouter = Router();
+publicBranchesRouter.get("/", getPublicBranches);
+publicBranchesRouter.get("/:slug", getPublicBranchBySlug);
+
 const adminRouter = Router();
 adminRouter.use(authMiddleware as any);
 adminRouter.post("/", createBranch);
@@ -22,4 +28,4 @@ adminRouter.put("/:id", updateBranch);
 adminRouter.patch("/:id/status", updateBranchStatus);
 adminRouter.delete("/:id", deleteBranch);
 
-export { publicRouter, adminRouter };
+export { publicRouter, adminRouter, publicBranchesRouter };

@@ -247,6 +247,18 @@ export class BranchService {
     }
     return this.repo.updateSortOrder(id, sortOrder);
   }
+
+  async getPublicBranches(): Promise<Branch[]> {
+    return this.repo.findManyPublic();
+  }
+
+  async getPublicBranchBySlug(slug: string): Promise<Branch> {
+    const branch = await this.repo.findBySlugPublic(slug);
+    if (!branch) {
+      throw new Error("Branch not found");
+    }
+    return branch;
+  }
 }
 
 // Importing prisma for standalone duplicate checks

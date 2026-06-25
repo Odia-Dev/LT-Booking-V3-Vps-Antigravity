@@ -33,7 +33,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 async function getBranch(slug: string): Promise<Branch | null> {
   try {
-    const res = await fetch(`${apiBaseUrl}/api/branches/slug/${slug}`, {
+    const res = await fetch(`${apiBaseUrl}/api/public/branches/${slug}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;

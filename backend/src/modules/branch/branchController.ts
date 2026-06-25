@@ -122,3 +122,27 @@ export async function deleteBranch(req: Request, res: Response): Promise<void> {
     });
   }
 }
+
+export async function getPublicBranches(req: Request, res: Response): Promise<void> {
+  try {
+    const branches = await service.getPublicBranches();
+    res.status(200).json({ success: true, branches });
+  } catch (error: any) {
+    console.error("getPublicBranches error:", error);
+    res.status(550).json({ success: false, message: "Failed to retrieve public branches" });
+  }
+}
+
+export async function getPublicBranchBySlug(req: Request, res: Response): Promise<void> {
+  try {
+    const { slug } = req.params;
+    const branch = await service.getPublicBranchBySlug(slug);
+    res.status(200).json({ success: true, branch });
+  } catch (error: any) {
+    console.error("getPublicBranchBySlug error:", error);
+    res.status(error.message === "Branch not found" ? 404 : 400).json({
+      success: false,
+      message: error.message || "Failed to retrieve public branch",
+    });
+  }
+}

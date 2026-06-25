@@ -158,4 +158,20 @@ export class BranchRepository {
       data: { sortOrder },
     });
   }
+
+  async findManyPublic(): Promise<Branch[]> {
+    return prisma.branch.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { sortOrder: "asc" },
+    });
+  }
+
+  async findBySlugPublic(slug: string): Promise<Branch | null> {
+    return prisma.branch.findFirst({
+      where: {
+        slug,
+        status: "ACTIVE",
+      },
+    });
+  }
 }
