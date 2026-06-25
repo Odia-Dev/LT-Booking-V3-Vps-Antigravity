@@ -96,9 +96,16 @@ export class VehicleRepository {
     category: string;
     description?: string;
     heroImage?: string;
+    thumbnail?: string;
+    gallery?: any;
+    brochure?: string;
+    youtubeUrl?: string;
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    startingPrice?: number;
+    bookingAmount?: number;
+    sortOrder?: number;
   }): Promise<Vehicle> {
     return this.create(data);
   }
@@ -109,9 +116,16 @@ export class VehicleRepository {
     category: string;
     description?: string;
     heroImage?: string;
+    thumbnail?: string;
+    gallery?: any;
+    brochure?: string;
+    youtubeUrl?: string;
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    startingPrice?: number;
+    bookingAmount?: number;
+    sortOrder?: number;
   }): Promise<Vehicle> {
     return prisma.vehicle.create({
       data,
@@ -126,9 +140,16 @@ export class VehicleRepository {
       category?: string;
       description?: string;
       heroImage?: string;
+      thumbnail?: string;
+      gallery?: any;
+      brochure?: string;
+      youtubeUrl?: string;
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      startingPrice?: number;
+      bookingAmount?: number;
+      sortOrder?: number;
     }
   ): Promise<Vehicle> {
     return this.update(id, data);
@@ -142,9 +163,16 @@ export class VehicleRepository {
       category?: string;
       description?: string;
       heroImage?: string;
+      thumbnail?: string;
+      gallery?: any;
+      brochure?: string;
+      youtubeUrl?: string;
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      startingPrice?: number;
+      bookingAmount?: number;
+      sortOrder?: number;
     }
   ): Promise<Vehicle> {
     return prisma.vehicle.update({
@@ -186,11 +214,9 @@ export class VehicleRepository {
   }
 
   async updateSortOrder(id: string, sortOrder: number): Promise<Vehicle> {
-    // Vehicle schema does not have sortOrder directly; we stub this method to succeed
-    const exists = await this.findById(id);
-    if (!exists) {
-      throw new Error("Vehicle not found");
-    }
-    return exists;
+    return prisma.vehicle.update({
+      where: { id },
+      data: { sortOrder },
+    });
   }
 }

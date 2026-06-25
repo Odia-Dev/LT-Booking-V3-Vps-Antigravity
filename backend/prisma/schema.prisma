@@ -50,6 +50,13 @@ model Vehicle {
   status         String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED, UPCOMING
   seoTitle       String?
   seoDescription String?
+  thumbnail      String?
+  gallery        Json?
+  brochure       String?
+  youtubeUrl     String?
+  startingPrice  Float?
+  bookingAmount  Float?
+  sortOrder      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

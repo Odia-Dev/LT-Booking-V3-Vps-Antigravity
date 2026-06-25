@@ -23,6 +23,13 @@ export default function CreateVehiclePage() {
   const [startingPrice, setStartingPrice] = useState("");
   const [bookingAmount, setBookingAmount] = useState("");
 
+  // New Media Fields
+  const [thumbnail, setThumbnail] = useState("");
+  const [brochure, setBrochure] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [gallery, setGallery] = useState<string[]>([]);
+  const [galleryInput, setGalleryInput] = useState("");
+
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Slugify from name
@@ -35,6 +42,28 @@ export default function CreateVehiclePage() {
       .replace(/\-\-+/g, "-");
     setSlug(generated);
   }, [name]);
+
+  const addGalleryImage = () => {
+    if (galleryInput && !gallery.includes(galleryInput)) {
+      setGallery([...gallery, galleryInput]);
+      setGalleryInput("");
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGallery(gallery.filter((_, i) => i !== index));
+  };
+
+  const moveGalleryImage = (index: number, direction: "up" | "down") => {
+    const newGallery = [...gallery];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex >= 0 && targetIndex < newGallery.length) {
+      const temp = newGallery[index];
+      newGallery[index] = newGallery[targetIndex];
+      newGallery[targetIndex] = temp;
+      setGallery(newGallery);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +81,10 @@ export default function CreateVehiclePage() {
           category,
           description,
           heroImage: heroImage || undefined,
+          thumbnail: thumbnail || undefined,
+          brochure: brochure || undefined,
+          youtubeUrl: youtubeUrl || undefined,
+          gallery: gallery.length > 0 ? gallery : undefined,
           status,
           seoTitle: seoTitle || undefined,
           seoDescription: seoDescription || undefined,
@@ -208,6 +241,97 @@ export default function CreateVehiclePage() {
             onChange={(e) => setDescription(e.target.value)}
             className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
           />
+        </div>
+
+        <div className="border-t border-neutral-800 pt-6">
+          <h4 className="text-xs uppercase font-extrabold tracking-widest text-[#eb0a1e] mb-4">Media Management</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Thumbnail URL</label>
+              <input
+                type="text"
+                placeholder="https://..."
+                value={thumbnail}
+                onChange={(e) => setThumbnail(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Brochure PDF URL</label>
+              <input
+                type="text"
+                placeholder="https://..."
+                value={brochure}
+                onChange={(e) => setBrochure(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">YouTube Video URL</label>
+              <input
+                type="text"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400">Gallery Images</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add Image URL to Gallery"
+                value={galleryInput}
+                onChange={(e) => setGalleryInput(e.target.value)}
+                className="flex-1 bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+              <button
+                type="button"
+                onClick={addGalleryImage}
+                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded text-xs uppercase font-bold transition-colors"
+              >
+                Add
+              </button>
+            </div>
+
+            {gallery.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#09090b]/50 p-4 border border-neutral-800 rounded-lg">
+                {gallery.map((url, index) => (
+                  <div key={index} className="flex items-center justify-between bg-[#18181b] p-3 border border-neutral-800 rounded-md">
+                    <span className="text-xs text-neutral-300 truncate mr-4">{url}</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveGalleryImage(index, "up")}
+                        disabled={index === 0}
+                        className="p-1 text-neutral-400 hover:text-white disabled:opacity-30"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveGalleryImage(index, "down")}
+                        disabled={index === gallery.length - 1}
+                        className="p-1 text-neutral-400 hover:text-white disabled:opacity-30"
+                      >
+                        ▼
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryImage(index)}
+                        className="p-1 text-rose-500 hover:text-rose-400 ml-2 font-bold"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="border-t border-neutral-800 pt-6">

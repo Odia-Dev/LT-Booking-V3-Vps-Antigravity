@@ -50,6 +50,10 @@ export class VehicleService {
     sortOrder?: number;
     startingPrice?: number;
     bookingAmount?: number;
+    thumbnail?: string;
+    gallery?: string[];
+    brochure?: string;
+    youtubeUrl?: string;
   }): Promise<Vehicle> {
     const slug = data.slug || this.slugify(data.name);
 
@@ -90,7 +94,13 @@ export class VehicleService {
       slug,
       category: data.category,
       description: data.description,
+      startingPrice: data.startingPrice,
+      bookingAmount: data.bookingAmount,
       heroImage: data.heroImage,
+      thumbnail: data.thumbnail,
+      gallery: data.gallery,
+      brochure: data.brochure,
+      youtubeUrl: data.youtubeUrl,
       status: data.status || "ACTIVE",
       seoTitle,
       seoDescription,
@@ -111,6 +121,10 @@ export class VehicleService {
       sortOrder?: number;
       startingPrice?: number;
       bookingAmount?: number;
+      thumbnail?: string;
+      gallery?: string[];
+      brochure?: string;
+      youtubeUrl?: string;
     }
   ): Promise<Vehicle> {
     const vehicle = await this.repo.findById(id);
@@ -156,7 +170,13 @@ export class VehicleService {
       slug: slug || undefined,
       category: data.category,
       description: data.description,
+      startingPrice: data.startingPrice,
+      bookingAmount: data.bookingAmount,
       heroImage: data.heroImage,
+      thumbnail: data.thumbnail,
+      gallery: data.gallery,
+      brochure: data.brochure,
+      youtubeUrl: data.youtubeUrl,
       status: data.status,
       seoTitle: data.seoTitle,
       seoDescription: data.seoDescription,
