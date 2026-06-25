@@ -1,4 +1,4 @@
-import { VehicleRepository } from "./vehicleRepository";
+import { VehicleRepository, VehicleFilters } from "./vehicleRepository";
 import { Vehicle } from "@prisma/client";
 
 export class VehicleService {
@@ -18,6 +18,18 @@ export class VehicleService {
     return this.repo.findMany(filters);
   }
 
+  async listVehicles(filters?: VehicleFilters): Promise<{ data: Vehicle[]; total: number }> {
+    return this.repo.listVehicles(filters);
+  }
+
+  async getVehicleById(id: string): Promise<Vehicle> {
+    const vehicle = await this.repo.findById(id);
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    return vehicle;
+  }
+
   async getVehicleBySlug(slug: string): Promise<Vehicle> {
     const vehicle = await this.repo.findBySlug(slug);
     if (!vehicle) {
@@ -35,18 +47,53 @@ export class VehicleService {
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    sortOrder?: number;
+    startingPrice?: number;
+    bookingAmount?: number;
   }): Promise<Vehicle> {
     const slug = data.slug || this.slugify(data.name);
 
-    // Check for unique slug conflict
+    // 1. Duplicate vehicle check & slug conflict prevention
     const existing = await this.repo.findBySlug(slug);
     if (existing) {
       throw new Error("A vehicle with this name or slug already exists");
     }
 
+    // 2. Category validation
+    const allowedCategories = ["SUV", "MPV", "Hatchback", "Sedan"];
+    if (!allowedCategories.includes(data.category)) {
+      throw new Error("Invalid vehicle category. Allowed categories: SUV, MPV, Hatchback, Sedan");
+    }
+
+    // 3. Status validation
+    if (data.status) {
+      const allowedStatuses = ["ACTIVE", "INACTIVE", "ARCHIVED", "UPCOMING"];
+      if (!allowedStatuses.includes(data.status)) {
+        throw new Error("Invalid status type");
+      }
+    }
+
+    // 4. Default SEO metadata fallback
+    const seoTitle = data.seoTitle || `${data.name} - Toyota Model Specs & Booking | Laxmi Toyota`;
+    const seoDescription = data.seoDescription || `Discover the all-new ${data.name} specifications, features, and official test drive booking details at Laxmi Toyota.`;
+
+    // 5. Price & Booking validation
+    if (data.startingPrice !== undefined && data.startingPrice < 0) {
+      throw new Error("Starting price cannot be negative");
+    }
+    if (data.bookingAmount !== undefined && data.bookingAmount < 0) {
+      throw new Error("Booking deposit amount cannot be negative");
+    }
+
     return this.repo.create({
-      ...data,
+      name: data.name,
       slug,
+      category: data.category,
+      description: data.description,
+      heroImage: data.heroImage,
+      status: data.status || "ACTIVE",
+      seoTitle,
+      seoDescription,
     });
   }
 
@@ -61,6 +108,9 @@ export class VehicleService {
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      sortOrder?: number;
+      startingPrice?: number;
+      bookingAmount?: number;
     }
   ): Promise<Vehicle> {
     const vehicle = await this.repo.findById(id);
@@ -80,9 +130,36 @@ export class VehicleService {
       }
     }
 
+    if (data.category) {
+      const allowedCategories = ["SUV", "MPV", "Hatchback", "Sedan"];
+      if (!allowedCategories.includes(data.category)) {
+        throw new Error("Invalid vehicle category. Allowed categories: SUV, MPV, Hatchback, Sedan");
+      }
+    }
+
+    if (data.status) {
+      const allowedStatuses = ["ACTIVE", "INACTIVE", "ARCHIVED", "UPCOMING"];
+      if (!allowedStatuses.includes(data.status)) {
+        throw new Error("Invalid status type");
+      }
+    }
+
+    if (data.startingPrice !== undefined && data.startingPrice < 0) {
+      throw new Error("Starting price cannot be negative");
+    }
+    if (data.bookingAmount !== undefined && data.bookingAmount < 0) {
+      throw new Error("Booking deposit amount cannot be negative");
+    }
+
     return this.repo.update(id, {
-      ...data,
+      name: data.name,
       slug: slug || undefined,
+      category: data.category,
+      description: data.description,
+      heroImage: data.heroImage,
+      status: data.status,
+      seoTitle: data.seoTitle,
+      seoDescription: data.seoDescription,
     });
   }
 
@@ -92,5 +169,32 @@ export class VehicleService {
       throw new Error("Vehicle not found");
     }
     return this.repo.delete(id);
+  }
+
+  async searchVehicles(query: string): Promise<Vehicle[]> {
+    return this.repo.searchVehicles(query);
+  }
+
+  async updateStatus(id: string, status: string): Promise<Vehicle> {
+    const allowedStatuses = ["ACTIVE", "INACTIVE", "ARCHIVED", "UPCOMING"];
+    if (!allowedStatuses.includes(status)) {
+      throw new Error("Invalid status type");
+    }
+    const vehicle = await this.repo.findById(id);
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    return this.repo.updateStatus(id, status);
+  }
+
+  async updateSortOrder(id: string, sortOrder: number): Promise<Vehicle> {
+    if (sortOrder < 0) {
+      throw new Error("Sort order must be non-negative");
+    }
+    const vehicle = await this.repo.findById(id);
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    return this.repo.updateSortOrder(id, sortOrder);
   }
 }
