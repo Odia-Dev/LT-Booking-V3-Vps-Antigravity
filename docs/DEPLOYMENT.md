@@ -350,7 +350,27 @@ If a deployment fails, run rollback commands:
 
 ---
 
-## 14. Useful Commands Reference
+## 14. Automated Deployment Script
+
+An automated deployment script is located at the project root: `deploy.sh`.
+
+### Usage
+Execute the script from the project root:
+```bash
+./deploy.sh
+```
+
+The script automates:
+1. Directory structure validation checks.
+2. Git fetch and pulls from branch `develop`.
+3. Backend dependencies installation, Prisma client generation, validations, schema migrations, and production compilation.
+4. Frontend clean dependencies installs and Next.js builds.
+5. PM2 reloads.
+6. Post-deployment port-listening and health check diagnostics verification.
+
+---
+
+## 15. Useful Commands Reference
 
 ### Git
 ```bash
