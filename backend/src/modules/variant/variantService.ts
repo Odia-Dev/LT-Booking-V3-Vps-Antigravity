@@ -245,4 +245,16 @@ export class VariantService {
     }
     return this.repo.updateSortOrder(id, sortOrder);
   }
+
+  async getVariantAndVehicleBySlug(slug: string): Promise<{ variant: Variant; vehicle: any }> {
+    const variant = await this.repo.getVariantBySlug(slug);
+    if (!variant) {
+      throw new Error("Variant not found");
+    }
+    const vehicle = await this.vehicleRepo.findById(variant.vehicleId);
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+    return { variant, vehicle };
+  }
 }

@@ -8,17 +8,21 @@ import {
   updateVariant,
   updateVariantStatus,
   deleteVariant,
+  getPublicVariantsByVehicleSlug,
+  getPublicVariantBySlug,
 } from "./variantController";
 import { authMiddleware } from "../../middleware/auth";
 
-// Mounted at /api/vehicles
+// Mounted at /api/vehicles (and /api/public/vehicles)
 const publicRouter = Router();
 publicRouter.get("/:vehicleId/variants", getVariantsByVehicle);
+publicRouter.get("/:slug/variants", getPublicVariantsByVehicleSlug);
 
-// Mounted at /api/variants
+// Mounted at /api/variants (and /api/public/variants)
 const variantsRouter = Router();
 variantsRouter.get("/", listVariants);
-variantsRouter.get("/:id", getVariantById);
+variantsRouter.get("/:slug", getPublicVariantBySlug);
+variantsRouter.get("/id/:id", getVariantById);
 variantsRouter.get("/slug/:slug", getVariantBySlug);
 
 // Admin variants routes - mounted at /api/admin/variants or /api/variants (protected)

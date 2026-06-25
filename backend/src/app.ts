@@ -84,7 +84,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
+app.use("/api/public/vehicles", variantRoutes); // support GET /api/public/vehicles/:slug/variants
 app.use("/api/variants", variantsRouter);
+app.use("/api/public/variants", variantsRouter); // support GET /api/public/variants/:slug
 app.use("/api/admin/vehicles", adminVehicleRoutes);
 app.use("/api/admin/variants", adminVariantRoutes);
 app.use("/api/vehicles", colorRoutes);

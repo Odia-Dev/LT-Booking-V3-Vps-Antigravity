@@ -152,3 +152,95 @@ export async function deleteVariant(req: Request, res: Response): Promise<void> 
     });
   }
 }
+
+export async function getPublicVariantsByVehicleSlug(req: Request, res: Response): Promise<void> {
+  try {
+    const { slug } = req.params;
+    const vehicleRepo = new (require("../vehicle/vehicleRepository").VehicleRepository)();
+    const vehicle = await vehicleRepo.findBySlug(slug);
+    if (!vehicle) {
+      res.status(404).json({ success: false, message: "Vehicle not found" });
+      return;
+    }
+    const result = await service.listVariants({ vehicleId: vehicle.id, limit: 100 });
+    res.status(200).json({
+      success: true,
+      vehicle,
+      variants: result.data,
+    });
+  } catch (error: any) {
+    console.error("getPublicVariantsByVehicleSlug error:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to retrieve public variants" });
+  }
+}
+
+export async function getPublicVariantBySlug(req: Request, res: Response): Promise<void> {
+  try {
+    const { slug } = req.params;
+    const { variant, vehicle } = await service.getVariantAndVehicleBySlug(slug);
+
+    // Compute canonical URL and SEO Metadata
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const canonicalUrl = `${frontendUrl}/vehicles/${vehicle.slug}/${slug}`;
+    const seoTitle = `${vehicle.name} ${variant.name} - Features & Specifications | Laxmi Toyota`;
+    const seoDescription = `Explore ex-showroom price, booking details, features and full technical specifications for the new ${vehicle.name} ${variant.name} variant at Laxmi Toyota.`;
+
+    const openGraph = {
+      title: seoTitle,
+      description: seoDescription,
+      url: canonicalUrl,
+      type: "website",
+      images: [
+        {
+          url: vehicle.heroImage || "",
+          alt: `${vehicle.name} ${variant.name}`,
+        }
+      ]
+    };
+
+    // Construct structured JSON-LD Schema
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Car",
+      "name": `${vehicle.name} ${variant.name}`,
+      "description": seoDescription,
+      "image": vehicle.heroImage || "",
+      "brand": {
+        "@type": "Brand",
+        "name": "Toyota"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": variant.price,
+        "priceCurrency": "INR",
+        "url": canonicalUrl,
+        "availability": variant.status === "ACTIVE" ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      },
+      "vehicleEngine": {
+        "@type": "EngineSpecification",
+        "fuelType": variant.fuelType
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      vehicle,
+      variant,
+      features: variant.specs || {},
+      specifications: variant.specs || {},
+      seo: {
+        title: seoTitle,
+        description: seoDescription,
+        canonical: canonicalUrl,
+        openGraph,
+        jsonLd
+      }
+    });
+  } catch (error: any) {
+    console.error("getPublicVariantBySlug error:", error);
+    res.status(error.message === "Variant not found" ? 404 : 500).json({
+      success: false,
+      message: error.message || "Failed to retrieve public variant details",
+    });
+  }
+}

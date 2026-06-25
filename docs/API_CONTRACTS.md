@@ -192,3 +192,119 @@ This document details the HTTP REST API endpoints exposed by the LT-Booking-V3 b
     "message": "Database connection failed."
   }
   ```
+
+---
+
+## 5. Public Variant Services (`/api/public`)
+
+### GET `/api/public/vehicles/:slug/variants`
+* **Description**: Retrieve variants associated with a vehicle slug.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicle": {
+      "id": "vehicle-uuid",
+      "name": "Urban Cruiser Hyryder",
+      "slug": "urban-cruiser-hyryder",
+      "category": "SUV",
+      "description": "Strong Hybrid technology...",
+      "heroImage": "https://...",
+      "status": "ACTIVE"
+    },
+    "variants": [
+      {
+        "id": "variant-uuid",
+        "vehicleId": "vehicle-uuid",
+        "name": "V AT",
+        "price": 2019000,
+        "fuelType": "Hybrid",
+        "transmission": "Automatic",
+        "seating": 5,
+        "status": "ACTIVE"
+      }
+    ]
+  }
+  ```
+
+### GET `/api/public/variants/:slug`
+* **Description**: Retrieve variant details by slug with SEO headers and JSON-LD schema metadata.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "vehicle": {
+      "id": "vehicle-uuid",
+      "name": "Urban Cruiser Hyryder",
+      "slug": "urban-cruiser-hyryder",
+      "category": "SUV",
+      "description": "Strong Hybrid technology...",
+      "heroImage": "https://...",
+      "status": "ACTIVE"
+    },
+    "variant": {
+      "id": "variant-uuid",
+      "vehicleId": "vehicle-uuid",
+      "name": "V AT",
+      "price": 2019000,
+      "fuelType": "Hybrid",
+      "transmission": "Automatic",
+      "seating": 5,
+      "status": "ACTIVE",
+      "specs": {
+        "safetyFeatures": ["6 Airbags", "ABS with EBD"],
+        "comfortFeatures": ["Ventilated Seats"],
+        "length": "4365",
+        "width": "1795"
+      }
+    },
+    "features": {
+      "safetyFeatures": ["6 Airbags", "ABS with EBD"],
+      "comfortFeatures": ["Ventilated Seats"]
+    },
+    "specifications": {
+      "length": "4365",
+      "width": "1795"
+    },
+    "seo": {
+      "title": "Urban Cruiser Hyryder V AT - Features & Specifications | Laxmi Toyota",
+      "description": "Explore ex-showroom price, booking details, features and full technical specifications for the new Urban Cruiser Hyryder V AT variant at Laxmi Toyota.",
+      "canonical": "http://localhost:3000/vehicles/urban-cruiser-hyryder/v-at",
+      "openGraph": {
+        "title": "Urban Cruiser Hyryder V AT - Features & Specifications | Laxmi Toyota",
+        "description": "Explore ex-showroom price, booking details, features and full technical specifications for the new Urban Cruiser Hyryder V AT variant at Laxmi Toyota.",
+        "url": "http://localhost:3000/vehicles/urban-cruiser-hyryder/v-at",
+        "type": "website",
+        "images": [
+          {
+            "url": "https://...",
+            "alt": "Urban Cruiser Hyryder V AT"
+          }
+        ]
+      },
+      "jsonLd": {
+        "@context": "https://schema.org",
+        "@type": "Car",
+        "name": "Urban Cruiser Hyryder V AT",
+        "description": "Explore ex-showroom price, booking details, features and full technical specifications for the new Urban Cruiser Hyryder V AT variant at Laxmi Toyota.",
+        "image": "https://...",
+        "brand": {
+          "@type": "Brand",
+          "name": "Toyota"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": 2019000,
+          "priceCurrency": "INR",
+          "url": "http://localhost:3000/vehicles/urban-cruiser-hyryder/v-at",
+          "availability": "https://schema.org/InStock"
+        },
+        "vehicleEngine": {
+          "@type": "EngineSpecification",
+          "fuelType": "Hybrid"
+        }
+      }
+    }
+  }
+  ```
+
