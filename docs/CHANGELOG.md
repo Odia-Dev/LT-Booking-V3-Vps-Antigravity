@@ -30,4 +30,10 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
   * Created public Branch APIs (`GET /api/public/branches`, `GET /api/public/branches/:slug`).
   * Built complete Admin Branch CMS dashboard console under `/admin/branches` for full CRUD, search, pagination, and status toggles.
   * Built public directory listings page (`/branches`) and detail pages (`/branches/[slug]`) displaying embedded map previews, manager cards, contact CTAs, and dynamic SEO / JSON-LD schemas.
+* **Milestone M09 Lead Management**:
+  * Implemented database repository (`leadRepository.ts`) and business services (`leadService.ts`) for lead routing, scoring, sorting, and duplicate prevention.
+  * Added production endpoints: public inquiry submission (`POST /api/public/leads`) with IP-based rate limiting and spam filtering, alongside secure admin CRM APIs.
+  * Created reusable `LeadForm.tsx` component capturing customer data and UTM/referrer tracking across 6 inquiry forms.
+  * Built Admin Lead CRM Dashboard console under `/admin/leads` and details view `/admin/leads/[id]` supporting status transitions, coordinator assignments, bulk actions, and note logs.
+
 

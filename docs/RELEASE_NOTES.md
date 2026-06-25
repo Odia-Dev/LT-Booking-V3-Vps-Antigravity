@@ -6,6 +6,16 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.0.0-m09-production-ready` (2026-06-25)
+* **Goal**: Establish production-ready Lead Management backend API, security middlewares, reusable customer-facing forms, and admin CRM console.
+* **Commit**: `feat(m09): production ready`
+* **Details**:
+  - Implemented lead repository and service logic including phone/email checks, intent scoring, priority mapping, and duplicate submission checks.
+  - Deployed `/api/public/leads` with IP-based rate limiting (max 5 requests/minute) and spam keyword filters.
+  - Setup async notification runner supporting customer emails, admin logs, webhooks, and future WhatsApp hooks.
+  - Built reusable `LeadForm.tsx` tab component on the website (`/contact`) capturing UTM tracking data.
+  - Deployed Admin CRM Console (`/admin/leads` and `/admin/leads/[id]`) with pagination, search, status transitions, bulk operations, and timeline note history.
+
 ### `v1.0.0-m08-production-ready` (2026-06-25)
 * **Goal**: Establish production-ready dealership branch management API, admin CMS, and public website location pages.
 * **Commit**: `feat(m08): production ready`
