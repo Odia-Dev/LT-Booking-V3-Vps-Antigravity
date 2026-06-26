@@ -11,7 +11,7 @@ import {
   getPublicVariantsByVehicleSlug,
   getPublicVariantBySlug,
 } from "./variantController";
-import { authMiddleware } from "../../middleware/auth";
+import { authMiddleware, requireRole } from "../../middleware/auth";
 
 // Mounted at /api/vehicles (and /api/public/vehicles)
 const publicRouter = Router();
@@ -29,6 +29,7 @@ variantsRouter.get("/slug/:slug", getVariantBySlug);
 // Let's support both or define them under adminRouter.
 const adminRouter = Router();
 adminRouter.use(authMiddleware as any);
+adminRouter.use(requireRole(["ADMIN"]) as any);
 adminRouter.post("/", createVariant);
 adminRouter.put("/:id", updateVariant);
 adminRouter.patch("/:id/status", updateVariantStatus);

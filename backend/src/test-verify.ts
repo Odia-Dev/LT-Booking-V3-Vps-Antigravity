@@ -1,3 +1,4 @@
+process.env.NODE_ENV = "development";
 import http from "http";
 import { AuthRepository } from "./modules/auth/authRepository";
 import { ProfileRepository } from "./modules/profile/profileRepository";
@@ -97,6 +98,9 @@ ProfileRepository.prototype.updateProfile = async function (id: string, data: an
   user.updatedAt = new Date();
   return user;
 };
+
+import { prisma } from "./config/db";
+(prisma as any).$queryRaw = async () => [1];
 
 import app from "./app";
 

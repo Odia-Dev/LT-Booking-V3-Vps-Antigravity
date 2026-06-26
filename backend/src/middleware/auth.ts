@@ -28,3 +28,18 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     res.status(401).json({ success: false, message: "Invalid or expired session token" });
   }
 }
+
+export function requireRole(roles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+    if (!req.admin) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+    if (!roles.includes(req.admin.role)) {
+      res.status(403).json({ success: false, message: "Forbidden: Access denied" });
+      return;
+    }
+    next();
+  };
+}
+

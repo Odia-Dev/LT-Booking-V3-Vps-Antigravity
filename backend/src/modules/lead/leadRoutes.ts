@@ -8,7 +8,7 @@ import {
   assignLead,
   deleteLead,
 } from "./leadController";
-import { authMiddleware } from "../../middleware/auth";
+import { authMiddleware, requireRole } from "../../middleware/auth";
 import { publicLeadRateLimiter, spamProtection } from "../../middleware/rateLimiter";
 
 const router = Router();
@@ -19,11 +19,11 @@ publicLeadsRouter.post("/", publicLeadRateLimiter, spamProtection, createLead);
 router.post("/", publicLeadRateLimiter, spamProtection, createLead);
 
 // Protected routes (Admin only)
-router.get("/", authMiddleware as any, getLeads);
-router.get("/:id", authMiddleware as any, getLeadById);
-router.put("/:id", authMiddleware as any, updateLead);
-router.patch("/:id/status", authMiddleware as any, updateLeadStatus);
-router.patch("/:id/assign", authMiddleware as any, assignLead);
-router.delete("/:id", authMiddleware as any, deleteLead);
+router.get("/", authMiddleware as any, requireRole(["ADMIN"]) as any, getLeads);
+router.get("/:id", authMiddleware as any, requireRole(["ADMIN"]) as any, getLeadById);
+router.put("/:id", authMiddleware as any, requireRole(["ADMIN"]) as any, updateLead);
+router.patch("/:id/status", authMiddleware as any, requireRole(["ADMIN"]) as any, updateLeadStatus);
+router.patch("/:id/assign", authMiddleware as any, requireRole(["ADMIN"]) as any, assignLead);
+router.delete("/:id", authMiddleware as any, requireRole(["ADMIN"]) as any, deleteLead);
 
 export { router as default, publicLeadsRouter };

@@ -10,7 +10,7 @@ import {
   updateBranchStatus,
   deleteBranch,
 } from "./branchController";
-import { authMiddleware } from "../../middleware/auth";
+import { authMiddleware, requireRole } from "../../middleware/auth";
 
 const publicRouter = Router();
 publicRouter.get("/", getBranches);
@@ -23,6 +23,7 @@ publicBranchesRouter.get("/:slug", getPublicBranchBySlug);
 
 const adminRouter = Router();
 adminRouter.use(authMiddleware as any);
+adminRouter.use(requireRole(["ADMIN"]) as any);
 adminRouter.post("/", createBranch);
 adminRouter.put("/:id", updateBranch);
 adminRouter.patch("/:id/status", updateBranchStatus);

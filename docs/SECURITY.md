@@ -6,18 +6,24 @@ This document describes the security protocols, encryption mechanisms, and route
 
 ## 1. Authentication Security
 
-* **Stateless Administration**: The platform avoids session database storage to keep operations lightweight. Sessions are validated cryptographically.
-* **HTTP-Only Cookies**: Authentication tokens are signed in JWTs and stored in cookies configured with:
-  * `HttpOnly`: Block access from client-side JavaScript APIs (mitigating XSS vulnerabilities).
-  * `Secure`: Transmit tokens exclusively over encrypted HTTPS connections.
-  * `SameSite=Lax`: Guard against Cross-Site Request Forgery (CSRF).
+* **Stateless Session Management**: The platform avoids database-backed session storage. Authentication sessions are validated cryptographically using JSON Web Tokens (JWT).
+* **JWT Expiration Rules**:
+  * **Administrator sessions** expire after **24 hours**.
+  * **Customer sessions** expire after **7 days**.
+* **Role-Based Access Control (RBAC)**:
+  * A central `requireRole(roles: string[])` middleware is enforced across protected backend API endpoints.
+  * Requests carrying unauthorized user roles are rejected with a strict HTTP `403 Forbidden` response.
+* **Hardened Session Cookies**: JWT session tokens are set as cookies with:
+  * `HttpOnly`: Block access from client-side JavaScript APIs to mitigate Cross-Site Scripting (XSS) risks.
+  * `Secure`: Transmit tokens exclusively over encrypted HTTPS connections (enabled in production).
+  * `SameSite=Strict`: Restrict cookies from being sent on cross-site requests to mitigate CSRF.
 
 ---
 
 ## 2. Password Policies
 
-* **Password Hashing**: Administrative credentials must be pre-hashed using the **bcrypt** hashing algorithm with a salt factor of `10`.
-* **Zero Plain-Text Storage**: The system never records raw passwords in database structures or environment files.
+* **Password Hashing**: Administrative credentials must be pre-hashed using the **bcrypt** hashing algorithm with a cost factor (salt rounds) of `10`.
+* **Zero Plain-Text Storage**: The system never records raw passwords in database structures or environment configuration files.
 
 ---
 

@@ -9,7 +9,7 @@ import {
   cancelTestDrive,
   createPublicTestDrive,
 } from "./testDriveController";
-import { authMiddleware } from "../../middleware/auth";
+import { authMiddleware, requireRole } from "../../middleware/auth";
 
 const router = Router();
 const publicTestDriveRouter = Router();
@@ -17,8 +17,9 @@ const publicTestDriveRouter = Router();
 // Public route for guest customer booking
 publicTestDriveRouter.post("/", createPublicTestDrive);
 
-// All routes require authentication
+// All routes require authentication and ADMIN role
 router.use(authMiddleware as any);
+router.use(requireRole(["ADMIN"]) as any);
 
 router.get("/", getTestDrives);
 router.post("/", createTestDrive);

@@ -10,7 +10,7 @@ import {
   updateVehicleStatus,
   deleteVehicle,
 } from "./vehicleController";
-import { authMiddleware } from "../../middleware/auth";
+import { authMiddleware, requireRole } from "../../middleware/auth";
 
 const publicRouter = Router();
 publicRouter.get("/", getVehicles);
@@ -23,6 +23,7 @@ publicVehiclesRouter.get("/:slug", getPublicVehicleBySlug);
 
 const adminRouter = Router();
 adminRouter.use(authMiddleware as any);
+adminRouter.use(requireRole(["ADMIN"]) as any);
 adminRouter.post("/", createVehicle);
 adminRouter.put("/:id", updateVehicle);
 adminRouter.patch("/:id/status", updateVehicleStatus);
