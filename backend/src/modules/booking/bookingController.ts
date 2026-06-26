@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { BookingService } from "./bookingService";
 import {
   CreateBookingSchema,
@@ -6,6 +6,7 @@ import {
   BookingStatusSchema,
   PaymentStatusSchema,
   SearchFiltersSchema,
+  CreatePublicBookingSchema,
 } from "./bookingValidation";
 import { AuthenticatedRequest } from "../../middleware/auth";
 
@@ -334,6 +335,39 @@ export async function deleteBooking(req: AuthenticatedRequest, res: Response): P
     console.error("deleteBooking error:", error);
     if (error.message && error.message.includes("not found")) {
       res.status(404).json({ success: false, message: "Booking record not found" });
+    } else {
+      res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+}
+
+export async function createPublicBooking(req: Request, res: Response): Promise<void> {
+  try {
+    const parseResult = CreatePublicBookingSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ success: false, errors: parseResult.error.errors });
+      return;
+    }
+
+    const booking = await service.createPublicBooking(parseResult.data);
+    res.status(201).json({
+      success: true,
+      message: "Booking request initiated successfully",
+      booking: {
+        id: booking.id,
+        bookingId: booking.bookingId,
+        bookingAmount: booking.bookingAmount,
+        bookingStatus: booking.bookingStatus,
+        paymentStatus: booking.paymentStatus,
+      },
+    });
+  } catch (error: any) {
+    console.error("createPublicBooking error:", error);
+    const msg = error.message;
+    if (msg && (msg.includes("already has an active booking") || msg.includes("Unique constraint failed"))) {
+      res.status(409).json({ success: false, message: msg });
+    } else if (msg && (msg.includes("does not exist") || msg.includes("inactive") || msg.includes("must be positive"))) {
+      res.status(400).json({ success: false, message: msg });
     } else {
       res.status(500).json({ success: false, message: "Internal server error" });
     }

@@ -9,22 +9,25 @@ import {
   updatePaymentStatus,
   cancelBooking,
   deleteBooking,
+  createPublicBooking,
 } from "./bookingController";
 import { authMiddleware } from "../../middleware/auth";
 
 const router = Router();
+const publicBookingsRouter = Router();
 
-// All booking endpoints require active authentication session
-router.use(authMiddleware as any);
+// Public route for customer checkout bookings
+publicBookingsRouter.post("/", createPublicBooking);
 
-router.get("/", getBookings);
-router.get("/:id", getBookingById);
-router.get("/booking-id/:bookingId", getBookingByBookingId);
-router.post("/", createBooking);
-router.put("/:id", updateBooking);
-router.patch("/:id/status", updateBookingStatus);
-router.patch("/:id/payment-status", updatePaymentStatus);
-router.patch("/:id/cancel", cancelBooking);
-router.delete("/:id", deleteBooking);
+// Protected booking endpoints require active authentication session
+router.get("/", authMiddleware as any, getBookings);
+router.get("/:id", authMiddleware as any, getBookingById);
+router.get("/booking-id/:bookingId", authMiddleware as any, getBookingByBookingId);
+router.post("/", authMiddleware as any, createBooking);
+router.put("/:id", authMiddleware as any, updateBooking);
+router.patch("/:id/status", authMiddleware as any, updateBookingStatus);
+router.patch("/:id/payment-status", authMiddleware as any, updatePaymentStatus);
+router.patch("/:id/cancel", authMiddleware as any, cancelBooking);
+router.delete("/:id", authMiddleware as any, deleteBooking);
 
-export default router;
+export { router as default, publicBookingsRouter };

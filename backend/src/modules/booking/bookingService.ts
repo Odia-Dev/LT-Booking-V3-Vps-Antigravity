@@ -237,4 +237,141 @@ export class BookingService {
     await this.getBookingById(id);
     return this.repo.updatePaymentStatus(id, status);
   }
+
+  async createPublicBooking(data: {
+    name: string;
+    email: string;
+    phone: string;
+    city?: string | null;
+    state?: string | null;
+    vehicleId: string;
+    variantId: string;
+    branchId: string;
+    bookingAmount: number;
+    notes?: string | null;
+    campaign?: string;
+    medium?: string;
+    source?: string;
+    referrer?: string;
+    landingPageUrl?: string;
+  }): Promise<Booking> {
+    // 1. Find or create customer User
+    let customer = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: data.email },
+          { phone: data.phone }
+        ]
+      }
+    });
+
+    if (!customer) {
+      customer = await prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          city: data.city || undefined,
+          state: data.state || undefined,
+          role: "CUSTOMER"
+        }
+      });
+    } else {
+      if ((data.city || data.state) && (!customer.city || !customer.state)) {
+        await prisma.user.update({
+          where: { id: customer.id },
+          data: {
+            city: customer.city || data.city || undefined,
+            state: customer.state || data.state || undefined,
+            name: customer.name || data.name
+          }
+        });
+      }
+    }
+
+    // 2. Find or create Lead
+    let lead = await prisma.lead.findFirst({
+      where: {
+        phone: data.phone,
+        variantId: data.variantId,
+        status: { not: "CANCELLED" }
+      }
+    });
+
+    if (!lead) {
+      const notesPayload = {
+        campaign: data.campaign,
+        medium: data.medium,
+        originalNotes: data.notes,
+        referrer: data.referrer,
+        landingPageUrl: data.landingPageUrl,
+        leadScore: 90,
+        priority: "HIGH"
+      };
+
+      lead = await prisma.lead.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          type: "BOOKING",
+          source: data.source || "ORGANIC",
+          branchId: data.branchId,
+          variantId: data.variantId,
+          notes: JSON.stringify(notesPayload)
+        }
+      });
+    }
+
+    // 3. Validate Vehicle, Variant, Branch Active
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
+    if (!vehicle || vehicle.status !== "ACTIVE") {
+      throw new Error("Specified Vehicle does not exist or is inactive");
+    }
+
+    const variant = await prisma.variant.findUnique({ where: { id: data.variantId } });
+    if (!variant || variant.vehicleId !== data.vehicleId || variant.status !== "ACTIVE") {
+      throw new Error("Specified Variant does not exist or does not match vehicle");
+    }
+
+    const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
+    if (!branch || !branch.isActive || branch.status !== "ACTIVE") {
+      throw new Error("Specified Branch does not exist or is inactive");
+    }
+
+    if (data.bookingAmount <= 0) {
+      throw new Error("Booking amount must be positive");
+    }
+
+    // 4. Prevent duplicate active bookings for the same customer/vehicle
+    const activeBooking = await prisma.booking.findFirst({
+      where: {
+        customerId: customer.id,
+        vehicleId: data.vehicleId,
+        bookingStatus: {
+          notIn: ["CANCELLED", "REFUNDED", "EXPIRED"],
+        },
+      },
+    });
+    if (activeBooking) {
+      throw new Error("Customer already has an active booking for this vehicle");
+    }
+
+    // 5. Generate unique Booking ID
+    const bookingId = await this.generateUniqueBookingId();
+
+    // 6. Create Booking
+    return this.repo.createBooking({
+      bookingId,
+      customerId: customer.id,
+      leadId: lead.id,
+      vehicleId: data.vehicleId,
+      variantId: data.variantId,
+      branchId: data.branchId,
+      bookingAmount: data.bookingAmount,
+      notes: data.notes,
+      paymentStatus: "PENDING",
+      bookingStatus: "INITIATED"
+    });
+  }
 }

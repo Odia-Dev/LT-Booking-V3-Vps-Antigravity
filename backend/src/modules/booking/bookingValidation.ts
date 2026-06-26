@@ -62,6 +62,24 @@ export const PaymentStatusSchema = z.object({
   paymentStatus: z.enum(["PENDING", "SUCCESS", "FAILED", "REFUNDED"]),
 });
 
+export const CreatePublicBookingSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  city: z.string().min(1, "City is required").nullable().optional(),
+  state: z.string().min(1, "State is required").nullable().optional(),
+  vehicleId: z.string().uuid("Invalid vehicle ID"),
+  variantId: z.string().uuid("Invalid variant ID"),
+  branchId: z.string().uuid("Invalid branch ID"),
+  bookingAmount: z.number().positive("Booking amount must be positive"),
+  notes: z.string().max(1000).nullable().optional(),
+  campaign: z.string().optional(),
+  medium: z.string().optional(),
+  source: z.string().optional(),
+  referrer: z.string().optional(),
+  landingPageUrl: z.string().optional(),
+});
+
 export const SearchFiltersSchema = z.object({
   status: z.string().optional(),
   paymentStatus: z.string().optional(),

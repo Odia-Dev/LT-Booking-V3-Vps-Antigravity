@@ -16,7 +16,7 @@ import { publicRouter as colorRoutes, adminRouter as adminColorRoutes } from "./
 import { publicRouter as branchRoutes, adminRouter as adminBranchRoutes, publicBranchesRouter } from "./modules/branch/branchRoutes";
 import leadRoutes, { publicLeadsRouter } from "./modules/lead/leadRoutes";
 import testDriveRoutes, { publicTestDriveRouter } from "./modules/testDrive/testDriveRoutes";
-import bookingRoutes from "./modules/booking/bookingRoutes";
+import bookingRoutes, { publicBookingsRouter } from "./modules/booking/bookingRoutes";
 
 dotenv.config();
 
@@ -99,6 +99,7 @@ app.use("/api/public/leads", publicLeadsLimiter);
 app.use("/api/test-drives", testDriveLimiter);
 app.use("/api/public/test-drives", testDriveLimiter);
 app.use("/api/bookings", bookingLimiter);
+app.use("/api/public/bookings", bookingLimiter);
 
 // Request logger middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -174,6 +175,7 @@ app.use("/api/public/leads", publicLeadsRouter);
 app.use("/api/test-drives", testDriveRoutes);
 app.use("/api/public/test-drives", publicTestDriveRouter);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/public/bookings", publicBookingsRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
