@@ -2,6 +2,9 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import { execSync } from "child_process";
 import { prisma } from "./config/db";
 import packageJson from "../package.json";
@@ -19,15 +22,82 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS with credentials
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+// Trust front-facing Nginx proxy
+app.set("trust proxy", 1);
+
+// Disable X-Powered-By header to prevent technology disclosure
+app.disable("x-powered-by");
+
+// Apply basic security headers with Helmet
+app.use(helmet());
+
+// Compress response bodies for optimized bandwidth usage
+app.use(compression());
+
+// Secure CORS origin configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : [process.env.FRONTEND_URL || "http://localhost:3000"];
+
 app.use(cors({
-  origin: frontendUrl,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 
-app.use(express.json());
+// Set strict JSON and URL-encoded request payload limits
+app.use(express.json({ limit: "50kb" }));
+app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use(cookieParser());
+
+// Define rate limiters for critical paths (Returns HTTP 429 when exceeded)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { success: false, message: "Too many login attempts. Please try again in 15 minutes." },
+  statusCode: 429,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const publicLeadsLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5,
+  message: { success: false, message: "Too many lead submissions. Please try again in a minute." },
+  statusCode: 429,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const testDriveLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5,
+  message: { success: false, message: "Too many test drive requests. Please try again in a minute." },
+  statusCode: 429,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const bookingLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5,
+  message: { success: false, message: "Too many booking requests. Please try again in a minute." },
+  statusCode: 429,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Protect critical endpoints with rate limiters
+app.use("/api/auth/login", loginLimiter);
+app.use("/api/public/leads", publicLeadsLimiter);
+app.use("/api/test-drives", testDriveLimiter);
+app.use("/api/public/test-drives", testDriveLimiter);
+app.use("/api/bookings", bookingLimiter);
 
 // Request logger middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -104,9 +174,16 @@ app.use("/api/test-drives", testDriveRoutes);
 app.use("/api/public/test-drives", publicTestDriveRouter);
 
 // Error handler middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("Unhandled error:", err);
-  res.status(500).json({ success: false, message: "Internal server error" });
+  
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message: isProduction ? "Internal server error" : err.message || "Internal server error",
+    ...(isProduction ? {} : { stack: err.stack }),
+  });
 });
 
 // Start Server
