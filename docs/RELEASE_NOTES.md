@@ -6,6 +6,18 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.0.0-m12-razorpay-ready` (2026-06-26)
+* **Goal**: Release the production-grade Razorpay payment integration, including order creation, dynamic checkout scripting, cryptographically verified signature callbacks, async webhooks processing, refund tracking, and event-driven notifications.
+* **Commit**: `feat(m12): production ready`
+* **Details**:
+  - Configured backend schema models (`Payment` & `PaymentAudit`) to register and monitor online transactions lifecycle history.
+  - Implemented backend Repository and Services to initialize Razorpay SDK, verify signatures via SHA-256 HMAC buffers, and log mock refund details.
+  - Deployed REST API controllers and routes (`/api/payments/*` and `/api/public/payments/*`) protected by RBAC checking.
+  - Upgraded public checkout forms (`/book-online`) to dynamically load checkout overlays, verify payment responses, and present success/failed screen transitions with retry capabilities.
+  - Deployed secure webhook receiver (`POST /api/webhooks/razorpay`) verifying signature hashes, capturing events (captured, failed, order paid, refund processed), and validating idempotency via payload hash audits.
+  - Integrated notification dispatches (Email, SMS, WhatsApp alerts) across all transaction outcomes.
+  - Verified compilation build safety and prisma schema checks.
+
 ### `v1.0.0-m11-booking-engine-ready` (2026-06-26)
 * **Goal**: Launch the complete public Online Booking Engine experience, CRM booking consoles, payment/booking status lifecycles, and event-driven logging notification hooks.
 * **Commit**: `feat(m11): production ready`

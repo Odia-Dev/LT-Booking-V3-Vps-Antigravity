@@ -7,6 +7,15 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 ## [1.0.0] - 2026-06-26
 
 ### Added
+* **Razorpay Payment Integration (Milestone M12)**:
+  - Extended database schema with `Payment` and `PaymentAudit` models for persistent order logging and status change records.
+  - Initialized Razorpay Client SDK using environment-isolated API secrets.
+  - Implemented backend Repository and Services to handle payment generation, cryptographic signature validation, and mock refund processing.
+  - Configured REST controller endpoints for order creation, lookups, signature verifications, and administrative refund controls.
+  - Mounted protected payment console routes under JWT check auth alongside public checkout routes `/api/public/payments/*`.
+  - Upgraded public checkout forms (`/book-online`) to load the Razorpay SDK dynamically, launch payment screens, map verified callbacks, and render success/failure redirect interfaces.
+  - Deployed Razorpay Webhook receiver (`POST /api/webhooks/razorpay`) verifying request buffer signatures, event handling (captured, failed, refunded), and payload hash idempotency checks.
+  - Integrated notification hooks dispatching Email, SMS, and WhatsApp alerts on successful transactions, payment failures, confirmed status changes, and refunds.
 * **Milestone M11 Online Booking Engine**:
   - Rewrote and extended the database model schema for `Booking` with physical relation mappings to vehicle catalog and customer profiles.
   - Developed monthly sequential, atomic, and concurrency-safe Unique Booking ID generation (`LT-YYYYMM-000001`).

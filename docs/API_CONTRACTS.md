@@ -1158,6 +1158,139 @@ Every dispatched channel notification (SMS, Email, WhatsApp) registers audit log
   "errorMessage": null,
   "createdAt": "2026-06-26T12:00:00.000Z"
 }
+
+---
+
+## 11. Razorpay Payment & Webhook Services (`/api/payments` & `/api/public/payments`)
+
+### POST `/api/payments/order`
+* **Description**: Create Razorpay payment session order (Protected Admin/Customer route).
+* **Payload**:
+  ```json
+  {
+    "bookingId": "booking-uuid"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "razorpay_order_id": "order_XYZ123",
+    "amount": 2500000,
+    "currency": "INR",
+    "key_id": "rzp_test_abc123"
+  }
+  ```
+
+### POST `/api/public/payments/order`
+* **Description**: Create Razorpay payment session order for anonymous checkout (Public route).
+* **Payload**: (Same as POST `/api/payments/order`)
+* **Response (201 Created)**: (Same as POST `/api/payments/order`)
+
+### POST `/api/payments/verify`
+* **Description**: Verify Razorpay payment signature and log status updates (Protected Admin/Customer route).
+* **Payload**:
+  ```json
+  {
+    "razorpay_order_id": "order_XYZ123",
+    "razorpay_payment_id": "pay_ABC456",
+    "razorpay_signature": "cryptographic_signature_hash"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Payment verified successfully",
+    "payment": {
+      "id": "payment-uuid",
+      "bookingId": "booking-uuid",
+      "status": "SUCCESS"
+    }
+  }
+  ```
+
+### POST `/api/public/payments/verify`
+* **Description**: Verify Razorpay payment signature for guest checkout (Public route).
+* **Payload**: (Same as POST `/api/payments/verify`)
+* **Response (200 OK)**: (Same as POST `/api/payments/verify`)
+
+### GET `/api/payments/:id`
+* **Description**: Retrieve payment log by ID (Protected Admin/Customer route).
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "payment-uuid",
+      "bookingId": "booking-uuid",
+      "razorpayOrderId": "order_XYZ123",
+      "razorpayPaymentId": "pay_ABC456",
+      "amount": 25000,
+      "status": "SUCCESS",
+      "audits": [ ... ]
+    }
+  }
+  ```
+
+### GET `/api/payments/order/:orderId`
+* **Description**: Retrieve payment log by Razorpay Order ID (Protected Admin/Customer route).
+* **Response (200 OK)**: (Same as GET `/api/payments/:id`)
+
+### POST `/api/payments/:id/refund`
+* **Description**: Initiate a refund request for a payment (Protected Admin route).
+* **Payload**:
+  ```json
+  {
+    "amount": 10000,
+    "reason": "Customer request"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Refund request initiated successfully",
+    "payment": {
+      "id": "payment-uuid",
+      "status": "REFUND_PROCESSING"
+    }
+  }
+  ```
+
+### GET `/api/payments/:id/refunds`
+* **Description**: Get audit logs representing refund history (Protected Admin/Executive route).
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "refunds": [
+      {
+        "id": "audit-uuid",
+        "paymentId": "payment-uuid",
+        "fromStatus": "SUCCESS",
+        "toStatus": "REFUND_PROCESSING",
+        "action": "ADMIN_INITIATED_REFUND",
+        "metadata": {
+          "requestedAmount": 10000,
+          "reason": "Customer request"
+        }
+      }
+    ]
+  }
+  ```
+
+### POST `/api/webhooks/razorpay`
+* **Description**: Webhook receiver for Razorpay async updates (Public route).
+* **Headers**: `x-razorpay-signature: signature_hash`
+* **Payload**: Razorpay event JSON payload containing event type (`payment.captured`, `payment.failed`, `refund.processed`, `order.paid`).
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Webhook processed and recorded successfully"
+  }
+  ```
 ```
 
 
