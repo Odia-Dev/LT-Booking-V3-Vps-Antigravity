@@ -7,6 +7,12 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 ## [1.0.0] - 2026-06-26
 
 ### Added
+* **Security Hardening (Milestone S01)**:
+  - Deployed production API security middlewares (`helmet`, `express-rate-limit`, `cors`, and `compression`).
+  - Implemented role-based access control (RBAC) authorization guards checking `ADMIN` roles across critical resource routes (vehicles, variants, branches, colors, leads, and test drives).
+  - Hardened cookie session configurations to `SameSite=Strict`, `httpOnly`, and `secure`.
+  - Configured zero-leak logging policies and implemented Customer PII masking helpers (Email, Phone, Name) in console/audit logs.
+  - Performed dependency security audits (`npm audit` / `npm outdated`) for frontend and backend.
 * **Milestone M10 Test Drive Management**:
   - Implemented backend Repository, Services, and REST controllers for Test Drive Scheduling.
   - Setup slot conflict checking, double-booking prevention, and automatic customer User & Lead creation.

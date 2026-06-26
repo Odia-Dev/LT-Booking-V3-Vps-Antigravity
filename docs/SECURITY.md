@@ -92,3 +92,26 @@ To mitigate brute force attempts and DDoS, rate limits have been enforced using 
 * **Error Sanitization**: All controller catching logic filters and maps database-specific context (like `Prisma` engine messages) to non-sensitive messages before responding to client requests, avoiding technical metadata disclosures.
 * **Backup Access Isolation**: Database backups are executed using PostgreSQL local socket connections without hardcoding passwords in backup cron scripts or system variables.
 
+---
+
+## 8. Dependency Security Audit
+
+A comprehensive package vulnerability and update audit is performed regularly across both backend and frontend environments:
+
+### A. Backend Package Audit
+* **Vulnerability Status**: `0` vulnerabilities found.
+* **Intentionally Unchanged Packages**:
+  * `prisma` & `@prisma/client` (`5.22.0`): Pinned to version `5.22.0` (Latest: `7.8.0`) to avoid schema compatibility issues, migration engine shifts, and potential runtime queries regression.
+  * `express` (`4.22.2`): Pinned to version `4.22.2` (Latest: `5.2.1`) to ensure middleware compatibility and stable TypeScript routing types.
+  * `typescript` (`5.9.3`): Maintained at matching levels to prevent compiler flag changes.
+
+### B. Frontend Package Audit
+* **Vulnerability Status**: `2` moderate severity vulnerabilities found.
+  * **Vulnerability Source**: `postcss` (< `8.5.10`) - XSS via Unescaped `</style>` in CSS Stringify Output.
+  * **Impact**: Included transitively via the Next.js `next` framework packages.
+* **Intentionally Unchanged Packages**:
+  * `next` (`15.5.19`): Pinned to version `15.5.19` (Latest: `16.2.9`) to protect Next.js 15 routing structures, page builds, and App Router rendering pipelines from breaking.
+  * `react` & `react-dom` (`19.1.0`): Maintained at version `19.1.0` (Latest: `19.2.7`) to match Next.js 15 runtime compatibility matrices.
+* **Remediation Strategy**: Upgrade actions for Next.js and React are deferred until minor, verified non-breaking patches are certified.
+
+
