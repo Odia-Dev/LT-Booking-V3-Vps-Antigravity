@@ -79,3 +79,16 @@ To mitigate brute force attempts and DDoS, rate limits have been enforced using 
 
 * Unhandled exceptions and errors are caught by a centralized error handling middleware.
 * In **production** environment (`process.env.NODE_ENV === "production"`), the middleware suppresses detailed stack traces (`stack` parameters) and returns generic `"Internal server error"` messages, preventing database schema or backend filepath leakage.
+
+---
+
+## 7. Log Security & Data Protection
+
+* **Zero-Leak Logging Policy**: The application strictly prohibits logging sensitive variables, parameters, or configurations. Specifically:
+  * Raw user passwords or hashes are never printed or written to files.
+  * Cryptographic secrets (such as JWT keys) and environment variables are never logged.
+  * Payment gateways or other transaction-specific tokens/secrets are never printed in console or process logs.
+* **PII Masking**: Customer Personal Identifiable Information (PII) including Name, Email, and Phone is obfuscated inside system-level logs (e.g. notifications and audit logs) using helper masking techniques to secure user privacy in the server logs (e.g., `srv1749249.hstgr.cloud` auth/PM2 logs).
+* **Error Sanitization**: All controller catching logic filters and maps database-specific context (like `Prisma` engine messages) to non-sensitive messages before responding to client requests, avoiding technical metadata disclosures.
+* **Backup Access Isolation**: Database backups are executed using PostgreSQL local socket connections without hardcoding passwords in backup cron scripts or system variables.
+

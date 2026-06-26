@@ -1,4 +1,4 @@
-process.env.NODE_ENV = "development";
+process.env.NODE_ENV = "test";
 import http from "http";
 import { AuthRepository } from "./modules/auth/authRepository";
 import { ProfileRepository } from "./modules/profile/profileRepository";
