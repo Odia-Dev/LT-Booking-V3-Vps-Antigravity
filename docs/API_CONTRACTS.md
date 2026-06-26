@@ -913,3 +913,178 @@ Local DB stores state in the `CalendarEvent` table with the following schema con
 }
 ```
 
+---
+
+## 9. Online Booking Engine Services (`/api/bookings`)
+
+All bookings endpoints require a valid session via `admin_session` cookie.
+
+### GET `/api/bookings`
+* **Description**: Retrieve list of bookings with paginated search filters.
+* **Access Rules**: 
+  * `ADMIN`: Reads all bookings.
+  * `SALES_EXECUTIVE`: Reads only bookings where `assignedExecutive` matches their identifier.
+  * `CUSTOMER`: Reads only their own bookings.
+* **Query Parameters**:
+  * `status`: filter by booking status (e.g. `CONFIRMED`)
+  * `paymentStatus`: filter by payment status (e.g. `SUCCESS`)
+  * `branchId`: UUID filter
+  * `vehicleId`: UUID filter
+  * `customerId`: UUID filter
+  * `search`: text query (searches bookingId, notes, customer details, vehicle name)
+  * `startDate` / `endDate`: date range ISO string filters
+  * `page` (default `1`) / `limit` (default `10`)
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "booking-uuid",
+        "bookingId": "LT-202606-000001",
+        "customerId": "user-uuid",
+        "leadId": "lead-uuid",
+        "testDriveId": null,
+        "vehicleId": "vehicle-uuid",
+        "variantId": "variant-uuid",
+        "branchId": "branch-uuid",
+        "bookingAmount": 25000,
+        "paymentGateway": "RAZORPAY",
+        "paymentId": "pay_XYZ123",
+        "orderId": "order_ABC456",
+        "paymentStatus": "PENDING",
+        "bookingStatus": "INITIATED",
+        "assignedExecutive": null,
+        "notes": "Premium color selection",
+        "createdAt": "2026-06-26T12:00:00.000Z",
+        "updatedAt": "2026-06-26T12:00:00.000Z"
+      }
+    ],
+    "total": 1
+  }
+  ```
+
+### GET `/api/bookings/:id`
+* **Description**: Get booking by database UUID.
+* **Access Rules**: Admin, Assigned Executive, or Owner Customer only.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...bookingDetails }
+  }
+  ```
+
+### GET `/api/bookings/booking-id/:bookingId`
+* **Description**: Get booking by human-readable booking ID (e.g., `LT-202606-000001`).
+* **Access Rules**: Admin, Assigned Executive, or Owner Customer only.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...bookingDetails }
+  }
+  ```
+
+### POST `/api/bookings`
+* **Description**: Create new booking. Checks existences of dependencies and prevents duplicate active bookings for the same customer/vehicle.
+* **Access Rules**: Admin, or Customer (can only book for themselves).
+* **Payload**:
+  ```json
+  {
+    "customerId": "user-uuid",
+    "leadId": "lead-uuid",
+    "testDriveId": null,
+    "vehicleId": "vehicle-uuid",
+    "variantId": "variant-uuid",
+    "branchId": "branch-uuid",
+    "bookingAmount": 25000,
+    "notes": "Notes about booking request"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...bookingDetails }
+  }
+  ```
+
+### PUT `/api/bookings/:id`
+* **Description**: Update booking parameters.
+* **Access Rules**: 
+  * `ADMIN`: Full parameter updates.
+  * `SALES_EXECUTIVE`: Can only update `bookingStatus`, `paymentStatus`, `notes`, and `assignedExecutive`. Attempted changes to other parameters are stripped.
+  * `CUSTOMER`: Access denied.
+* **Payload**:
+  ```json
+  {
+    "bookingAmount": 26000,
+    "notes": "Updated color selection notes"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...updatedBooking }
+  }
+  ```
+
+### PATCH `/api/bookings/:id/status`
+* **Description**: Update booking status.
+* **Access Rules**: Admin or Assigned Executive.
+* **Payload**:
+  ```json
+  {
+    "bookingStatus": "CONFIRMED"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...updatedBooking }
+  }
+  ```
+
+### PATCH `/api/bookings/:id/payment-status`
+* **Description**: Update payment status. Updates booking status to `PAYMENT_SUCCESS` if payment status is `SUCCESS`.
+* **Access Rules**: Admin or Assigned Executive.
+* **Payload**:
+  ```json
+  {
+    "paymentStatus": "SUCCESS"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...updatedBooking }
+  }
+  ```
+
+### PATCH `/api/bookings/:id/cancel`
+* **Description**: Cancel booking.
+* **Access Rules**: Admin or Owner Customer only.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": { ...updatedBooking }
+  }
+  ```
+
+### DELETE `/api/bookings/:id`
+* **Description**: Permanently delete booking from database.
+* **Access Rules**: Admin only.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Booking record permanently deleted"
+  }
+  ```
+
+

@@ -85,6 +85,7 @@ export class BookingService {
     branchId: string;
     bookingAmount: number;
     notes?: string | null;
+    assignedExecutive?: string | null;
     paymentGateway?: string | null;
     paymentId?: string | null;
     orderId?: string | null;
@@ -163,6 +164,7 @@ export class BookingService {
       bookingAmount?: number;
       bookingStatus?: string;
       paymentStatus?: string;
+      assignedExecutive?: string | null;
       notes?: string | null;
       paymentGateway?: string | null;
       paymentId?: string | null;

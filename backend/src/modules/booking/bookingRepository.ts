@@ -5,6 +5,9 @@ export interface BookingFilters {
   status?: string; // maps to bookingStatus
   paymentStatus?: string;
   branchId?: string;
+  customerId?: string;
+  vehicleId?: string;
+  assignedExecutive?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
@@ -24,6 +27,7 @@ export class BookingRepository {
     bookingAmount: number;
     paymentStatus?: string;
     bookingStatus?: string;
+    assignedExecutive?: string | null;
     notes?: string | null;
     paymentGateway?: string | null;
     paymentId?: string | null;
@@ -54,6 +58,7 @@ export class BookingRepository {
       bookingAmount?: number;
       paymentStatus?: string;
       bookingStatus?: string;
+      assignedExecutive?: string | null;
       notes?: string | null;
       paymentGateway?: string | null;
       paymentId?: string | null;
@@ -132,6 +137,18 @@ export class BookingRepository {
 
     if (filters?.branchId) {
       whereClause.branchId = filters.branchId;
+    }
+
+    if (filters?.customerId) {
+      whereClause.customerId = filters.customerId;
+    }
+
+    if (filters?.vehicleId) {
+      whereClause.vehicleId = filters.vehicleId;
+    }
+
+    if (filters?.assignedExecutive) {
+      whereClause.assignedExecutive = filters.assignedExecutive;
     }
 
     if (filters?.startDate || filters?.endDate) {
