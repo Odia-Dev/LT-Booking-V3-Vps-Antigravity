@@ -11,6 +11,7 @@ publicPaymentsRouter.post("/verify", verifyPayment as any);
 
 // Require active authentication session for administrative operations
 router.post("/order", authMiddleware as any, createOrder as any);
+router.post("/verify", authMiddleware as any, verifyPayment as any);
 router.get("/:id", authMiddleware as any, getPaymentById as any);
 router.get("/order/:orderId", authMiddleware as any, getPaymentByOrderId as any);
 

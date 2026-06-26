@@ -122,12 +122,12 @@ export class PaymentService {
       }
     );
 
-    // Update Booking status to PAYMENT_SUCCESS
+    // Update Booking status to CONFIRMED
     await prisma.booking.update({
       where: { id: payment.bookingId },
       data: {
         paymentStatus: "SUCCESS",
-        bookingStatus: "PAYMENT_SUCCESS",
+        bookingStatus: "CONFIRMED",
         paymentId: razorpayPaymentId,
       },
     });
