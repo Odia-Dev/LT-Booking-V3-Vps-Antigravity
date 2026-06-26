@@ -240,3 +240,19 @@ model CalendarEvent {
 
   testDrive   TestDrive @relation(fields: [testDriveId], references: [id], onDelete: Cascade)
 }
+
+// -----------------------------------------------------------------------------
+// NotificationLog Model: Keeps track of dispatched notifications
+// -----------------------------------------------------------------------------
+model NotificationLog {
+  id           String   @id @default(uuid())
+  bookingId    String?
+  testDriveId  String?
+  recipient    String   // phone or email
+  channel      String   // EMAIL, SMS, WHATSAPP, PUSH
+  type         String   // e.g. BOOKING_CREATED, BOOKING_CONFIRMED, etc.
+  status       String   // SENT, FAILED, PENDING
+  content      String
+  errorMessage String?
+  createdAt    DateTime @default(now())
+}

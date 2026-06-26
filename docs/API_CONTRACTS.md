@@ -1010,6 +1010,44 @@ All bookings endpoints require a valid session via `admin_session` cookie.
   }
   ```
 
+### POST `/api/public/bookings`
+* **Description**: Guest customer checkout booking submission. Automatically resolves or registers a Customer User profile, registers an Inquiry Lead, validates options, prevents duplicate active bookings for the same customer/vehicle, generates a unique Booking ID, and initiates the booking.
+* **Access Rules**: Public (Anonymous guest access).
+* **Payload**:
+  ```json
+  {
+    "name": "Shyamal Mohanty",
+    "email": "shyamal@example.com",
+    "phone": "9876543210",
+    "city": "Bhubaneswar",
+    "state": "Odisha",
+    "vehicleId": "vehicle-uuid",
+    "variantId": "variant-uuid",
+    "branchId": "branch-uuid",
+    "bookingAmount": 25000,
+    "notes": "Interested in attitude black color",
+    "campaign": "festive_june",
+    "medium": "organic",
+    "source": "facebook",
+    "referrer": "https://m.facebook.com/",
+    "landingPageUrl": "https://laxmitoyota.co.in/book-online"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Booking request initiated successfully",
+    "booking": {
+      "id": "booking-uuid",
+      "bookingId": "LT-202606-000001",
+      "bookingAmount": 25000,
+      "bookingStatus": "INITIATED",
+      "paymentStatus": "PENDING"
+    }
+  }
+  ```
+
 ### PUT `/api/bookings/:id`
 * **Description**: Update booking parameters.
 * **Access Rules**: 
@@ -1086,5 +1124,40 @@ All bookings endpoints require a valid session via `admin_session` cookie.
     "message": "Booking record permanently deleted"
   }
   ```
+
+---
+
+## 10. Online Booking Notification & Logging Architecture
+
+The online booking system implements an event-driven notification dispatch pipeline mapping transactional changes and database operations to customer communication alerts.
+
+### 10.1 Channel Interface Abstractions
+All communication interfaces are abstracted under `IEmailService`, `ISmsService`, and `IWhatsAppService` definitions. Active stubs (`MockEmailService`, `MockSmsService`, `MockWhatsAppService`) simulate delivery logs to the system console during pre-integration.
+
+### 10.2 Dispatched Event Hooks
+Event-driven hooks are bound using Node's `EventEmitter` listener patterns, prepared to connect to Milestone M12 modules:
+
+1. **`booking.created`**: Fired upon booking initiation. Dispatches booking confirmation email, SMS reference receipt, and logs template WhatsApp triggers.
+2. **`booking.confirmed`**: Fired when booking status transitions to `CONFIRMED`. Alerts customer regarding showroom validation and allocation coordinator assignments.
+3. **`booking.cancelled`**: Fired when booking status transitions to `CANCELLED`. Dispatches cancellation email and SMS instructions.
+4. **`booking.payment_success`**: Fired when payment status transitions to `SUCCESS`. Confirms receipt of reservation payment amount.
+5. **`booking.payment_failed`**: Fired when payment status transitions to `FAILED`. Dispatches failed payment warnings containing links to retry checkout.
+
+### 10.3 Persistent Notification Logging
+Every dispatched channel notification (SMS, Email, WhatsApp) registers audit logs directly inside the PostgreSQL `NotificationLog` table:
+```json
+{
+  "id": "notification-log-uuid",
+  "bookingId": "booking-uuid",
+  "testDriveId": null,
+  "recipient": "shyamal@example.com | 9876543210",
+  "channel": "EMAIL | SMS | WHATSAPP",
+  "type": "BOOKING_CREATED | BOOKING_CONFIRMED | BOOKING_CANCELLED | PAYMENT_SUCCESSFUL | PAYMENT_FAILED",
+  "status": "SENT | FAILED | PENDING",
+  "content": "Full notification content message details...",
+  "errorMessage": null,
+  "createdAt": "2026-06-26T12:00:00.000Z"
+}
+```
 
 

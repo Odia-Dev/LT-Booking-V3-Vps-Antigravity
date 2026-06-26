@@ -1,6 +1,7 @@
 import { BookingRepository, BookingFilters } from "./bookingRepository";
 import { Booking } from "@prisma/client";
 import { prisma } from "../../config/db";
+import { bookingNotificationEvents } from "../../services/bookingNotificationService";
 
 export class BookingService {
   private repo = new BookingRepository();
@@ -144,12 +145,15 @@ export class BookingService {
     // 7. Generate Atomic Unique Booking ID
     const bookingId = await this.generateUniqueBookingId();
 
-    return this.repo.createBooking({
+    const booking = await this.repo.createBooking({
       ...data,
       bookingId,
       paymentStatus: "PENDING",
       bookingStatus: "INITIATED",
     });
+
+    bookingNotificationEvents.emit("booking.created", booking);
+    return booking;
   }
 
   async updateBooking(
@@ -220,22 +224,51 @@ export class BookingService {
       throw new Error("Booking amount must be a positive number");
     }
 
-    return this.repo.updateBooking(id, data);
+    const updated = await this.repo.updateBooking(id, data);
+    if (data.bookingStatus) {
+      if (data.bookingStatus === "CONFIRMED") {
+        bookingNotificationEvents.emit("booking.confirmed", updated);
+      } else if (data.bookingStatus === "CANCELLED") {
+        bookingNotificationEvents.emit("booking.cancelled", updated);
+      }
+    }
+    if (data.paymentStatus) {
+      if (data.paymentStatus === "SUCCESS") {
+        bookingNotificationEvents.emit("booking.payment_success", updated);
+      } else if (data.paymentStatus === "FAILED") {
+        bookingNotificationEvents.emit("booking.payment_failed", updated);
+      }
+    }
+    return updated;
   }
 
   async cancelBooking(id: string): Promise<Booking> {
     await this.getBookingById(id);
-    return this.repo.cancelBooking(id);
+    const booking = await this.repo.cancelBooking(id);
+    bookingNotificationEvents.emit("booking.cancelled", booking);
+    return booking;
   }
 
   async updateBookingStatus(id: string, status: string): Promise<Booking> {
     await this.getBookingById(id);
-    return this.repo.updateBookingStatus(id, status);
+    const booking = await this.repo.updateBookingStatus(id, status);
+    if (status === "CONFIRMED") {
+      bookingNotificationEvents.emit("booking.confirmed", booking);
+    } else if (status === "CANCELLED") {
+      bookingNotificationEvents.emit("booking.cancelled", booking);
+    }
+    return booking;
   }
 
   async updatePaymentStatus(id: string, status: string): Promise<Booking> {
     await this.getBookingById(id);
-    return this.repo.updatePaymentStatus(id, status);
+    const booking = await this.repo.updatePaymentStatus(id, status);
+    if (status === "SUCCESS") {
+      bookingNotificationEvents.emit("booking.payment_success", booking);
+    } else if (status === "FAILED") {
+      bookingNotificationEvents.emit("booking.payment_failed", booking);
+    }
+    return booking;
   }
 
   async createPublicBooking(data: {
@@ -361,7 +394,7 @@ export class BookingService {
     const bookingId = await this.generateUniqueBookingId();
 
     // 6. Create Booking
-    return this.repo.createBooking({
+    const booking = await this.repo.createBooking({
       bookingId,
       customerId: customer.id,
       leadId: lead.id,
@@ -373,5 +406,8 @@ export class BookingService {
       paymentStatus: "PENDING",
       bookingStatus: "INITIATED"
     });
+
+    bookingNotificationEvents.emit("booking.created", booking);
+    return booking;
   }
 }
