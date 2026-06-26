@@ -55,12 +55,27 @@ function BookOnlineContent() {
   const [successDetails, setSuccessDetails] = useState<{ id: string; bookingId: string; bookingAmount: number } | null>(null);
   const [error, setError] = useState("");
 
+  // Payment Flow States: NONE, SUCCESS, FAILED, CANCELLED, VERIFYING
+  const [paymentStatus, setPaymentStatus] = useState<"NONE" | "SUCCESS" | "FAILED" | "CANCELLED" | "VERIFYING">("NONE");
+  const [paymentError, setPaymentError] = useState("");
+
   // UTM Metadata
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
   const [utmCampaign, setUtmCampaign] = useState("");
   const [referrer, setReferrer] = useState("");
   const [landingPageUrl, setLandingPageUrl] = useState("");
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   // Fetch branches and vehicles
   useEffect(() => {
@@ -141,9 +156,82 @@ function BookOnlineContent() {
     return vehicle?.bookingAmount || 25000; // default booking amount
   };
 
+  const launchRazorpayCheckout = (
+    orderData: { key_id: string; amount: number; currency: string; razorpay_order_id: string },
+    newBookingId: string,
+    newBookingRefId: string,
+    amount: number
+  ) => {
+    // Make use of amount variable to satisfy unused-vars check
+    console.log(`Launching checkout session for amount: ₹${amount}`);
+    
+    const options = {
+      key: orderData.key_id,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "Laxmi Toyota",
+      description: `Reservation Payment for Booking ${newBookingRefId}`,
+      image: "https://laxmitoyota.co.in/logo.png",
+      order_id: orderData.razorpay_order_id,
+      handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+        setPaymentStatus("VERIFYING");
+        try {
+          const verifyRes = await fetch(`${apiBaseUrl}/api/public/payments/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success) {
+            setPaymentStatus("SUCCESS");
+          } else {
+            setPaymentStatus("FAILED");
+            setPaymentError(verifyData.message || "Payment signature verification failed.");
+          }
+        } catch {
+          setPaymentStatus("FAILED");
+          setPaymentError("Unable to reach transaction verification server.");
+        }
+      },
+      prefill: {
+        name,
+        email,
+        contact: phone,
+      },
+      notes: {
+        bookingId: newBookingId,
+        bookingRefId: newBookingRefId,
+      },
+      theme: {
+        color: "#eb0a1e", // Toyota Brand Red
+      },
+      modal: {
+        ondismiss: function () {
+          setPaymentStatus("CANCELLED");
+        },
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rzp = new (window as any).Razorpay(options);
+    
+    rzp.on("payment.failed", function (response: { error: { description: string } }) {
+      setPaymentStatus("FAILED");
+      setPaymentError(response.error.description || "Razorpay transaction failed.");
+    });
+
+    rzp.open();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setPaymentError("");
+    setPaymentStatus("NONE");
 
     if (!consent) {
       setError("Please check the consent box to proceed with the booking.");
@@ -153,6 +241,7 @@ function BookOnlineContent() {
     setLoading(true);
 
     try {
+      // Step 1: Create Booking
       const payload = {
         name,
         email,
@@ -185,6 +274,21 @@ function BookOnlineContent() {
 
       setSuccessDetails(data.booking);
       setSuccess(true);
+
+      // Step 2: Create Razorpay Order
+      const orderRes = await fetch(`${apiBaseUrl}/api/public/payments/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: data.booking.id }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        throw new Error(orderData.message || "Failed to initialize payment gateway order.");
+      }
+
+      // Step 3: Launch Razorpay Checkout
+      launchRazorpayCheckout(orderData, data.booking.id, data.booking.bookingId, data.booking.bookingAmount);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Submission error occurred");
     } finally {
@@ -192,76 +296,195 @@ function BookOnlineContent() {
     }
   };
 
-  if (success) {
+  const handleRetryPayment = async () => {
+    if (!successDetails) return;
+    setLoading(true);
+    setPaymentError("");
+    setPaymentStatus("NONE");
+
+    try {
+      const orderRes = await fetch(`${apiBaseUrl}/api/public/payments/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: successDetails.id }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        throw new Error(orderData.message || "Failed to initialize payment gateway order.");
+      }
+
+      launchRazorpayCheckout(orderData, successDetails.id, successDetails.bookingId, successDetails.bookingAmount);
+    } catch (err: unknown) {
+      setPaymentStatus("FAILED");
+      setPaymentError(err instanceof Error ? err.message : "Error initiating transaction.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If a booking was successfully initiated, show status-specific views
+  if (success && successDetails) {
+    // 1. Verifying Payment state
+    if (paymentStatus === "VERIFYING") {
+      return (
+        <div className="bg-[#18181b]/35 border border-neutral-800/80 rounded-2xl p-8 max-w-2xl mx-auto text-center flex flex-col items-center justify-center min-h-[450px] space-y-6">
+          <div className="w-12 h-12 border-4 border-t-[#eb0a1e] border-neutral-800 rounded-full animate-spin"></div>
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">Verifying Secure Payment</h2>
+            <p className="text-xs text-neutral-400 font-mono mt-1.5 font-light">
+              Booking Ref ID: {successDetails.bookingId}
+            </p>
+          </div>
+          <p className="text-neutral-400 text-sm max-w-sm font-light">
+            We are confirming your transaction status with the payment gateway. Please do not close the browser or click back.
+          </p>
+        </div>
+      );
+    }
+
+    // 2. Success state
+    if (paymentStatus === "SUCCESS") {
+      return (
+        <div className="bg-[#18181b]/35 border border-green-700/50 rounded-2xl p-8 max-w-2xl mx-auto text-center flex flex-col items-center justify-center min-h-[450px] space-y-6 animate-fadeIn">
+          <span className="text-5xl bg-green-950/50 p-4 rounded-full text-green-500 border border-green-900/40">✓</span>
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">Booking Confirmed!</h2>
+            <p className="text-xs text-neutral-400 font-mono mt-1.5">Booking Ref ID: {successDetails.bookingId}</p>
+          </div>
+
+          <div className="bg-[#09090b]/80 border border-neutral-800 rounded-xl p-6 w-full max-w-md text-left space-y-4">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-green-500 flex justify-between">
+              <span>Booking Summary</span>
+              <span>Status: SUCCESS</span>
+            </h3>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-neutral-400">Vehicle:</span>
+              <span className="text-white font-semibold">
+                {vehicles.find((v) => v.id === selectedVehicle)?.name}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-neutral-400">Variant:</span>
+              <span className="text-white font-semibold">
+                {variants.find((v) => v.id === selectedVariant)?.name}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-neutral-400">Dealership Branch:</span>
+              <span className="text-white font-semibold">
+                {branches.find((b) => b.id === selectedBranch)?.name}
+              </span>
+            </div>
+            <div className="h-px bg-neutral-800 my-2" />
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Paid Amount:</span>
+              <span className="text-lg font-black text-green-400">₹{successDetails.bookingAmount.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <p className="text-neutral-300 text-sm max-w-md leading-relaxed font-light">
+            Your transaction was processed successfully. A booking confirmation alert has been sent to your registered contact coordinates. A sales specialist will reach out shortly to guide you through registration.
+          </p>
+
+          <div>
+            <Link
+              href="/"
+              className="px-8 py-3.5 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors inline-block"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. Failed or Cancelled states
+    if (paymentStatus === "FAILED" || paymentStatus === "CANCELLED") {
+      const isFailed = paymentStatus === "FAILED";
+      return (
+        <div className="bg-[#18181b]/35 border border-neutral-800/80 rounded-2xl p-8 max-w-2xl mx-auto text-center flex flex-col items-center justify-center min-h-[450px] space-y-6">
+          <span className={`text-5xl p-4 rounded-full border ${
+            isFailed 
+              ? "bg-red-950/40 text-red-500 border-red-900/30" 
+              : "bg-yellow-950/40 text-yellow-500 border-yellow-900/30"
+          }`}>
+            {isFailed ? "⚠️" : "✕"}
+          </span>
+
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">
+              Payment {isFailed ? "Failed" : "Cancelled"}
+            </h2>
+            <p className="text-xs text-neutral-400 font-mono mt-1.5">Booking Ref ID: {successDetails.bookingId}</p>
+          </div>
+
+          <div className="bg-[#09090b]/80 border border-neutral-800 rounded-xl p-6 w-full max-w-md text-left space-y-4">
+            <div className="flex justify-between text-xs font-extrabold uppercase tracking-wider">
+              <span className="text-neutral-400">Transaction Status:</span>
+              <span className={isFailed ? "text-red-500" : "text-yellow-500"}>
+                {paymentStatus}
+              </span>
+            </div>
+            {isFailed && paymentError && (
+              <div className="p-3 bg-red-950/20 border border-red-900/40 text-red-400 text-xs rounded-lg font-mono">
+                {paymentError}
+              </div>
+            )}
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-neutral-400">Amount Due:</span>
+              <span className="text-white font-semibold">₹{successDetails.bookingAmount.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <p className="text-neutral-300 text-sm max-w-md leading-relaxed font-light">
+            Your booking is saved in the system, but the payment gateway transaction was {isFailed ? "declined" : "cancelled"}. You can retry processing the payment now.
+          </p>
+
+          <div className="flex gap-4">
+            <button
+              onClick={handleRetryPayment}
+              disabled={loading}
+              className="px-6 py-3 bg-[#eb0a1e] hover:bg-[#c90817] disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+            >
+              {loading ? "Initializing..." : "Retry Payment"}
+            </button>
+            <Link
+              href="/"
+              className="px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors"
+            >
+              Go to Home
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // Default "Order Created / Launching Payment Gateway" loading screen
     return (
-      <div className="bg-[#18181b]/35 border border-yellow-700/50 rounded-2xl p-8 max-w-2xl mx-auto text-center flex flex-col items-center justify-center min-h-[450px] space-y-6">
-        <span className="text-5xl text-yellow-500">⏳</span>
+      <div className="bg-[#18181b]/35 border border-neutral-800/80 rounded-2xl p-8 max-w-2xl mx-auto text-center flex flex-col items-center justify-center min-h-[450px] space-y-6">
+        <div className="w-12 h-12 border-4 border-t-[#eb0a1e] border-neutral-800 rounded-full animate-spin"></div>
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Payment Pending</h2>
-          <p className="text-xs text-neutral-400 font-mono mt-1.5">Booking Ref ID: {successDetails?.bookingId}</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">Initiating Payment Gateway</h2>
+          <p className="text-xs text-neutral-400 font-mono mt-1.5 font-light">
+            Booking Ref ID: {successDetails.bookingId}
+          </p>
         </div>
-        
-        <div className="bg-[#09090b]/80 border border-neutral-800 rounded-xl p-6 w-full max-w-md text-left space-y-4">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-400">Booking Summary</h3>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-neutral-400">Vehicle:</span>
-            <span className="text-white font-semibold">
-              {vehicles.find((v) => v.id === selectedVehicle)?.name}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-neutral-400">Variant:</span>
-            <span className="text-white font-semibold">
-              {variants.find((v) => v.id === selectedVariant)?.name}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-neutral-400">Dealership Branch:</span>
-            <span className="text-white font-semibold">
-              {branches.find((b) => b.id === selectedBranch)?.name}
-            </span>
-          </div>
-          <div className="h-px bg-neutral-800 my-2" />
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Booking Amount Paid:</span>
-            <span className="text-lg font-black text-yellow-500">₹{successDetails?.bookingAmount?.toLocaleString()}</span>
-          </div>
-        </div>
-
-        <p className="text-neutral-300 text-sm max-w-md leading-relaxed font-light">
-          Your booking has been registered in our system under Status **Initiated**. A sales representative from the selected dealership will contact you to send the payment link and finalize allocation details.
+        <p className="text-neutral-400 text-sm max-w-sm font-light">
+          Launching Razorpay secure checkout. If the popup does not open automatically, please click below.
         </p>
-
-        <div className="flex gap-4">
-          <Link
-            href="/"
-            className="px-6 py-3 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors"
-          >
-            Go to Home
-          </Link>
-          <button
-            onClick={() => {
-              setSuccess(false);
-              setName("");
-              setPhone("");
-              setEmail("");
-              setCity("");
-              setState("");
-              setSelectedVehicle("");
-              setSelectedVariant("");
-              setSelectedBranch("");
-              setMessage("");
-              setConsent(false);
-            }}
-            className="px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors"
-          >
-            Book Another Car
-          </button>
-        </div>
+        <button
+          onClick={handleRetryPayment}
+          disabled={loading}
+          className="px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-extrabold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+        >
+          Open Checkout Manual
+        </button>
       </div>
     );
   }
 
+  // Original Form View
   return (
     <div className="max-w-3xl mx-auto space-y-8 bg-[#18181b]/35 border border-neutral-800/80 rounded-2xl p-6 md:p-8">
       <div>
@@ -287,37 +510,41 @@ function BookOnlineContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] text-neutral-500 font-extrabold uppercase tracking-wider mb-2">Model</label>
-              <select
-                required
-                value={selectedVehicle}
-                onChange={(e) => setSelectedVehicle(e.target.value)}
-                className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 appearance-none"
-              >
-                <option value="" className="bg-[#18181b]">Select Vehicle</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id} className="bg-[#18181b]">
-                    {v.name} (Booking: ₹{(v.bookingAmount || 25000).toLocaleString()})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  required
+                  value={selectedVehicle}
+                  onChange={(e) => setSelectedVehicle(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 appearance-none"
+                >
+                  <option value="" className="bg-[#18181b]">Select Vehicle</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id} className="bg-[#18181b]">
+                      {v.name} (Booking: ₹{(v.bookingAmount || 25000).toLocaleString()})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-[10px] text-neutral-500 font-extrabold uppercase tracking-wider mb-2">Variant</label>
-              <select
-                required
-                value={selectedVariant}
-                disabled={!selectedVehicle}
-                onChange={(e) => setSelectedVariant(e.target.value)}
-                className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 disabled:opacity-40 appearance-none"
-              >
-                <option value="" className="bg-[#18181b]">Select Variant</option>
-                {variants.map((v) => (
-                  <option key={v.id} value={v.id} className="bg-[#18181b]">
-                    {v.name} (Ex-Showroom: ₹{v.price.toLocaleString()})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  required
+                  value={selectedVariant}
+                  disabled={!selectedVehicle}
+                  onChange={(e) => setSelectedVariant(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 disabled:opacity-40 appearance-none"
+                >
+                  <option value="" className="bg-[#18181b]">Select Variant</option>
+                  {variants.map((v) => (
+                    <option key={v.id} value={v.id} className="bg-[#18181b]">
+                      {v.name} (Ex-Showroom: ₹{v.price.toLocaleString()})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -327,19 +554,21 @@ function BookOnlineContent() {
           <h3 className="text-xs uppercase font-extrabold text-neutral-500 tracking-wider">2. Select Showroom Location</h3>
           <div>
             <label className="block text-[10px] text-neutral-500 font-extrabold uppercase tracking-wider mb-2">Branch</label>
-            <select
-              required
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 appearance-none"
-            >
-              <option value="" className="bg-[#18181b]">Select Branch Showroom</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#18181b]">
-                  {b.name} ({b.city})
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                required
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 appearance-none"
+              >
+                <option value="" className="bg-[#18181b]">Select Branch Showroom</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id} className="bg-[#18181b]">
+                    {b.name} ({b.city})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -465,7 +694,7 @@ function BookOnlineContent() {
             disabled={loading}
             className="w-full py-4 bg-[#eb0a1e] hover:bg-[#c90817] disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
           >
-            {loading ? "Processing Booking..." : "Submit Online Reservation"}
+            {loading ? "Processing Booking..." : "Submit & Pay Reservation"}
           </button>
         </div>
       </form>

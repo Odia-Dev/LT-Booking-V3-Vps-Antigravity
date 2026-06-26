@@ -51,15 +51,13 @@ export async function createOrder(req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    // Validate: RBAC (Ensure user owns this booking or is Admin/Executive)
-    if (!req.admin) {
-      res.status(401).json({ success: false, message: "Authentication required" });
-      return;
-    }
-    const { role, id } = req.admin;
-    if (role === "CUSTOMER" && booking.customerId !== id) {
-      res.status(403).json({ success: false, message: "Access denied" });
-      return;
+    // Validate: RBAC (Ensure user owns this booking if logged in; allow guest checkouts)
+    if (req.admin) {
+      const { role, id } = req.admin;
+      if (role === "CUSTOMER" && booking.customerId !== id) {
+        res.status(403).json({ success: false, message: "Access denied" });
+        return;
+      }
     }
 
     // Validate: Booking status allows payment (INITIATED or PAYMENT_PENDING)
@@ -139,6 +137,45 @@ export async function getPaymentByOrderId(req: AuthenticatedRequest, res: Respon
     res.status(200).json({ success: true, data: payment });
   } catch (error: any) {
     console.error("Error retrieving payment by Order ID:", error);
+    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+  }
+}
+
+export async function verifyPayment(req: Request, res: Response): Promise<void> {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      res.status(400).json({ success: false, message: "Missing required signature verification fields" });
+      return;
+    }
+
+    const isValid = await paymentService.verifySignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    );
+
+    if (isValid) {
+      const payment = await paymentService.markSuccess(
+        razorpay_order_id,
+        razorpay_payment_id,
+        req.body
+      );
+      res.status(200).json({
+        success: true,
+        message: "Payment verified successfully",
+        payment,
+      });
+    } else {
+      await paymentService.markFailed(razorpay_order_id, razorpay_payment_id, {
+        error: "Signature mismatch verification failure",
+        payload: req.body,
+      });
+      res.status(400).json({ success: false, message: "Invalid payment signature" });
+    }
+  } catch (error: any) {
+    console.error("Error verifying payment:", error);
     res.status(500).json({ success: false, message: error.message || "Internal server error" });
   }
 }
