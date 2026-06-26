@@ -162,6 +162,7 @@ model Booking {
   vehicle        Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   variant        Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
   branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  payment        Payment?
 }
 
 // -----------------------------------------------------------------------------
@@ -180,6 +181,7 @@ model User {
   updatedAt    DateTime @updatedAt
   testDrives   TestDrive[]
   bookings     Booking[]
+  payments     Payment[]
 }
 
 // -----------------------------------------------------------------------------
@@ -255,4 +257,40 @@ model NotificationLog {
   content      String
   errorMessage String?
   createdAt    DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// Payment Model: Razorpay Transaction Logs
+// -----------------------------------------------------------------------------
+model Payment {
+  id                 String         @id @default(uuid())
+  bookingId          String         @unique
+  customerId         String
+  razorpayOrderId    String         @unique
+  razorpayPaymentId  String?        @unique
+  amount             Float
+  currency           String         @default("INR")
+  status             String         @default("CREATED") // CREATED, PENDING, SUCCESS, FAILED, REFUNDED, EXPIRED
+  gatewayResponse    Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  booking            Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer           User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  audits             PaymentAudit[]
+}
+
+// -----------------------------------------------------------------------------
+// PaymentAudit Model: Payment status change audit trails
+// -----------------------------------------------------------------------------
+model PaymentAudit {
+  id         String   @id @default(uuid())
+  paymentId  String
+  fromStatus String
+  toStatus   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 }
