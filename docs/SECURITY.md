@@ -128,4 +128,22 @@ The following verifications were successfully run and passed prior to final prod
   * **Frontend**: Audited (2 moderate-risk transitive postcss vulnerabilities managed via version locking)
 * **API Rate Limiting & Helmet Headers**: PASS (Verified protection boundaries on login, leads, and test drive modules)
 
+---
+
+## 10. Payment Security Hardening (Milestone M12 - Razorpay)
+
+To secure transaction handling, payment order generation, and state updates, the following controls have been implemented:
+
+* **Secrets Isolation**: All sensitive gateway identifiers (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`) are stored strictly in the `.env` file and isolated from codebase version control.
+* **Zero Log Leaks**: The system ensures `RAZORPAY_KEY_SECRET` and raw webhook signatures are never logged or outputted to console standard outputs or PM2 logs.
+* **Mandatory Signature Validation**:
+  - The client verification callback (`POST /api/payments/verify`) validates signatures cryptographically using `RAZORPAY_KEY_SECRET` and `crypto.createHmac` matching standard Razorpay signature format.
+  - The webhook callback (`POST /api/webhooks/razorpay`) validates webhook signatures matching the `x-razorpay-signature` header.
+* **Idempotency & Replay Attack Prevention**:
+  - Webhooks compute a SHA-256 hash (`payload_hash`) of the raw body payload. This hash is compared against logged actions inside `PaymentAudit` to reject duplicate webhook replays.
+  - Webhook processing checks unique `eventId` parameters in Razorpay payloads to prevent double-processing.
+* **Duplicate Payment Prevention**:
+  - Before creating a new Razorpay order, the system queries the database to ensure the booking does not already have an active payment record with status `SUCCESS`. If it does, the operation is blocked to prevent duplicate billing.
+  - Form validation restricts customers to one active booking per vehicle to block multiple payment checkouts.
+
 
