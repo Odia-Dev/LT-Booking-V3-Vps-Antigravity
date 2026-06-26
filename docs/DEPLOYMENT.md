@@ -322,9 +322,10 @@ If a deployment fails, run rollback commands:
   * [x] M01-M03 Base project foundations & Auth Setup
   * [x] M04 Admin Dashboard
   * [x] M05-M07 Vehicle, Variant & Color CMS
-  * [ ] M08 Branch Management (Pending Deploy verification)
-  * [ ] M09 Payment Gateway (Pending)
-  * [ ] M10 Lead CRM (Pending)
+  * [x] M08 Branch Management
+  * [x] M09 Lead CRM & Inquiry Management
+  * [x] M10 Test Drive Management
+  * [x] S01 Security Hardening
   * [ ] M11 Booking Module (Pending)
 
 ---

@@ -16,6 +16,7 @@ This document logs git release tags and production deploy branches history.
   - Masked customer PII (Name, Email, Phone) in console outputs and server process logs.
   - Documented VPS configurations (SSH key authorization, local-only PostgreSQL network isolation, Fail2Ban, unattended OS security updates, and PM2 boot recovery).
   - Audited dependency security states and documented package pins (Next.js 15, React 19, Prisma 5, Express 4) for stability.
+  - Verified and passed backend/frontend compilations (`npm run build`) and Prisma schema validation (`npx prisma validate`).
 
 ### `v1.0.0-m10-production-ready` (2026-06-26)
 * **Goal**: Launch the complete public Test Drive booking experience, dynamic CRM administrative consoles, notification hooks, and calendar scheduling support.

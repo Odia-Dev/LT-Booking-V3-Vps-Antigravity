@@ -13,6 +13,7 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
   - Hardened cookie session configurations to `SameSite=Strict`, `httpOnly`, and `secure`.
   - Configured zero-leak logging policies and implemented Customer PII masking helpers (Email, Phone, Name) in console/audit logs.
   - Performed dependency security audits (`npm audit` / `npm outdated`) for frontend and backend.
+  - Run complete production builds, Prisma schema validations, and verification checks.
 * **Milestone M10 Test Drive Management**:
   - Implemented backend Repository, Services, and REST controllers for Test Drive Scheduling.
   - Setup slot conflict checking, double-booking prevention, and automatic customer User & Lead creation.
