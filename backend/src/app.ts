@@ -17,6 +17,7 @@ import { publicRouter as branchRoutes, adminRouter as adminBranchRoutes, publicB
 import leadRoutes, { publicLeadsRouter } from "./modules/lead/leadRoutes";
 import testDriveRoutes, { publicTestDriveRouter } from "./modules/testDrive/testDriveRoutes";
 import bookingRoutes, { publicBookingsRouter } from "./modules/booking/bookingRoutes";
+import paymentRoutes from "./modules/payment/paymentRoutes";
 
 dotenv.config();
 
@@ -176,6 +177,7 @@ app.use("/api/test-drives", testDriveRoutes);
 app.use("/api/public/test-drives", publicTestDriveRouter);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/public/bookings", publicBookingsRouter);
+app.use("/api/payments", paymentRoutes);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
