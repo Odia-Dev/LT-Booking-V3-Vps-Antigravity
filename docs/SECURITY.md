@@ -30,7 +30,22 @@ This document describes the security protocols, encryption mechanisms, and route
 ## 3. Network & Infrastructure Hardening
 
 * **Unified Entrypoint Proxy**: All API interactions routing through Next.js and Express are mapped to a secure domain `https://laxmitoyota.co.in/api/*` protected by SSL.
-* **Firewall Rules (UFW)**: The production server denies all incoming traffic except port `80` (HTTP), `443` (HTTPS), and `22` (SSH).
+* **SSL/TLS & HTTPS Redirections**: Port `80` (HTTP) requests are redirected to Port `443` (HTTPS) via a `301 Moved Permanently` rule. TLS v1.2 and v1.3 protocols are enforced with secure modern cipher suites.
+* **Nginx Reverse Proxy Security Headers**:
+  * **HSTS**: `Strict-Transport-Security` header enforces SSL for all subdomains and supports preloading.
+  * **Clickjacking Protection**: `X-Frame-Options: DENY` ensures pages cannot be loaded inside frame structures.
+  * **MIME Sniffing Prevention**: `X-Content-Type-Options: nosniff` forces browsers to adhere strictly to server-provided MIME content-types.
+  * **Referrer Policy**: `Referrer-Policy: strict-origin-when-cross-origin` keeps query params and referrers private on external navigations.
+* **Network Firewall Rules (UFW)**: The VPS operating system firewall restricts incoming network requests to only ports `22` (SSH), `80` (HTTP), and `443` (HTTPS).
+* **Nginx Request Limiting & Payload Controls**:
+  * A Nginx `limit_req_zone` restricts global burst traffic.
+  * `client_max_body_size` is limited to **10M** to block oversized payload memory attacks.
+  * Backend responses are compressed using `gzip` for optimized bandwidth.
+* **Secure SSH Daemon Configuration**: Default root credentials and password-based SSH access are disabled (`PasswordAuthentication no`, `PermitRootLogin no`). Access is granted solely via authorized public keys.
+* **PostgreSQL Isolation**: The PostgreSQL engine is bound strictly to local sockets (`listen_addresses = 'localhost'`) and cannot receive public packets on port `5432` / shadow port `5433`.
+* **Fail2Ban Intrusion Prevention**: Protects SSH access from brute force cracking by automatically blocking IPs on consecutive connection failures.
+* **Automatic Security Patches**: The Ubuntu VPS runs `unattended-upgrades` to automatically install critical operating system security patches.
+* **PM2 Process Resilience**: Node processes are managed by PM2 and hooked to the system start service (`pm2 startup`) to ensure immediate recovery on server reboots.
 
 ---
 
