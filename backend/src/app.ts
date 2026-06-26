@@ -18,6 +18,7 @@ import leadRoutes, { publicLeadsRouter } from "./modules/lead/leadRoutes";
 import testDriveRoutes, { publicTestDriveRouter } from "./modules/testDrive/testDriveRoutes";
 import bookingRoutes, { publicBookingsRouter } from "./modules/booking/bookingRoutes";
 import paymentRoutes, { publicPaymentsRouter } from "./modules/payment/paymentRoutes";
+import webhookRoutes from "./modules/payment/webhookRoutes";
 
 dotenv.config();
 
@@ -52,8 +53,15 @@ app.use(cors({
   credentials: true,
 }));
 
-// Set strict JSON and URL-encoded request payload limits
-app.use(express.json({ limit: "50kb" }));
+// Set strict JSON and URL-encoded request payload limits with raw body verification support
+app.use(
+  express.json({
+    limit: "50kb",
+    verify: (req: any, _res: any, buf: Buffer) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use(cookieParser());
 
@@ -179,6 +187,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/public/bookings", publicBookingsRouter);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/public/payments", publicPaymentsRouter);
+app.use("/api/webhooks", webhookRoutes);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
