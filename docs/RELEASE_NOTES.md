@@ -6,6 +6,19 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.0.0-m11-booking-engine-ready` (2026-06-26)
+* **Goal**: Launch the complete public Online Booking Engine experience, CRM booking consoles, payment/booking status lifecycles, and event-driven logging notification hooks.
+* **Commit**: `feat(m11): production ready`
+* **Details**:
+  - Rewrote database model schema for `Booking` with relational references to Catalog elements, User customer profile, and optional inquiry dependencies.
+  - Implemented monthly sequential, atomic, and concurrency-safe Unique Booking ID generation (`LT-YYYYMM-000001`).
+  - Implemented backend Repository and Services supporting paginated list queries, date/branch filters, status updates, and cancellation flow.
+  - Deployed secure controller endpoints protected by RBAC checking (Admins have full CRUD, Executives can only read assigned bookings and edit status/notes, Customers can only manage their own bookings).
+  - Deployed public booking checkout forms (`/book-online` and `/book-online/[vehicle]`) tracking UTM metadata, auto-generating user profiles, and rendering transaction info.
+  - Built comprehensive Admin Booking Management CRM dashboard (`/admin/bookings` and `/admin/bookings/[id]`) with timeline activity logs and bulk updates.
+  - Deployed transaction notifications mapping (`booking.created`, `booking.confirmed`, `booking.cancelled`, `booking.payment_success`, `booking.payment_failed`) with database log audits.
+  - Verified and passed backend compiler compilation and frontend Next.js production builds.
+
 ### `v1.0.0-s01-security-ready` (2026-06-26)
 * **Goal**: Audit, harden, and verify the production security of the LT-Booking-V3 platform, including API middlewares, role-based authorization guards, log PII masking, Nginx reverse proxy headers, and dependency vulnerabilities.
 * **Commit**: `security(s01): production security hardening`

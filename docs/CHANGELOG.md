@@ -7,6 +7,14 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 ## [1.0.0] - 2026-06-26
 
 ### Added
+* **Milestone M11 Online Booking Engine**:
+  - Rewrote and extended the database model schema for `Booking` with physical relation mappings to vehicle catalog and customer profiles.
+  - Developed monthly sequential, atomic, and concurrency-safe Unique Booking ID generation (`LT-YYYYMM-000001`).
+  - Implemented backend Repository and Services supporting paginated lists, status/payment updates, and cancellation lifecycles.
+  - Implemented secure API Controllers and Zod input validation schemas for `/api/bookings` with multi-tier role-based access controls.
+  - Configured public booking flow (`/book-online` and `/book-online/[vehicle]`) supporting UTM campaign parameter tracking, automatic profile resolution, and a Payment Pending dashboard screen.
+  - Designed the comprehensive Admin Booking Management Dashboard CRM console (`/admin/bookings` and `/admin/bookings/[id]`) with timeline activity logs and bulk updates.
+  - Deployed an event-driven notification architecture for transactional booking status transitions with persistent logs stored in `NotificationLog`.
 * **Security Hardening (Milestone S01)**:
   - Deployed production API security middlewares (`helmet`, `express-rate-limit`, `cors`, and `compression`).
   - Implemented role-based access control (RBAC) authorization guards checking `ADMIN` roles across critical resource routes (vehicles, variants, branches, colors, leads, and test drives).
