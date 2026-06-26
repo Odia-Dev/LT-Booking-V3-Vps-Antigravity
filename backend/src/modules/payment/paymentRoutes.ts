@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrder, getPaymentById, getPaymentByOrderId, verifyPayment } from "./paymentController";
+import { createOrder, getPaymentById, getPaymentByOrderId, verifyPayment, initiateRefund, getRefundHistory } from "./paymentController";
 import { authMiddleware } from "../../middleware/auth";
 
 const router = Router();
@@ -14,5 +14,7 @@ router.post("/order", authMiddleware as any, createOrder as any);
 router.post("/verify", authMiddleware as any, verifyPayment as any);
 router.get("/:id", authMiddleware as any, getPaymentById as any);
 router.get("/order/:orderId", authMiddleware as any, getPaymentByOrderId as any);
+router.post("/:id/refund", authMiddleware as any, initiateRefund as any);
+router.get("/:id/refunds", authMiddleware as any, getRefundHistory as any);
 
 export { router as default, publicPaymentsRouter };

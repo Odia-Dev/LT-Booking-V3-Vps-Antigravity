@@ -203,4 +203,93 @@ export class PaymentService {
 
     return updatedPayment;
   }
+
+  async requestRefund(paymentId: string, amount?: number, reason?: string): Promise<any> {
+    const payment = await this.paymentRepository.getPaymentById(paymentId);
+    if (!payment) {
+      throw new Error(`Payment record ${paymentId} not found`);
+    }
+
+    const eligibleStatuses = ["SUCCESS", "PARTIAL_REFUND"];
+    if (!eligibleStatuses.includes(payment.status)) {
+      throw new Error(`Payment is not eligible for refund. Current status: ${payment.status}`);
+    }
+
+    // Get previous refunds to check total remaining refundable balance
+    const audits = await prisma.paymentAudit.findMany({
+      where: { paymentId },
+    });
+
+    let totalRefunded = 0;
+    audits.forEach((audit) => {
+      if (audit.toStatus === "REFUNDED" || audit.toStatus === "PARTIAL_REFUND") {
+        const meta = audit.metadata as any;
+        if (meta && meta.amount) {
+          totalRefunded += meta.amount;
+        }
+      }
+    });
+
+    const maxRefundable = payment.amount - totalRefunded;
+    const refundAmount = amount !== undefined ? amount : maxRefundable;
+
+    if (refundAmount <= 0) {
+      throw new Error("No refundable balance remains on this payment");
+    }
+
+    if (refundAmount > maxRefundable) {
+      throw new Error(`Requested refund (₹${refundAmount}) exceeds maximum refundable balance (₹${maxRefundable})`);
+    }
+
+    const targetPaymentStatus = refundAmount === maxRefundable ? "REFUNDED" : "PARTIAL_REFUND";
+
+    // Update payment to REFUND_PROCESSING (do not automatically call Razorpay api yet)
+    const updatedPayment = await this.paymentRepository.updatePayment(
+      payment.id,
+      {
+        status: "REFUND_PROCESSING",
+      },
+      {
+        fromStatus: payment.status,
+        toStatus: "REFUND_PROCESSING",
+        action: "ADMIN_INITIATED_REFUND",
+        metadata: {
+          requestedAmount: refundAmount,
+          reason: reason || "Admin Request",
+          targetStatus: targetPaymentStatus,
+        },
+      }
+    );
+
+    // Also update Booking status to REFUND_PROCESSING
+    await prisma.booking.update({
+      where: { id: payment.bookingId },
+      data: {
+        paymentStatus: "REFUND_PROCESSING",
+      },
+    });
+
+    // Execute the mock interface call
+    await this.executeMockRazorpayRefund(payment.id, refundAmount, reason);
+
+    return updatedPayment;
+  }
+
+  async executeMockRazorpayRefund(paymentId: string, amount: number, reason?: string): Promise<any> {
+    console.log(`[MOCK RAZORPAY REFUND] Dispatching refund request to Razorpay for payment ${paymentId}, amount: ₹${amount}, reason: ${reason || "none"}`);
+    
+    // Simulate Razorpay API Response object
+    return {
+      id: `rfnd_${crypto.randomBytes(8).toString("hex")}`,
+      entity: "refund",
+      amount: amount * 100, // paise
+      currency: "INR",
+      payment_id: paymentId,
+      notes: {
+        reason: reason || "Admin Request",
+      },
+      created_at: Math.floor(Date.now() / 1000),
+      status: "processed",
+    };
+  }
 }

@@ -179,3 +179,75 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
     res.status(500).json({ success: false, message: error.message || "Internal server error" });
   }
 }
+
+export async function initiateRefund(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!req.admin) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+
+    if (req.admin.role !== "ADMIN") {
+      res.status(403).json({ success: false, message: "Forbidden: Only administrators can initiate refunds" });
+      return;
+    }
+
+    const { id } = req.params;
+
+    const { AdminInitiateRefundSchema } = require("./refundValidation");
+    const parseResult = AdminInitiateRefundSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ success: false, errors: parseResult.error.errors });
+      return;
+    }
+
+    const { amount, reason } = parseResult.data;
+
+    const payment = await paymentService.requestRefund(id, amount, reason);
+
+    res.status(200).json({
+      success: true,
+      message: "Refund request initiated successfully",
+      payment,
+    });
+  } catch (error: any) {
+    console.error("Error initiating refund:", error);
+    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+  }
+}
+
+export async function getRefundHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    const payment = await paymentRepository.getPaymentById(id);
+    if (!payment) {
+      res.status(404).json({ success: false, message: "Payment record not found" });
+      return;
+    }
+
+    // RBAC: Check access
+    if (!hasAccessToPayment(req, payment)) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+
+    const audits = await prisma.paymentAudit.findMany({
+      where: {
+        paymentId: id,
+        toStatus: {
+          in: ["REFUNDED", "PARTIAL_REFUND", "REFUND_PROCESSING", "REFUND_REQUESTED"],
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json({
+      success: true,
+      refunds: audits,
+    });
+  } catch (error: any) {
+    console.error("Error retrieving refund history:", error);
+    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+  }
+}
