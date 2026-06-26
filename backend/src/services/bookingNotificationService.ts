@@ -79,6 +79,10 @@ export class BookingNotificationService {
     bookingNotificationEvents.on("booking.payment_failed", async (booking: any) => {
       await this.handlePaymentFailed(booking);
     });
+
+    bookingNotificationEvents.on("booking.refund_processed", async (booking: any) => {
+      await this.handleRefundProcessed(booking);
+    });
   }
 
   private async logNotification(data: {
@@ -194,6 +198,20 @@ export class BookingNotificationService {
           status: "SENT",
           content: smsContent
         });
+
+        await this.whatsAppService.sendWhatsApp(customer.phone, "booking_confirmed", [
+          customer.name || "Customer",
+          booking.bookingId,
+          vehicleName
+        ]);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.phone,
+          channel: "WHATSAPP",
+          type: "BOOKING_CONFIRMED",
+          status: "SENT",
+          content: `WhatsApp: Template booking_confirmed triggered for ${booking.bookingId}`
+        });
       }
     } catch (err: any) {
       console.error("[BookingNotificationService] Error executing booking.confirmed triggers:", err);
@@ -268,6 +286,20 @@ export class BookingNotificationService {
           status: "SENT",
           content: smsContent
         });
+
+        await this.whatsAppService.sendWhatsApp(customer.phone, "payment_success", [
+          customer.name || "Customer",
+          booking.bookingId,
+          booking.bookingAmount.toString()
+        ]);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.phone,
+          channel: "WHATSAPP",
+          type: "PAYMENT_SUCCESSFUL",
+          status: "SENT",
+          content: `WhatsApp: Template payment_success triggered for ${booking.bookingId}`
+        });
       }
     } catch (err: any) {
       console.error("[BookingNotificationService] Error executing booking.payment_success triggers:", err);
@@ -305,9 +337,73 @@ export class BookingNotificationService {
           status: "SENT",
           content: smsContent
         });
+
+        await this.whatsAppService.sendWhatsApp(customer.phone, "payment_failed", [
+          customer.name || "Customer",
+          booking.bookingId
+        ]);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.phone,
+          channel: "WHATSAPP",
+          type: "PAYMENT_FAILED",
+          status: "SENT",
+          content: `WhatsApp: Template payment_failed triggered for ${booking.bookingId}`
+        });
       }
     } catch (err: any) {
       console.error("[BookingNotificationService] Error executing booking.payment_failed triggers:", err);
+    }
+  }
+
+  private async handleRefundProcessed(booking: any) {
+    const customer = booking.customer || await prisma.user.findUnique({ where: { id: booking.customerId } });
+    if (!customer) return;
+
+    const emailBody = `Hello ${customer.name},\n\nWe have processed a refund of INR ${booking.bookingAmount.toLocaleString()} for your booking reservation ${booking.bookingId}.\n\nThe funds should be credited back to your original payment source within 5-7 business days.\n\nThank you,\nLaxmi Toyota`;
+    const emailSubject = `Refund Processed: Toyota Booking Reservation - ${booking.bookingId}`;
+
+    try {
+      if (customer.email) {
+        await this.emailService.sendEmail(customer.email, emailSubject, emailBody);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.email,
+          channel: "EMAIL",
+          type: "REFUND_PROCESSED",
+          status: "SENT",
+          content: emailBody
+        });
+      }
+
+      if (customer.phone) {
+        const smsContent = `Laxmi Toyota: Refund of INR ${booking.bookingAmount.toLocaleString()} has been processed for booking ${booking.bookingId}.`;
+        await this.smsService.sendSms(customer.phone, smsContent);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.phone,
+          channel: "SMS",
+          type: "REFUND_PROCESSED",
+          status: "SENT",
+          content: smsContent
+        });
+
+        await this.whatsAppService.sendWhatsApp(customer.phone, "refund_processed", [
+          customer.name || "Customer",
+          booking.bookingId,
+          booking.bookingAmount.toString()
+        ]);
+        await this.logNotification({
+          bookingId: booking.id,
+          recipient: customer.phone,
+          channel: "WHATSAPP",
+          type: "REFUND_PROCESSED",
+          status: "SENT",
+          content: `WhatsApp: Template refund_processed triggered for ${booking.bookingId}`
+        });
+      }
+    } catch (err: any) {
+      console.error("[BookingNotificationService] Error executing booking.refund_processed triggers:", err);
     }
   }
 }

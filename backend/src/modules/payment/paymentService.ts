@@ -2,6 +2,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { prisma } from "../../config/db";
 import { PaymentRepository } from "./paymentRepository";
+import { bookingNotificationEvents } from "../../services/bookingNotificationService";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "mock_key_id",
@@ -123,14 +124,22 @@ export class PaymentService {
     );
 
     // Update Booking status to CONFIRMED
-    await prisma.booking.update({
+    const updatedBooking = await prisma.booking.update({
       where: { id: payment.bookingId },
       data: {
         paymentStatus: "SUCCESS",
         bookingStatus: "CONFIRMED",
         paymentId: razorpayPaymentId,
       },
+      include: {
+        vehicle: true,
+        variant: true,
+      },
     });
+
+    // Emit event notifications
+    bookingNotificationEvents.emit("booking.payment_success", updatedBooking);
+    bookingNotificationEvents.emit("booking.confirmed", updatedBooking);
 
     return updatedPayment;
   }
@@ -161,13 +170,20 @@ export class PaymentService {
     );
 
     // Update Booking status
-    await prisma.booking.update({
+    const updatedBooking = await prisma.booking.update({
       where: { id: payment.bookingId },
       data: {
         paymentStatus: "FAILED",
         paymentId: razorpayPaymentId || undefined,
       },
+      include: {
+        vehicle: true,
+        variant: true,
+      },
     });
+
+    // Emit event notification
+    bookingNotificationEvents.emit("booking.payment_failed", updatedBooking);
 
     return updatedPayment;
   }
@@ -193,13 +209,20 @@ export class PaymentService {
     );
 
     // Update Booking status
-    await prisma.booking.update({
+    const updatedBooking = await prisma.booking.update({
       where: { id: payment.bookingId },
       data: {
         paymentStatus: "REFUNDED",
         bookingStatus: "REFUNDED",
       },
+      include: {
+        vehicle: true,
+        variant: true,
+      },
     });
+
+    // Emit event notification
+    bookingNotificationEvents.emit("booking.refund_processed", updatedBooking);
 
     return updatedPayment;
   }
@@ -262,15 +285,22 @@ export class PaymentService {
     );
 
     // Also update Booking status to REFUND_PROCESSING
-    await prisma.booking.update({
+    const updatedBooking = await prisma.booking.update({
       where: { id: payment.bookingId },
       data: {
         paymentStatus: "REFUND_PROCESSING",
+      },
+      include: {
+        vehicle: true,
+        variant: true,
       },
     });
 
     // Execute the mock interface call
     await this.executeMockRazorpayRefund(payment.id, refundAmount, reason);
+
+    // Emit event notification since mock refund executes instantly
+    bookingNotificationEvents.emit("booking.refund_processed", updatedBooking);
 
     return updatedPayment;
   }

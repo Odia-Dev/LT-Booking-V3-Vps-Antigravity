@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { prisma } from "../../config/db";
 import { PaymentService } from "./paymentService";
 import { PaymentRepository } from "./paymentRepository";
+import { bookingNotificationEvents } from "../../services/bookingNotificationService";
 
 const paymentService = new PaymentService();
 const paymentRepository = new PaymentRepository();
@@ -128,14 +129,22 @@ export async function handleRazorpayWebhook(req: Request, res: Response): Promis
       );
 
       // Update Booking status to CONFIRMED
-      await prisma.booking.update({
+      const updatedBooking = await prisma.booking.update({
         where: { id: payment.bookingId },
         data: {
           paymentStatus: "SUCCESS",
           bookingStatus: "CONFIRMED",
           paymentId: paymentId || payment.razorpayPaymentId || undefined,
         },
+        include: {
+          vehicle: true,
+          variant: true,
+        },
       });
+
+      // Emit event notifications
+      bookingNotificationEvents.emit("booking.payment_success", updatedBooking);
+      bookingNotificationEvents.emit("booking.confirmed", updatedBooking);
     } else if (eventType === "payment.failed") {
       updatedPayment = await paymentRepository.updatePayment(
         payment.id,
@@ -152,13 +161,20 @@ export async function handleRazorpayWebhook(req: Request, res: Response): Promis
         }
       );
 
-      await prisma.booking.update({
+      const updatedBooking = await prisma.booking.update({
         where: { id: payment.bookingId },
         data: {
           paymentStatus: "FAILED",
           paymentId: paymentId || undefined,
         },
+        include: {
+          vehicle: true,
+          variant: true,
+        },
       });
+
+      // Emit event notification
+      bookingNotificationEvents.emit("booking.payment_failed", updatedBooking);
     } else if (eventType === "refund.processed") {
       updatedPayment = await paymentRepository.updatePayment(
         payment.id,
@@ -174,13 +190,20 @@ export async function handleRazorpayWebhook(req: Request, res: Response): Promis
         }
       );
 
-      await prisma.booking.update({
+      const updatedBooking = await prisma.booking.update({
         where: { id: payment.bookingId },
         data: {
           paymentStatus: "REFUNDED",
           bookingStatus: "REFUNDED",
         },
+        include: {
+          vehicle: true,
+          variant: true,
+        },
       });
+
+      // Emit event notification
+      bookingNotificationEvents.emit("booking.refund_processed", updatedBooking);
     }
 
     res.status(200).json({
