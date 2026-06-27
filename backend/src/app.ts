@@ -108,12 +108,22 @@ const bookingLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const dashboardLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  message: { success: false, message: "Too many dashboard requests. Please slow down." },
+  statusCode: 429,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Protect critical endpoints with rate limiters
 app.use("/api/auth/login", loginLimiter);
 app.use("/api/public/leads", publicLeadsLimiter);
 app.use("/api/test-drives", testDriveLimiter);
 app.use("/api/public/test-drives", testDriveLimiter);
 app.use("/api/bookings", bookingLimiter);
+app.use("/api/dashboard", dashboardLimiter);
 app.use("/api/public/bookings", bookingLimiter);
 
 // Request logger middleware
