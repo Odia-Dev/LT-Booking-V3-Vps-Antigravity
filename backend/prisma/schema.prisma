@@ -40,6 +40,7 @@ model Branch {
   leads Lead[]
   testDrives TestDrive[]
   bookings Booking[]
+  preferredUsers User[] @relation("UserPreferredBranch")
 }
 
 // -----------------------------------------------------------------------------
@@ -177,11 +178,15 @@ model User {
   city         String?
   state        String?
   role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
+  address      String?
+  preferredBranchId String?
+  communicationPreferences Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   testDrives   TestDrive[]
   bookings     Booking[]
   payments     Payment[]
+  preferredBranch Branch? @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
 // -----------------------------------------------------------------------------

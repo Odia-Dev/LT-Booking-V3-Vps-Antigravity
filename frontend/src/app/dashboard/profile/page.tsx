@@ -2,12 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 
+interface Branch {
+  id: string;
+  name: string;
+  city: string;
+}
+
 interface Profile {
   name: string;
   email: string;
   phone: string;
   city: string;
   state: string;
+  address: string;
+  preferredBranchId: string;
+  communicationPreferences: {
+    email: boolean;
+    sms: boolean;
+    whatsapp: boolean;
+  };
 }
 
 export default function CustomerProfilePage() {
@@ -17,8 +30,16 @@ export default function CustomerProfilePage() {
     phone: "",
     city: "",
     state: "",
+    address: "",
+    preferredBranchId: "",
+    communicationPreferences: {
+      email: true,
+      sms: true,
+      whatsapp: true,
+    },
   });
 
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -27,42 +48,60 @@ export default function CustomerProfilePage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndBranches = async () => {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/profile`, {
+        const fetchOptions = {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-        const data = await res.json();
+          headers: { "Content-Type": "application/json" },
+          credentials: "include" as const,
+        };
 
-        if (res.status === 401) {
+        // Fetch user profile and branch lists in parallel
+        const [profileRes, branchesRes] = await Promise.all([
+          fetch(`${apiBaseUrl}/api/dashboard/profile`, fetchOptions),
+          fetch(`${apiBaseUrl}/api/public/branches`),
+        ]);
+
+        if (profileRes.status === 401) {
           window.location.href = "/login";
           return;
         }
 
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load profile");
+        const profileData = await profileRes.json();
+        if (!profileRes.ok) {
+          throw new Error(profileData.message || "Failed to load user profile");
         }
 
+        if (branchesRes.ok) {
+          const branchesData = await branchesRes.json();
+          setBranches(branchesData.branches || branchesData.data || []);
+        }
+
+        const p = profileData.profile;
         setProfile({
-          name: data.profile.name || "",
-          email: data.profile.email || "",
-          phone: data.profile.phone || "",
-          city: data.profile.city || "",
-          state: data.profile.state || "",
+          name: p.name || "",
+          email: p.email || "",
+          phone: p.phone || "",
+          city: p.city || "",
+          state: p.state || "",
+          address: p.address || "",
+          preferredBranchId: p.preferredBranchId || "",
+          communicationPreferences: {
+            email: p.communicationPreferences?.email !== false,
+            sms: p.communicationPreferences?.sms !== false,
+            whatsapp: p.communicationPreferences?.whatsapp !== false,
+          },
         });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to load user profile.";
+        console.error("Fetch profile error:", err);
+        const msg = err instanceof Error ? err.message : "Failed to load profile details.";
         setError(msg);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchProfileAndBranches();
   }, [apiBaseUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,39 +111,60 @@ export default function CustomerProfilePage() {
     setSuccess("");
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/profile`, {
-        method: "PUT",
+      const res = await fetch(`${apiBaseUrl}/api/dashboard/profile`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
         body: JSON.stringify({
           name: profile.name,
-          email: profile.email,
           city: profile.city,
           state: profile.state,
+          address: profile.address,
+          preferredBranchId: profile.preferredBranchId || null,
+          communicationPreferences: profile.communicationPreferences,
         }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || data.errors?.[0]?.message || "Failed to update profile");
+        throw new Error(data.message || data.errors?.[0]?.message || "Failed to update profile settings.");
       }
 
       setSuccess("Profile settings updated successfully.");
+      const p = data.profile;
       setProfile({
-        name: data.profile.name || "",
-        email: data.profile.email || "",
-        phone: data.profile.phone || "",
-        city: data.profile.city || "",
-        state: data.profile.state || "",
+        name: p.name || "",
+        email: p.email || "",
+        phone: p.phone || "",
+        city: p.city || "",
+        state: p.state || "",
+        address: p.address || "",
+        preferredBranchId: p.preferredBranchId || "",
+        communicationPreferences: {
+          email: p.communicationPreferences?.email !== false,
+          sms: p.communicationPreferences?.sms !== false,
+          whatsapp: p.communicationPreferences?.whatsapp !== false,
+        },
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An error occurred while saving.";
+      console.error("Save profile error:", err);
+      const msg = err instanceof Error ? err.message : "An error occurred while saving profile settings.";
       setError(msg);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCommPrefChange = (channel: "email" | "sms" | "whatsapp") => {
+    setProfile((prev) => ({
+      ...prev,
+      communicationPreferences: {
+        ...prev.communicationPreferences,
+        [channel]: !prev.communicationPreferences[channel],
+      },
+    }));
   };
 
   if (loading) {
@@ -124,7 +184,7 @@ export default function CustomerProfilePage() {
     <div className="w-full max-w-2xl bg-neutral-900/35 border border-neutral-850 rounded-2xl p-6 md:p-8 shadow-xl animate-fadeIn">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Profile Settings</h1>
-        <p className="text-sm text-neutral-400">Update your details to streamline vehicle booking processes.</p>
+        <p className="text-sm text-neutral-400">Update your details to streamline vehicle booking and test-drive processes.</p>
       </div>
 
       {error && (
@@ -141,6 +201,7 @@ export default function CustomerProfilePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+          {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
               Full Name
@@ -155,9 +216,10 @@ export default function CustomerProfilePage() {
             />
           </div>
 
+          {/* Verified Phone */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-              Mobile Number
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-450 mb-2 flex items-center gap-1.5">
+              Verified Phone <span className="text-[10px] text-emerald-500 bg-emerald-950/80 px-1.5 py-0.5 rounded font-mono">LOCKED</span>
             </label>
             <input
               type="text"
@@ -167,19 +229,20 @@ export default function CustomerProfilePage() {
             />
           </div>
 
+          {/* Registered Email */}
           <div className="md:col-span-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-              Email Address
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-455 mb-2 flex items-center gap-1.5">
+              Registered Email <span className="text-[10px] text-emerald-500 bg-emerald-950/80 px-1.5 py-0.5 rounded font-mono">LOCKED</span>
             </label>
             <input
               type="email"
-              placeholder="e.g. john@example.com"
+              disabled
               value={profile.email}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+              className="w-full px-4 py-3 bg-neutral-900/40 border border-neutral-800 rounded-lg text-neutral-500 cursor-not-allowed focus:outline-none"
             />
           </div>
 
+          {/* City */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
               City
@@ -193,6 +256,7 @@ export default function CustomerProfilePage() {
             />
           </div>
 
+          {/* State */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
               State
@@ -204,6 +268,75 @@ export default function CustomerProfilePage() {
               onChange={(e) => setProfile({ ...profile, state: e.target.value })}
               className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
             />
+          </div>
+
+          {/* Preferred Branch */}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              Preferred Dealership Branch
+            </label>
+            <select
+              value={profile.preferredBranchId}
+              onChange={(e) => setProfile({ ...profile, preferredBranchId: e.target.value })}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+            >
+              <option value="">Select branch...</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.city})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Address */}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              Billing/Delivery Address
+            </label>
+            <textarea
+              placeholder="Enter your complete street address details..."
+              value={profile.address}
+              onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+              rows={3}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors resize-none"
+            />
+          </div>
+
+          {/* Communication Preferences */}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
+              Communication Channel Subscriptions
+            </label>
+            <div className="flex flex-col sm:flex-row gap-4 p-4 bg-neutral-950 border border-neutral-800/80 rounded-lg">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={profile.communicationPreferences.email}
+                  onChange={() => handleCommPrefChange("email")}
+                  className="rounded border-neutral-700 bg-neutral-950 text-[#eb0a1e] focus:ring-0 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm text-neutral-300">Email Notifications</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={profile.communicationPreferences.sms}
+                  onChange={() => handleCommPrefChange("sms")}
+                  className="rounded border-neutral-700 bg-neutral-950 text-[#eb0a1e] focus:ring-0 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm text-neutral-300">SMS Updates</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={profile.communicationPreferences.whatsapp}
+                  onChange={() => handleCommPrefChange("whatsapp")}
+                  className="rounded border-neutral-700 bg-neutral-950 text-[#eb0a1e] focus:ring-0 w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm text-neutral-300">WhatsApp Alerts</span>
+              </label>
+            </div>
           </div>
         </div>
 

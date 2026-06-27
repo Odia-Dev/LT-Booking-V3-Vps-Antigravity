@@ -11,6 +11,9 @@ export const mockUsers: User[] = [
     city: "Bhubaneswar",
     state: "Odisha",
     role: "ADMIN",
+    address: null,
+    preferredBranchId: null,
+    communicationPreferences: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   }

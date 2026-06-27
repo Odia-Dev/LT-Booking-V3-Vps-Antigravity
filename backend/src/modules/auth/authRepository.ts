@@ -55,6 +55,9 @@ export class AuthRepository {
           city: null,
           state: null,
           role: data.role || "CUSTOMER",
+          address: null,
+          preferredBranchId: null,
+          communicationPreferences: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
