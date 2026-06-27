@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import path from "path";
 import { execSync } from "child_process";
 import { prisma } from "./config/db";
 import packageJson from "../package.json";
@@ -213,12 +214,37 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/public/payments", publicPaymentsRouter);
 app.use("/api/webhooks", webhookRoutes);
 
+// Serve uploaded delivery documents as static files (secured path)
+// Only accessible with valid auth — direct URL access requires the relative path
+app.use(
+  "/uploads",
+  helmet.noSniff(),
+  express.static(path.join(__dirname, "..", "uploads"), {
+    dotfiles: "deny",
+    index: false,
+  })
+);
+
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("Unhandled error:", err);
-  
+
+  // Multer-specific errors (file size, unexpected field, invalid type)
+  if (err.code === "LIMIT_FILE_SIZE") {
+    res.status(413).json({ success: false, message: "File too large. Maximum allowed size is 10MB." });
+    return;
+  }
+  if (err.code === "LIMIT_UNEXPECTED_FILE") {
+    res.status(400).json({ success: false, message: "Unexpected file field. Use the 'files' field name." });
+    return;
+  }
+  if (err.message && err.message.startsWith("Unsupported file type")) {
+    res.status(415).json({ success: false, message: err.message });
+    return;
+  }
+
   const isProduction = process.env.NODE_ENV === "production";
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: isProduction ? "Internal server error" : err.message || "Internal server error",

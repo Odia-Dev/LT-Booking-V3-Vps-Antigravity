@@ -348,6 +348,7 @@ model Delivery {
   branch             Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   checklist          DeliveryChecklist?
   timeline           DeliveryTimeline[]
+  documents          DeliveryDocument[]
 }
 
 // -----------------------------------------------------------------------------
@@ -383,6 +384,27 @@ model DeliveryTimeline {
   comment      String?
   performedBy  String?
   createdAt    DateTime @default(now())
+
+  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// DeliveryDocument Model: Delivery Document Uploads (PDFs, Photos)
+// -----------------------------------------------------------------------------
+model DeliveryDocument {
+  id           String   @id @default(uuid())
+  deliveryId   String
+  bookingId    String
+  uploadedBy   String   // user ID or email of uploader
+  documentType String   // INVOICE, INSURANCE, RC_RECEIPT, CHECKLIST_PDF, DELIVERY_PHOTO, OTHER
+  fileName     String   // original file name
+  storedName   String   // sanitized disk file name
+  filePath     String   // relative server path e.g. uploads/delivery/<deliveryId>/file.pdf
+  mimeType     String   // application/pdf | image/jpeg | image/png | image/webp
+  fileSize     Int      // bytes
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
