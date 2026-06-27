@@ -6,6 +6,21 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.2.0-m14-delivery-ready` (2026-06-27)
+* **Goal**: Release the complete Delivery Management module (M14) covering backend handover infrastructure, 10-item checklist enforcement, admin dashboards, customer tracking portal, multi-channel notifications, and secure document uploads.
+* **Commit**: `feat(m14): production ready`
+* **Details**:
+  - Extended Prisma schema with `Delivery`, `DeliveryChecklist`, `DeliveryTimeline`, and `DeliveryDocument` models with cascade relations to `Booking`, `User`, `Vehicle`, `Variant`, and `Branch`.
+  - Built `deliveryRepository.ts` and `deliveryService.ts` managing 5-state lifecycle (`SCHEDULED → PREPARED → READY → DELIVERED / CANCELLED`) with mandatory 10-item checklist gate enforcement.
+  - Deployed 7 secured REST API endpoints at `/api/deliveries` with Zod validation, pagination, full-text search, and role-based access control.
+  - Implemented `PATCH /api/deliveries/:id/checklist` with milestone diff detection to fire targeted notifications only when specific items transition false → true.
+  - Built Admin Delivery Dashboard (`/admin/deliveries`, `/admin/deliveries/[id]`) featuring interactive checklist checkboxes, status lifecycle dropdown, bulk update operations, and delivery schedule overlay modal.
+  - Built Customer Delivery Tracking page (`/dashboard/delivery`) with an 8-step visual milestone progress tracker, scheduled date display, branch contact information, and multi-delivery dropdown selector.
+  - Created `DeliveryNotificationService` dispatching Email, SMS, and WhatsApp alerts at 6 lifecycle trigger points with per-channel `NotificationLog` entries (with `deliveryId`) and portal `Notification` alerts.
+  - Implemented secure Multer-based document upload system: per-delivery disk storage at `uploads/delivery/<id>/`, 10MB limit, PDF/JPEG/PNG/WEBP supported, metadata persisted in `DeliveryDocument` table.
+  - Added typed multer error handlers (413/400/415) and served `uploads/` via Express static with `noSniff` header.
+  - Verified zero-error TypeScript backend compile (`npx tsc --noEmit`), zero-error Next.js frontend build (32 routes), and Prisma schema validation.
+
 ### `v1.1.0-m13-customer-dashboard-ready` (2026-06-27)
 * **Goal**: Release the production-grade Customer Dashboard module (M13) including layout shell, session authentication, profile editor, delivery status tracking timeline, invoice receipts list, Razorpay failed payment retries, notification center, and access-control security hardening.
 * **Commit**: `feat(m13): production ready`

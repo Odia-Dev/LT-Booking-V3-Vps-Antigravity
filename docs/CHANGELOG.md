@@ -4,6 +4,25 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 
 ---
 
+## [1.2.0] - 2026-06-27
+
+### Added
+* **Delivery Management (Milestone M14)**:
+  - Extended Prisma schema with four new models: `Delivery`, `DeliveryChecklist`, `DeliveryTimeline`, and `DeliveryDocument`.
+  - Implemented `deliveryRepository.ts` and `deliveryService.ts` for lifecycle management including 5 status states: `SCHEDULED → PREPARED → READY → DELIVERED / CANCELLED`.
+  - Deployed 7 REST API endpoints under `/api/deliveries` with Zod validation, pagination, search, and full RBAC gating.
+  - Enforced a 10-item mandatory handover checklist gate blocking `DELIVERED` status unless all milestones are `true`.
+  - Built Admin Delivery Dashboard (`/admin/deliveries`, `/admin/deliveries/[id]`) with interactive checklist checkboxes, status timeline, bulk operations, and schedule overlay.
+  - Built Customer Delivery Tracking page (`/dashboard/delivery`) displaying an 8-step visual milestone tracker, scheduled date, branch contacts, and assigned executive.
+  - Created `DeliveryNotificationService` firing Email, SMS, and WhatsApp alerts at 6 lifecycle events: Vehicle Allocated, Insurance Issued, RTO Completed, Delivery Scheduled, Delivery Reminder, Vehicle Delivered.
+  - Logged all notification dispatches to `NotificationLog` (with `deliveryId`) and created portal `Notification` alerts visible in `/dashboard/notifications`.
+  - Implemented secure document upload system using Multer: disk storage at `uploads/delivery/<id>/`, 10MB limit, PDF/JPEG/PNG/WEBP support.
+  - Stored document metadata in `DeliveryDocument` model: type, filename, stored path, MIME type, file size, uploader identity.
+  - Served uploaded files via Express static middleware at `/uploads` with `noSniff` security header.
+  - Added Multer-specific error handlers for file size (413), unexpected fields (400), and unsupported types (415).
+  - Added `deliveryId` field to `NotificationLog` model for delivery-scoped notification audit queries.
+  - Installed `multer` v1.x and `@types/multer` to backend dependencies.
+
 ## [1.1.0] - 2026-06-27
 
 ### Added

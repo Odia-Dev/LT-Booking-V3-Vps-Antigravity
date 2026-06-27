@@ -1708,3 +1708,95 @@ Every dispatched channel notification (SMS, Email, WhatsApp) registers audit log
   }
   ```
 
+---
+
+## 14. Delivery Documents (`/api/deliveries/:id/documents`)
+
+All document endpoints require authentication. Customers are read-only; Admins and Executives can upload/delete.
+
+### POST `/api/deliveries/:id/documents`
+* **Description**: Upload one or more delivery documents. Accepts `multipart/form-data`.
+* **Access**: Admin, Sales Executive (assigned delivery)
+* **Fields**:
+  - `files` – 1 to 5 files (PDF, JPEG, PNG, WEBP — max 10MB each)
+  - `documentType` – One of: `INVOICE`, `INSURANCE`, `RC_RECEIPT`, `CHECKLIST_PDF`, `DELIVERY_PHOTO`, `OTHER`
+  - `notes` *(optional)* – Free text note
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "2 document(s) uploaded successfully",
+    "data": [
+      {
+        "id": "uuid",
+        "deliveryId": "uuid",
+        "bookingId": "uuid",
+        "uploadedBy": "admin@laxmitoyota.co.in",
+        "documentType": "INVOICE",
+        "fileName": "invoice.pdf",
+        "storedName": "1719500000000-abc123.pdf",
+        "filePath": "uploads/delivery/<id>/1719500000000-abc123.pdf",
+        "mimeType": "application/pdf",
+        "fileSize": 204800,
+        "notes": null,
+        "createdAt": "2026-06-27T13:30:00.000Z"
+      }
+    ]
+  }
+  ```
+* **Error Responses**:
+  - `400` – Invalid `documentType` or no files uploaded
+  - `413` – File exceeds 10MB limit
+  - `415` – Unsupported file type
+
+### GET `/api/deliveries/:id/documents`
+* **Description**: List all documents for a delivery. Optionally filter by type.
+* **Access**: Admin, Sales Executive (assigned), Customer (own delivery)
+* **Query Params**: `?type=INVOICE|INSURANCE|RC_RECEIPT|CHECKLIST_PDF|DELIVERY_PHOTO|OTHER`
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "uuid",
+        "documentType": "INSURANCE",
+        "fileName": "insurance.pdf",
+        "filePath": "uploads/delivery/<id>/file.pdf",
+        "mimeType": "application/pdf",
+        "fileSize": 102400,
+        "createdAt": "2026-06-27T13:30:00.000Z"
+      }
+    ]
+  }
+  ```
+
+### DELETE `/api/deliveries/:id/documents/:docId`
+* **Description**: Delete a document record and its disk file.
+* **Access**: Admin, Sales Executive (assigned delivery)
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Document deleted successfully"
+  }
+  ```
+
+---
+
+## 15. Delivery Notification Events
+
+Notifications are fired automatically at the following lifecycle points. No external API call needed — they trigger from backend service layer events.
+
+| Event | Trigger | Channels |
+|---|---|---|
+| Vehicle Allocated | `POST /api/deliveries` (createDelivery) | Email, SMS, WhatsApp |
+| Insurance Issued | `PATCH /api/deliveries/:id/checklist` — `insuranceIssued: true` (first time) | Email, SMS, WhatsApp |
+| RTO Completed | `PATCH /api/deliveries/:id/checklist` — `rtoCompleted: true` (first time) | Email, SMS, WhatsApp |
+| Delivery Scheduled | `PATCH /api/deliveries/:id` — `scheduledDate` set for first time | Email, SMS, WhatsApp |
+| Delivery Reminder | `PATCH /api/deliveries/:id/status` — status → `READY` | Email, SMS, WhatsApp |
+| Vehicle Delivered | `PATCH /api/deliveries/:id/status` — status → `DELIVERED` | Email, SMS, WhatsApp |
+
+Each dispatch creates:
+- One `NotificationLog` row per channel (with `deliveryId` and `bookingId`)
+- One `Notification` portal alert visible on `/dashboard/notifications`
