@@ -33,7 +33,7 @@ export default function CustomerTestDrivesPage() {
   useEffect(() => {
     const fetchTestDrives = async () => {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/test-drives`, {
+        const res = await fetch(`${apiBaseUrl}/api/dashboard/test-drives`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -56,6 +56,43 @@ export default function CustomerTestDrivesPage() {
 
     fetchTestDrives();
   }, [apiBaseUrl]);
+
+  const mapStatusLabel = (status: string) => {
+    switch (status) {
+      case "REQUESTED":
+        return "Scheduled";
+      case "CONFIRMED":
+      case "BOOKED":
+        return "Confirmed";
+      case "COMPLETED":
+        return "Completed";
+      case "CANCELLED":
+        return "Cancelled";
+      case "RESCHEDULED":
+        return "Rescheduled";
+      case "NO_SHOW":
+        return "No Show";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusClass = (status: string) => {
+    const mapped = mapStatusLabel(status);
+    switch (mapped) {
+      case "Confirmed":
+      case "Completed":
+        return "bg-emerald-950/80 border border-emerald-900 text-emerald-400";
+      case "Cancelled":
+      case "No Show":
+        return "bg-red-950/80 border border-red-900 text-red-400";
+      case "Rescheduled":
+      case "Scheduled":
+        return "bg-amber-950/80 border border-amber-900 text-amber-400";
+      default:
+        return "bg-neutral-850 border border-neutral-800 text-neutral-400";
+    }
+  };
 
   if (loading) {
     return (
@@ -105,14 +142,8 @@ export default function CustomerTestDrivesPage() {
                   <span className="text-xs font-mono text-neutral-500 uppercase tracking-widest block mb-1">Appointment Ref</span>
                   <span className="text-base font-bold text-white font-mono">{appointment.testDriveId}</span>
                 </div>
-                <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider ${
-                  appointment.status === "CONFIRMED" || appointment.status === "COMPLETED" || appointment.status === "BOOKED"
-                    ? "bg-emerald-950/80 border border-emerald-900 text-emerald-400"
-                    : appointment.status === "CANCELLED" || appointment.status === "NO_SHOW"
-                    ? "bg-red-950/80 border border-red-900 text-red-400"
-                    : "bg-amber-950/80 border border-amber-900 text-amber-400"
-                }`}>
-                  Status: {appointment.status}
+                <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider ${getStatusClass(appointment.status)}`}>
+                  Status: {mapStatusLabel(appointment.status)}
                 </span>
               </div>
 
@@ -145,13 +176,13 @@ export default function CustomerTestDrivesPage() {
                   {appointment.assignedExecutive && (
                     <div>
                       <span className="font-semibold text-neutral-500 mr-2 uppercase tracking-wide">Assigned Advisor:</span>
-                      <span>{appointment.assignedExecutive}</span>
+                      <span className="text-neutral-200">{appointment.assignedExecutive}</span>
                     </div>
                   )}
                   {appointment.notes && (
                     <div>
                       <span className="font-semibold text-neutral-500 mr-2 uppercase tracking-wide">Customer Notes:</span>
-                      <span>{appointment.notes}</span>
+                      <span className="text-neutral-300">{appointment.notes}</span>
                     </div>
                   )}
                 </div>

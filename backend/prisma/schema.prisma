@@ -186,6 +186,7 @@ model User {
   testDrives   TestDrive[]
   bookings     Booking[]
   payments     Payment[]
+  notifications Notification[]
   preferredBranch Branch? @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
@@ -298,4 +299,20 @@ model PaymentAudit {
   createdAt  DateTime @default(now())
 
   payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// Notification Model: Customer portal dynamic notifications
+// -----------------------------------------------------------------------------
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String
+  type      String   // BOOKING, PAYMENT, TEST_DRIVE, DELIVERY, PROMOTION
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
