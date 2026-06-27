@@ -260,11 +260,12 @@ model CalendarEvent {
 model NotificationLog {
   id           String   @id @default(uuid())
   bookingId    String?
+  deliveryId   String?  // Delivery-specific notification reference
   testDriveId  String?
   recipient    String   // phone or email
   channel      String   // EMAIL, SMS, WHATSAPP, PUSH
-  type         String   // e.g. BOOKING_CREATED, BOOKING_CONFIRMED, etc.
-  status       String   // SENT, FAILED, PENDING
+  type         String   // e.g. BOOKING_CREATED, BOOKING_CONFIRMED, DELIVERY_SCHEDULED, etc.
+  status       String   // SUCCESS, FAILED, PENDING
   content      String
   errorMessage String?
   createdAt    DateTime @default(now())

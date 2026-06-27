@@ -2,6 +2,7 @@ import { Response } from "express";
 import { prisma } from "../../config/db";
 import { AuthenticatedRequest } from "../../middleware/auth";
 import { DeliveryService } from "./deliveryService";
+import { DeliveryNotificationService } from "./deliveryNotificationService";
 import {
   CreateDeliverySchema,
   UpdateDeliverySchema,
@@ -10,6 +11,7 @@ import {
 } from "./deliveryValidation";
 
 const service = new DeliveryService();
+const notificationService = new DeliveryNotificationService();
 
 function hasAccessToDelivery(req: AuthenticatedRequest, delivery: any): boolean {
   if (!req.admin) return false;
@@ -178,6 +180,11 @@ export async function createDelivery(req: AuthenticatedRequest, res: Response): 
       notes: parseResult.data.notes || undefined,
     });
 
+    // Trigger: Vehicle Allocated notification
+    notificationService.notifyVehicleAllocated(delivery).catch((e) =>
+      console.error("[Notification] Vehicle allocated dispatch failed:", e)
+    );
+
     res.status(201).json({ success: true, message: "Delivery scheduled successfully", data: delivery });
   } catch (error: any) {
     console.error("createDelivery error:", error);
@@ -214,6 +221,7 @@ export async function updateDelivery(req: AuthenticatedRequest, res: Response): 
       return;
     }
 
+    const hadScheduledDate = (delivery as any).scheduledDate;
     const updateData: any = {};
     if (parseResult.data.assignedExecutive !== undefined) {
       updateData.assignedExecutive = parseResult.data.assignedExecutive;
@@ -228,7 +236,15 @@ export async function updateDelivery(req: AuthenticatedRequest, res: Response): 
     const updated = await prisma.delivery.update({
       where: { id: req.params.id },
       data: updateData,
+      include: { branch: { select: { name: true, phone: true, email: true } } },
     });
+
+    // Trigger: Delivery Scheduled notification when a date is first set or changed
+    if (parseResult.data.scheduledDate && !hadScheduledDate) {
+      notificationService.notifyDeliveryScheduled(updated).catch((e) =>
+        console.error("[Notification] Delivery scheduled dispatch failed:", e)
+      );
+    }
 
     res.status(200).json({ success: true, message: "Delivery details updated successfully", data: updated });
   } catch (error: any) {
@@ -274,6 +290,26 @@ export async function updateDeliveryStatus(req: AuthenticatedRequest, res: Respo
       performer
     );
 
+    // Fetch branch for notification context
+    const deliveryWithBranch = await prisma.delivery.findUnique({
+      where: { id: req.params.id },
+      include: { branch: { select: { name: true, phone: true, email: true } } },
+    });
+
+    // Trigger notifications based on new status
+    if (deliveryWithBranch) {
+      const notifPayload = deliveryWithBranch;
+      if (parseResult.data.status === "READY") {
+        notificationService.notifyDeliveryReminder(notifPayload).catch((e) =>
+          console.error("[Notification] Delivery reminder dispatch failed:", e)
+        );
+      } else if (parseResult.data.status === "DELIVERED") {
+        notificationService.notifyVehicleDelivered(notifPayload).catch((e) =>
+          console.error("[Notification] Vehicle delivered dispatch failed:", e)
+        );
+      }
+    }
+
     res.status(200).json({ success: true, message: "Delivery status updated successfully", data: updated });
   } catch (error: any) {
     console.error("updateDeliveryStatus error:", error);
@@ -304,6 +340,9 @@ export async function updateDeliveryChecklist(req: AuthenticatedRequest, res: Re
       return;
     }
 
+    // Capture previous checklist state to detect newly-completed milestones
+    const prevChecklist = (delivery as any).checklist;
+
     const parseResult = UpdateChecklistSchema.safeParse(req.body);
     if (!parseResult.success) {
       res.status(400).json({ success: false, errors: parseResult.error.errors });
@@ -312,6 +351,22 @@ export async function updateDeliveryChecklist(req: AuthenticatedRequest, res: Re
 
     const performer = req.admin.email || "SYSTEM";
     const updated = await service.updateChecklist(req.params.id, parseResult.data, performer);
+
+    // Fire checklist-based notifications only when a milestone transitions false → true
+    const incoming = parseResult.data;
+    const wasInsuranceIssuedBefore = prevChecklist?.insuranceIssued === true;
+    const wasRtoCompletedBefore = prevChecklist?.rtoCompleted === true;
+
+    if (incoming.insuranceIssued === true && !wasInsuranceIssuedBefore) {
+      notificationService.notifyInsuranceComplete(delivery).catch((e) =>
+        console.error("[Notification] Insurance complete dispatch failed:", e)
+      );
+    }
+    if (incoming.rtoCompleted === true && !wasRtoCompletedBefore) {
+      notificationService.notifyRtoComplete(delivery).catch((e) =>
+        console.error("[Notification] RTO complete dispatch failed:", e)
+      );
+    }
 
     res.status(200).json({ success: true, message: "Delivery checklist updated successfully", data: updated });
   } catch (error: any) {
