@@ -25,13 +25,14 @@ export const UpdateStatusSchema = z.object({
 });
 
 export const UpdateChecklistSchema = z.object({
-  insuranceCompleted: z.boolean().optional(),
+  paymentCleared: z.boolean().optional(),
+  insuranceIssued: z.boolean().optional(),
   rtoCompleted: z.boolean().optional(),
   pdiCompleted: z.boolean().optional(),
   accessoriesInstalled: z.boolean().optional(),
-  paymentCleared: z.boolean().optional(),
-  documentationCompleted: z.boolean().optional(),
-  vehicleCleaned: z.boolean().optional(),
   fuelFilled: z.boolean().optional(),
-  photographsTaken: z.boolean().optional(),
+  cleaningCompleted: z.boolean().optional(),
+  documentationPrepared: z.boolean().optional(),
+  deliveryKitPrepared: z.boolean().optional(),
+  customerOrientationCompleted: z.boolean().optional(),
 });

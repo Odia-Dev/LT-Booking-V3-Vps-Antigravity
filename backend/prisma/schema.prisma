@@ -353,21 +353,22 @@ model Delivery {
 // DeliveryChecklist Model: Gate pass criteria verification
 // -----------------------------------------------------------------------------
 model DeliveryChecklist {
-  id                     String   @id @default(uuid())
-  deliveryId             String   @unique
-  insuranceCompleted     Boolean  @default(false)
-  rtoCompleted           Boolean  @default(false)
-  pdiCompleted           Boolean  @default(false)
-  accessoriesInstalled   Boolean  @default(false)
-  paymentCleared         Boolean  @default(false)
-  documentationCompleted Boolean  @default(false)
-  vehicleCleaned         Boolean  @default(false)
-  fuelFilled             Boolean  @default(false)
-  photographsTaken       Boolean  @default(false)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                            String   @id @default(uuid())
+  deliveryId                    String   @unique
+  paymentCleared                Boolean  @default(false)
+  insuranceIssued               Boolean  @default(false)
+  rtoCompleted                  Boolean  @default(false)
+  pdiCompleted                  Boolean  @default(false)
+  accessoriesInstalled          Boolean  @default(false)
+  fuelFilled                    Boolean  @default(false)
+  cleaningCompleted             Boolean  @default(false)
+  documentationPrepared         Boolean  @default(false)
+  deliveryKitPrepared           Boolean  @default(false)
+  customerOrientationCompleted  Boolean  @default(false)
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
 
-  delivery               Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  delivery                      Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------

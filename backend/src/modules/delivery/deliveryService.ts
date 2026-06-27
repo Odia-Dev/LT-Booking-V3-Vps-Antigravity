@@ -36,15 +36,16 @@ export class DeliveryService {
   async updateChecklist(
     deliveryId: string,
     data: {
-      insuranceCompleted?: boolean;
+      paymentCleared?: boolean;
+      insuranceIssued?: boolean;
       rtoCompleted?: boolean;
       pdiCompleted?: boolean;
       accessoriesInstalled?: boolean;
-      paymentCleared?: boolean;
-      documentationCompleted?: boolean;
-      vehicleCleaned?: boolean;
       fuelFilled?: boolean;
-      photographsTaken?: boolean;
+      cleaningCompleted?: boolean;
+      documentationPrepared?: boolean;
+      deliveryKitPrepared?: boolean;
+      customerOrientationCompleted?: boolean;
     },
     performedBy: string = "SYSTEM"
   ): Promise<DeliveryChecklist> {
@@ -85,15 +86,16 @@ export class DeliveryService {
       }
 
       const allMilestonesCompleted =
-        checklist.insuranceCompleted &&
+        checklist.paymentCleared &&
+        checklist.insuranceIssued &&
         checklist.rtoCompleted &&
         checklist.pdiCompleted &&
         checklist.accessoriesInstalled &&
-        checklist.paymentCleared &&
-        checklist.documentationCompleted &&
-        checklist.vehicleCleaned &&
         checklist.fuelFilled &&
-        checklist.photographsTaken;
+        checklist.cleaningCompleted &&
+        checklist.documentationPrepared &&
+        checklist.deliveryKitPrepared &&
+        checklist.customerOrientationCompleted;
 
       if (!allMilestonesCompleted) {
         throw new Error(

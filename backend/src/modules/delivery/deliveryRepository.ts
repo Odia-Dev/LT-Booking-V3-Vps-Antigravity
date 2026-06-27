@@ -32,15 +32,16 @@ export class DeliveryRepository {
       await tx.deliveryChecklist.create({
         data: {
           deliveryId: delivery.id,
-          insuranceCompleted: false,
+          paymentCleared: false,
+          insuranceIssued: false,
           rtoCompleted: false,
           pdiCompleted: false,
           accessoriesInstalled: false,
-          paymentCleared: false,
-          documentationCompleted: false,
-          vehicleCleaned: false,
           fuelFilled: false,
-          photographsTaken: false,
+          cleaningCompleted: false,
+          documentationPrepared: false,
+          deliveryKitPrepared: false,
+          customerOrientationCompleted: false,
         },
       });
 
@@ -136,15 +137,16 @@ export class DeliveryRepository {
   async updateChecklist(
     deliveryId: string,
     data: {
-      insuranceCompleted?: boolean;
+      paymentCleared?: boolean;
+      insuranceIssued?: boolean;
       rtoCompleted?: boolean;
       pdiCompleted?: boolean;
       accessoriesInstalled?: boolean;
-      paymentCleared?: boolean;
-      documentationCompleted?: boolean;
-      vehicleCleaned?: boolean;
       fuelFilled?: boolean;
-      photographsTaken?: boolean;
+      cleaningCompleted?: boolean;
+      documentationPrepared?: boolean;
+      deliveryKitPrepared?: boolean;
+      customerOrientationCompleted?: boolean;
     }
   ): Promise<DeliveryChecklist> {
     return prisma.deliveryChecklist.update({
