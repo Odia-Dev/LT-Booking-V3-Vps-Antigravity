@@ -1521,3 +1521,190 @@ Every dispatched channel notification (SMS, Email, WhatsApp) registers audit log
     }
   }
   ```
+
+---
+
+## 14. Delivery Handover Services (`/api/deliveries`)
+
+### GET `/api/deliveries`
+* **Description**: Retrieve paginated, filterable, and searchable list of deliveries.
+* **Query Parameters**:
+  - `page`: Page index (default: 1)
+  - `limit`: Logs limit (default: 10)
+  - `search`: Keyword term matching booking ID, customer name, phone, email, or executive name
+  - `branchId`: Filter by showroom branch
+  - `executive`: Filter by assigned representative name/email
+  - `status`: Filter by status (`SCHEDULED`, `PREPARED`, `READY`, `DELIVERED`, `CANCELLED`)
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "delivery-uuid",
+        "bookingId": "booking-uuid",
+        "customerId": "customer-uuid",
+        "vehicleId": "vehicle-uuid",
+        "variantId": "variant-uuid",
+        "branchId": "branch-uuid",
+        "assignedExecutive": "Rajesh Sen",
+        "status": "SCHEDULED",
+        "scheduledDate": "2026-06-30T10:00:00.000Z",
+        "actualDeliveryDate": null,
+        "notes": "Premium delivery request",
+        "booking": {
+          "bookingId": "LT-202606-000001"
+        },
+        "customer": {
+          "id": "customer-uuid",
+          "name": "Amit Patnaik",
+          "email": "amit@example.com",
+          "phone": "+919876543210"
+        },
+        "vehicle": { "name": "Fortuner" },
+        "variant": { "name": "2.8L 4x4 AT" },
+        "branch": { "name": "Bhubaneswar Toyota", "city": "Bhubaneswar" },
+        "checklist": {
+          "insuranceCompleted": true,
+          "rtoCompleted": false,
+          "pdiCompleted": false
+        }
+      }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 1
+    }
+  }
+  ```
+
+### GET `/api/deliveries/:id`
+* **Description**: Retrieve complete detailed information for a single delivery record including checklist flags and historical status timelines.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "delivery-uuid",
+      "status": "SCHEDULED",
+      "scheduledDate": "2026-06-30T10:00:00.000Z",
+      "actualDeliveryDate": null,
+      "assignedExecutive": "Rajesh Sen",
+      "notes": "Premium delivery request",
+      "checklist": {
+        "insuranceCompleted": true,
+        "rtoCompleted": false,
+        "pdiCompleted": false,
+        "accessoriesInstalled": false,
+        "paymentCleared": false,
+        "documentationCompleted": false,
+        "vehicleCleaned": false,
+        "fuelFilled": false,
+        "photographsTaken": false
+      },
+      "timeline": [
+        {
+          "id": "timeline-uuid",
+          "statusBefore": "NONE",
+          "statusAfter": "SCHEDULED",
+          "comment": "Delivery scheduled.",
+          "performedBy": "SYSTEM",
+          "createdAt": "2026-06-27T12:00:00.000Z"
+        }
+      ]
+    }
+  }
+  ```
+
+### POST `/api/deliveries`
+* **Description**: Create and schedule a new vehicle delivery. (Admins only)
+* **Payload**:
+  ```json
+  {
+    "bookingId": "booking-uuid",
+    "customerId": "customer-uuid",
+    "vehicleId": "vehicle-uuid",
+    "variantId": "variant-uuid",
+    "branchId": "branch-uuid",
+    "assignedExecutive": "Rajesh Sen",
+    "scheduledDate": "2026-06-30T10:00:00.000Z",
+    "notes": "Provide welcome kit"
+  }
+  ```
+* **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery scheduled successfully",
+    "data": { ... }
+  }
+  ```
+
+### PATCH `/api/deliveries/:id`
+* **Description**: Update basic delivery parameters (dates, executives, comments). (Admins & Assigned Executives only)
+* **Payload**:
+  ```json
+  {
+    "assignedExecutive": "Sanjay Das",
+    "scheduledDate": "2026-07-01T11:00:00.000Z",
+    "notes": "Welcome kit details updated"
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery details updated successfully",
+    "data": { ... }
+  }
+  ```
+
+### PATCH `/api/deliveries/:id/status`
+* **Description**: Update the handover delivery stage status and record audit log details. Transition to `DELIVERED` validates that the checklist is 100% complete. (Admins & Assigned Executives only)
+* **Payload**:
+  ```json
+  {
+    "status": "DELIVERED",
+    "comment": "All papers verified and keys handed over successfully."
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery status updated successfully",
+    "data": { ... }
+  }
+  ```
+
+### PATCH `/api/deliveries/:id/checklist`
+* **Description**: Update the individual boolean gates checks of the delivery checklist. (Admins & Assigned Executives only)
+* **Payload**:
+  ```json
+  {
+    "insuranceCompleted": true,
+    "rtoCompleted": true,
+    "pdiCompleted": true
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery checklist updated successfully",
+    "data": { ... }
+  }
+  ```
+
+### DELETE `/api/deliveries/:id`
+* **Description**: Delete a delivery record. (Admins only)
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery record deleted successfully"
+  }
+  ```
+
