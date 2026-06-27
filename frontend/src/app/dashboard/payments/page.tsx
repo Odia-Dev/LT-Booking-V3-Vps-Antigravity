@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface Payment {
   id: string;
@@ -25,7 +26,7 @@ export default function CustomerPaymentsPage() {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/payments`, {
+        const res = await fetch(`${apiBaseUrl}/api/dashboard/payments`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -36,7 +37,7 @@ export default function CustomerPaymentsPage() {
           throw new Error(data.message || "Failed to load payments");
         }
 
-        setPayments(data.data || []);
+        setPayments(data.payments?.data || data.data || []);
       } catch (err: unknown) {
         console.error("Fetch payments error:", err);
         const msg = err instanceof Error ? err.message : "An error occurred while loading your payments.";
@@ -86,12 +87,13 @@ export default function CustomerPaymentsPage() {
                   <th className="px-6 py-4">Booking Ref</th>
                   <th className="px-6 py-4 text-right">Amount Paid</th>
                   <th className="px-6 py-4 text-center">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-900 text-neutral-200">
                 {payments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-neutral-900/40 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-xs text-neutral-400">
                       {new Date(payment.createdAt).toLocaleDateString("en-IN", {
                         day: "2-digit",
                         month: "short",
@@ -101,7 +103,9 @@ export default function CustomerPaymentsPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">
-                      <p className="text-white">{payment.razorpayOrderId}</p>
+                      <Link href={`/dashboard/payments/${payment.id}`} className="text-white hover:text-[#eb0a1e] transition-colors font-bold">
+                        {payment.razorpayOrderId}
+                      </Link>
                       {payment.razorpayPaymentId && (
                         <p className="text-[10px] text-neutral-500 mt-0.5">PayID: {payment.razorpayPaymentId}</p>
                       )}
@@ -126,6 +130,14 @@ export default function CustomerPaymentsPage() {
                       }`}>
                         {payment.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                      <Link
+                        href={`/dashboard/payments/${payment.id}`}
+                        className="text-neutral-400 hover:text-white hover:underline uppercase tracking-wide font-semibold text-[11px]"
+                      >
+                        Details →
+                      </Link>
                     </td>
                   </tr>
                 ))}
