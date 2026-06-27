@@ -87,6 +87,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   const menuItems = [
     { name: "Overview", path: "/dashboard", icon: "📊" },
     { name: "My Bookings", path: "/dashboard/bookings", icon: "🚗" },
+    { name: "Delivery Tracking", path: "/dashboard/delivery", icon: "🎁" },
     { name: "Payments", path: "/dashboard/payments", icon: "💳" },
     { name: "Test Drives", path: "/dashboard/test-drives", icon: "🕒" },
     { name: "Notifications", path: "/dashboard/notifications", icon: "🔔" },
