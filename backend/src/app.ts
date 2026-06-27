@@ -19,6 +19,7 @@ import { publicRouter as branchRoutes, adminRouter as adminBranchRoutes, publicB
 import leadRoutes, { publicLeadsRouter } from "./modules/lead/leadRoutes";
 import testDriveRoutes, { publicTestDriveRouter } from "./modules/testDrive/testDriveRoutes";
 import bookingRoutes, { publicBookingsRouter } from "./modules/booking/bookingRoutes";
+import dashboardBookingRoutes from "./modules/booking/dashboardBookingRoutes";
 import paymentRoutes, { publicPaymentsRouter } from "./modules/payment/paymentRoutes";
 import webhookRoutes from "./modules/payment/webhookRoutes";
 
@@ -169,6 +170,7 @@ app.get("/health", async (req: Request, res: Response): Promise<void> => {
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/dashboard/profile", dashboardProfileRoutes);
+app.use("/api/dashboard/bookings", dashboardBookingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
