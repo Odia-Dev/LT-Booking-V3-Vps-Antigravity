@@ -251,3 +251,35 @@ export async function getRefundHistory(req: AuthenticatedRequest, res: Response)
     res.status(500).json({ success: false, message: error.message || "Internal server error" });
   }
 }
+
+export async function getPayments(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!req.admin) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+
+    const { role, id } = req.admin;
+    
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    
+    const filters: any = { page, limit };
+
+    if (role === "CUSTOMER") {
+      filters.customerId = id;
+    } else if (req.query.customerId) {
+      filters.customerId = req.query.customerId as string;
+    }
+
+    if (req.query.status) {
+      filters.status = req.query.status as string;
+    }
+
+    const result = await paymentRepository.listPayments(filters);
+    res.status(200).json({ success: true, ...result });
+  } catch (error: any) {
+    console.error("Error listing payments:", error);
+    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+  }
+}

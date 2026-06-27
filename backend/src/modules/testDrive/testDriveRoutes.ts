@@ -17,16 +17,18 @@ const publicTestDriveRouter = Router();
 // Public route for guest customer booking
 publicTestDriveRouter.post("/", createPublicTestDrive);
 
-// All routes require authentication and ADMIN role
+// All routes require authentication
 router.use(authMiddleware as any);
-router.use(requireRole(["ADMIN"]) as any);
 
+// GET routes allow both ADMIN and CUSTOMER (filtered internally)
 router.get("/", getTestDrives);
-router.post("/", createTestDrive);
 router.get("/:id", getTestDriveById);
-router.put("/:id", updateTestDrive);
-router.patch("/:id/status", updateTestDriveStatus);
-router.patch("/:id/assign", assignExecutive);
-router.delete("/:id", cancelTestDrive);
+
+// Mutation routes require ADMIN role
+router.post("/", requireRole(["ADMIN"]) as any, createTestDrive);
+router.put("/:id", requireRole(["ADMIN"]) as any, updateTestDrive);
+router.patch("/:id/status", requireRole(["ADMIN"]) as any, updateTestDriveStatus);
+router.patch("/:id/assign", requireRole(["ADMIN"]) as any, assignExecutive);
+router.delete("/:id", requireRole(["ADMIN"]) as any, cancelTestDrive);
 
 export { router as default, publicTestDriveRouter };

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 
 interface Profile {
   name: string;
@@ -35,11 +34,11 @@ export default function CustomerProfilePage() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
         });
         const data = await res.json();
 
         if (res.status === 401) {
-          // Redirect to login if unauthorized
           window.location.href = "/login";
           return;
         }
@@ -78,6 +77,7 @@ export default function CustomerProfilePage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           name: profile.name,
           email: profile.email,
@@ -109,149 +109,114 @@ export default function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex flex-col text-neutral-100 font-sans">
-        <header className="px-6 py-5 border-b border-neutral-900 flex justify-between items-center">
-          <span className="text-xl font-bold tracking-widest text-white uppercase">LAXMI TOYOTA</span>
-          <div className="h-5 w-24 bg-neutral-800 rounded animate-pulse"></div>
-        </header>
-        <main className="flex-grow flex items-center justify-center p-6">
-          <div className="w-full max-w-2xl bg-neutral-900/20 border border-neutral-800/80 rounded-2xl p-8 space-y-6">
-            <div className="h-8 w-48 bg-neutral-800 rounded animate-pulse"></div>
-            <div className="space-y-4">
-              <div className="h-12 w-full bg-neutral-800 rounded animate-pulse"></div>
-              <div className="h-12 w-full bg-neutral-800 rounded animate-pulse"></div>
-              <div className="h-12 w-full bg-neutral-800 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </main>
+      <div className="w-full max-w-2xl bg-neutral-900/20 border border-neutral-850 rounded-2xl p-8 space-y-6 animate-pulse">
+        <div className="h-8 w-48 bg-neutral-800 rounded"></div>
+        <div className="space-y-4">
+          <div className="h-12 w-full bg-neutral-800 rounded"></div>
+          <div className="h-12 w-full bg-neutral-800 rounded"></div>
+          <div className="h-12 w-full bg-neutral-800 rounded"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col justify-between text-neutral-100 font-sans">
-      {/* Header */}
-      <header className="px-6 py-5 flex justify-between items-center border-b border-neutral-900 bg-neutral-950/80 backdrop-blur-md sticky top-0 z-50">
-        <span className="text-xl font-bold tracking-widest text-white uppercase">LAXMI TOYOTA</span>
-        <div className="flex items-center space-x-6">
-          <Link href="/" className="text-sm text-neutral-400 hover:text-white transition-colors">Catalog</Link>
-          <button 
-            onClick={async () => {
-              await fetch(`${apiBaseUrl}/api/auth/logout`, { method: "POST" });
-              window.location.href = "/login";
-            }}
-            className="text-sm text-neutral-400 hover:text-white transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+    <div className="w-full max-w-2xl bg-neutral-900/35 border border-neutral-850 rounded-2xl p-6 md:p-8 shadow-xl animate-fadeIn">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Profile Settings</h1>
+        <p className="text-sm text-neutral-400">Update your details to streamline vehicle booking processes.</p>
+      </div>
 
-      {/* Main Body */}
-      <main className="flex-grow flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-2xl bg-neutral-900/40 border border-neutral-800/80 rounded-2xl p-8 backdrop-blur-md shadow-2xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Profile Settings</h1>
-            <p className="text-sm text-neutral-400">Update your details to streamline vehicle booking processes.</p>
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-950/40 border border-red-900/50 text-red-400 text-sm text-center">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-950/40 border border-emerald-900/50 text-emerald-400 text-sm text-center">
+          {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. John Doe"
+              value={profile.name}
+              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+            />
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 rounded-lg bg-red-950/50 border border-red-900/50 text-red-400 text-sm text-center">
-              {error}
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              Mobile Number
+            </label>
+            <input
+              type="text"
+              disabled
+              value={profile.phone}
+              className="w-full px-4 py-3 bg-neutral-900/40 border border-neutral-800 rounded-lg text-neutral-500 cursor-not-allowed focus:outline-none"
+            />
+          </div>
 
-          {success && (
-            <div className="mb-6 p-4 rounded-lg bg-emerald-950/50 border border-emerald-900/50 text-emerald-400 text-sm text-center">
-              {success}
-            </div>
-          )}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="e.g. john@example.com"
+              value={profile.email}
+              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. John Doe"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
-                />
-              </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              City
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Cuttack"
+              value={profile.city}
+              onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+            />
+          </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                  Mobile Number
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={profile.phone}
-                  className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-500 cursor-not-allowed focus:outline-none"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  placeholder="e.g. john@example.com"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Cuttack"
-                  value={profile.city}
-                  onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                  State
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Odisha"
-                  value={profile.state}
-                  onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-                  className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full md:w-auto px-8 py-3 bg-white text-neutral-950 font-bold rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50"
-              >
-                {saving ? "Saving Changes..." : "Save Changes"}
-              </button>
-            </div>
-          </form>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+              State
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Odisha"
+              value={profile.state}
+              onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+              className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-neutral-500 transition-colors"
+            />
+          </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="py-6 text-center border-t border-neutral-900">
-        <p className="text-xs text-neutral-600">&copy; 2026 Laxmi Toyota. All rights reserved.</p>
-      </footer>
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full md:w-auto px-8 py-3 bg-white text-neutral-950 font-bold rounded-lg hover:bg-neutral-250 transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving Changes..." : "Save Changes"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

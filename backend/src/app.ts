@@ -10,6 +10,7 @@ import { prisma } from "./config/db";
 import packageJson from "../package.json";
 import authRoutes from "./modules/auth/authRoutes";
 import profileRoutes from "./modules/profile/profileRoutes";
+import notificationRoutes from "./modules/notification/notificationRoutes";
 import { publicRouter as vehicleRoutes, adminRouter as adminVehicleRoutes, publicVehiclesRouter } from "./modules/vehicle/vehicleRoutes";
 import { publicRouter as variantRoutes, variantsRouter, adminRouter as adminVariantRoutes } from "./modules/variant/variantRoutes";
 import { publicRouter as colorRoutes, adminRouter as adminColorRoutes } from "./modules/color/colorRoutes";
@@ -166,6 +167,7 @@ app.get("/health", async (req: Request, res: Response): Promise<void> => {
 // Route Mounts
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
 app.use("/api/public/vehicles", variantRoutes); // support GET /api/public/vehicles/:slug/variants

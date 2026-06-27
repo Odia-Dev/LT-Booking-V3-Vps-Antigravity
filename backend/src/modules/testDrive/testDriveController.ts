@@ -7,12 +7,20 @@ import {
   assignExecutiveSchema,
   createPublicTestDriveSchema,
 } from "./testDriveValidation";
+import { AuthenticatedRequest } from "../../middleware/auth";
 
 const service = new TestDriveService();
 
 export async function getTestDrives(req: Request, res: Response): Promise<void> {
   try {
-    const customerId = req.query.customerId as string;
+    const adminUser = (req as AuthenticatedRequest).admin;
+    let customerId = req.query.customerId as string;
+
+    // Enforce role boundaries: customer can only query their own
+    if (adminUser?.role === "CUSTOMER") {
+      customerId = adminUser.id;
+    }
+
     const branchId = req.query.branchId as string;
     const vehicleId = req.query.vehicleId as string;
     const executiveName = req.query.executiveName as string;
@@ -22,6 +30,13 @@ export async function getTestDrives(req: Request, res: Response): Promise<void> 
       res.status(200).json({ success: true, appointments });
       return;
     }
+    
+    // Customers cannot perform open listings
+    if (adminUser?.role === "CUSTOMER") {
+      res.status(200).json({ success: true, appointments: [] });
+      return;
+    }
+
     if (branchId && !req.query.page) {
       const appointments = await service.listByBranch(branchId);
       res.status(200).json({ success: true, appointments });
@@ -60,6 +75,14 @@ export async function getTestDriveById(req: Request, res: Response): Promise<voi
   try {
     const { id } = req.params;
     const appointment = await service.getTestDriveById(id);
+    
+    // Security Check: Customer can only access their own record
+    const adminUser = (req as AuthenticatedRequest).admin;
+    if (adminUser?.role === "CUSTOMER" && appointment.customerId !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+
     res.status(200).json({ success: true, appointment });
   } catch (error: any) {
     console.error("getTestDriveById error:", error);

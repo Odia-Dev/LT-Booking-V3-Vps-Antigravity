@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrder, getPaymentById, getPaymentByOrderId, verifyPayment, initiateRefund, getRefundHistory } from "./paymentController";
+import { createOrder, getPaymentById, getPaymentByOrderId, verifyPayment, initiateRefund, getRefundHistory, getPayments } from "./paymentController";
 import { authMiddleware } from "../../middleware/auth";
 
 const router = Router();
@@ -9,7 +9,8 @@ const publicPaymentsRouter = Router();
 publicPaymentsRouter.post("/order", createOrder as any);
 publicPaymentsRouter.post("/verify", verifyPayment as any);
 
-// Require active authentication session for administrative operations
+// Require active authentication session for operations
+router.get("/", authMiddleware as any, getPayments as any);
 router.post("/order", authMiddleware as any, createOrder as any);
 router.post("/verify", authMiddleware as any, verifyPayment as any);
 router.get("/:id", authMiddleware as any, getPaymentById as any);
