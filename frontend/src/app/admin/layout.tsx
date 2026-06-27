@@ -87,6 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Offers", path: "/admin/offers", icon: "🏷️" },
     { name: "Leads", path: "/admin/leads", icon: "👥" },
     { name: "Bookings", path: "/admin/bookings", icon: "💳" },
+    { name: "Deliveries", path: "/admin/deliveries", icon: "🎁" },
     { name: "Settings", path: "/admin/settings", icon: "⚙️" },
   ];
 
