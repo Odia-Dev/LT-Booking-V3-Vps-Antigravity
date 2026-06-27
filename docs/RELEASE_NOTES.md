@@ -6,6 +6,20 @@ This document logs git release tags and production deploy branches history.
 
 ## Production Release Tags
 
+### `v1.1.0-m13-customer-dashboard-ready` (2026-06-27)
+* **Goal**: Release the production-grade Customer Dashboard module (M13) including layout shell, session authentication, profile editor, delivery status tracking timeline, invoice receipts list, Razorpay failed payment retries, notification center, and access-control security hardening.
+* **Commit**: `feat(m13): production ready`
+* **Details**:
+  - Implemented responsive Customer Portal Shell layout with mobile menu header, sidebar navigation, and breadcrumb indicators.
+  - Setup customer profile management with editable addresses, dealership branch selectors, and checkboxes for subscription channels.
+  - Extended Prisma `User` schema with profile fields and established relation mappings with `Branch`.
+  - Added new `Notification` model to Prisma schema supporting read/unread indicators linked to user records.
+  - Built detailed vehicle delivery status tracking timeline showing booking progress stages (Created, Paid, Confirmed, Allocated, PDI, Ready for Delivery, Delivered).
+  - Deployed payments invoice list and detail view supporting dynamically loaded Razorpay checkout retry overlays for failed/pending transactions.
+  - Setup paginated, filterable, and searchable Notification Center enabling customers to mark alerts as read.
+  - Hardened APIs with `dashboardLimiter` rate-limiting (60 req/min) and ownership checks preventing ID enumeration attacks.
+  - Verified and passed backend compiler compilation and frontend Next.js production builds.
+
 ### `v1.0.0-m12-razorpay-ready` (2026-06-26)
 * **Goal**: Release the production-grade Razorpay payment integration, including order creation, dynamic checkout scripting, cryptographically verified signature callbacks, async webhooks processing, refund tracking, and event-driven notifications.
 * **Commit**: `feat(m12): production ready`

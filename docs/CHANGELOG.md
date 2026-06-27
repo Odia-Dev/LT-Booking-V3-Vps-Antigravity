@@ -4,6 +4,21 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 
 ---
 
+## [1.1.0] - 2026-06-27
+
+### Added
+* **Customer Dashboard (Milestone M13)**:
+  - Deployed Customer layout shell with responsive sidebar, top-header mobile layout, and breadcrumb trackers.
+  - Implemented Session verification matching cookie credentials (`admin_session`) and redirects to `/login` if unauthenticated.
+  - Extended Prisma `User` schema with custom properties: `address`, `preferredBranchId`, and `communicationPreferences`.
+  - Implemented Customer Profile editor page supporting dealership branch list selectors and communication subscriptions checkboxes.
+  - Deployed dedicated dashboard API endpoints: `/api/dashboard/profile`, `/api/dashboard/bookings`, `/api/dashboard/payments`, `/api/dashboard/test-drives`, and `/api/dashboard/notifications`.
+  - Built Booking details tracking dashboard displaying vehicle reserve items, executive details, and a graphical 7-step delivery status timeline.
+  - Configured payments invoice tracking page featuring Razorpay retry options for failed orders and status audit trails.
+  - Setup a dynamic Notification Center with keyword search, pagination, type category filters, read/unread tabs, and patch endpoints to mark alerts as read.
+  - Hardened API request verification: restricted detail lookup checks to the owner customer and applied `dashboardLimiter` request throttling.
+
+
 ## [1.0.0] - 2026-06-26
 
 ### Added

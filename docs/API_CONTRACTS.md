@@ -1291,6 +1291,233 @@ Every dispatched channel notification (SMS, Email, WhatsApp) registers audit log
     "message": "Webhook processed and recorded successfully"
   }
   ```
-```
 
+---
 
+## 13. Customer Dashboard Services (`/api/dashboard`)
+
+### GET `/api/dashboard/profile`
+* **Description**: Fetch the authenticated customer's profile, including their registered email, verified phone, city, state, address, preferred dealership branch, and subscription channels.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "profile": {
+      "id": "customer-uuid",
+      "name": "John Doe",
+      "email": "johndoe@example.com",
+      "phone": "+919876543210",
+      "city": "Bhubaneswar",
+      "state": "Odisha",
+      "address": "123 Street Name",
+      "preferredBranchId": "branch-uuid",
+      "preferredBranch": {
+        "id": "branch-uuid",
+        "name": "Bhubaneswar Toyota"
+      },
+      "communicationPreferences": {
+        "email": true,
+        "sms": true,
+        "whatsapp": false
+      }
+    }
+  }
+  ```
+
+### PATCH `/api/dashboard/profile`
+* **Description**: Edit custom preferences and profile attributes. Email and Phone updates are strictly blocked.
+* **Payload**:
+  ```json
+  {
+    "name": "John Doe Updated",
+    "city": "Cuttack",
+    "state": "Odisha",
+    "address": "456 Main Road",
+    "preferredBranchId": "branch-uuid-2",
+    "communicationPreferences": {
+      "email": true,
+      "sms": false,
+      "whatsapp": true
+    }
+  }
+  ```
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Profile updated successfully",
+    "profile": { ... }
+  }
+  ```
+
+### GET `/api/dashboard/bookings`
+* **Description**: Retrieve list of booking records created by the authenticated customer.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "booking-uuid",
+        "bookingId": "LT-202606-000001",
+        "bookingAmount": 25000,
+        "paymentStatus": "SUCCESS",
+        "bookingStatus": "CONFIRMED",
+        "vehicle": { "name": "Fortuner" },
+        "variant": { "name": "2.8L 4x4 AT" },
+        "branch": { "name": "Bhubaneswar Toyota", "city": "Bhubaneswar" }
+      }
+    ]
+  }
+  ```
+
+### GET `/api/dashboard/bookings/:id`
+* **Description**: Retrieve detailed status tracking information for a specific booking. Restricted to booking owner.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "booking-uuid",
+      "bookingId": "LT-202606-000001",
+      "bookingAmount": 25000,
+      "paymentStatus": "SUCCESS",
+      "bookingStatus": "CONFIRMED",
+      "assignedExecutive": "Rajesh Kumar",
+      "notes": "Please deliver with premium mats.",
+      "createdAt": "2026-06-27T12:00:00.000Z",
+      "vehicle": { "name": "Fortuner" },
+      "variant": { "name": "2.8L 4x4 AT" },
+      "branch": {
+        "name": "Bhubaneswar Toyota",
+        "city": "Bhubaneswar",
+        "phone": "+919998887770",
+        "email": "bbsr@laxmitoyota.co.in"
+      }
+    }
+  }
+  ```
+
+### GET `/api/dashboard/payments`
+* **Description**: Fetch transaction receipts history.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "payment-uuid",
+        "razorpayOrderId": "order_OkJ232Fdf2",
+        "razorpayPaymentId": "pay_OkJ423Fdf4",
+        "amount": 25000,
+        "currency": "INR",
+        "status": "SUCCESS",
+        "createdAt": "2026-06-27T12:00:00.000Z",
+        "booking": {
+          "bookingId": "LT-202606-000001"
+        }
+      }
+    ]
+  }
+  ```
+
+### GET `/api/dashboard/payments/:id`
+* **Description**: Retrieve full transaction record and status audits history.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "payment-uuid",
+      "bookingId": "booking-uuid",
+      "razorpayOrderId": "order_OkJ232Fdf2",
+      "razorpayPaymentId": "pay_OkJ423Fdf4",
+      "amount": 25000,
+      "currency": "INR",
+      "status": "SUCCESS",
+      "createdAt": "2026-06-27T12:00:00.000Z",
+      "booking": {
+        "bookingId": "LT-202606-000001",
+        "bookingStatus": "CONFIRMED",
+        "vehicle": { "name": "Fortuner" },
+        "variant": { "name": "2.8L 4x4 AT" }
+      },
+      "audits": [
+        {
+          "id": "audit-uuid",
+          "statusBefore": "CREATED",
+          "statusAfter": "SUCCESS",
+          "notes": "Razorpay webhook verified capture success",
+          "createdAt": "2026-06-27T12:05:00.000Z"
+        }
+      ]
+    }
+  }
+  ```
+
+### GET `/api/dashboard/test-drives`
+* **Description**: Retrieve list of test drive schedules booked by the customer.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "appointments": [
+      {
+        "id": "td-uuid",
+        "testDriveId": "TD-202606-000042",
+        "preferredDate": "2026-06-28T00:00:00.000Z",
+        "preferredTime": "11:00 AM - 12:00 PM",
+        "status": "CONFIRMED",
+        "assignedExecutive": "Sanjay Panda",
+        "notes": "Needs clean diesel variant.",
+        "vehicle": { "name": "Innova Hycross" },
+        "variant": { "name": "2.0L ZX Hybrid" },
+        "branch": { "name": "Cuttack Toyota", "city": "Cuttack" }
+      }
+    ]
+  }
+  ```
+
+### GET `/api/dashboard/notifications`
+* **Description**: Fetch paginated, filterable, and searchable notifications logs linked to the customer.
+* **Query Parameters**:
+  - `page`: Page index (default: 1)
+  - `limit`: Logs limit (default: 10)
+  - `search`: Keyword search term
+  - `status`: Filter by status (`read` or `unread`)
+  - `type`: Filter by channel type (`BOOKING`, `PAYMENT`, `TEST_DRIVE`, `DELIVERY`, `PROMOTION`)
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "notif-uuid",
+        "title": "Booking Accepted",
+        "content": "Your booking LT-202606-000001 has been confirmed by Bhubaneswar Toyota.",
+        "type": "BOOKING",
+        "isRead": false,
+        "createdAt": "2026-06-27T12:10:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 1
+    }
+  }
+  ```
+
+### PATCH `/api/dashboard/notifications/:id/read`
+* **Description**: Set a notification isRead status flag to true.
+* **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "notification": {
+      "id": "notif-uuid",
+      "isRead": true
+    }
+  }
+  ```
