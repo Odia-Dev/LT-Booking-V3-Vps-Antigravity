@@ -41,6 +41,7 @@ model Branch {
   testDrives TestDrive[]
   bookings Booking[]
   preferredUsers User[] @relation("UserPreferredBranch")
+  deliveries Delivery[]
 }
 
 // -----------------------------------------------------------------------------
@@ -70,6 +71,7 @@ model Vehicle {
   colors         VehicleColor[]
   testDrives     TestDrive[]
   bookings       Booking[]
+  deliveries     Delivery[]
 }
 
 // -----------------------------------------------------------------------------
@@ -92,6 +94,7 @@ model Variant {
   leads   Lead[]
   testDrives TestDrive[]
   bookings   Booking[]
+  deliveries Delivery[]
 }
 
 // -----------------------------------------------------------------------------
@@ -164,6 +167,7 @@ model Booking {
   variant        Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
   branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
   payment        Payment?
+  delivery       Delivery?
 }
 
 // -----------------------------------------------------------------------------
@@ -187,6 +191,7 @@ model User {
   bookings     Booking[]
   payments     Payment[]
   notifications Notification[]
+  deliveries   Delivery[]
   preferredBranch Branch? @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
@@ -316,3 +321,67 @@ model Notification {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+// -----------------------------------------------------------------------------
+// Delivery Model: Vehicle Handover & Delivery Management
+// -----------------------------------------------------------------------------
+model Delivery {
+  id                 String             @id @default(uuid())
+  bookingId          String             @unique
+  customerId         String
+  vehicleId          String
+  variantId          String
+  branchId           String
+  assignedExecutive  String?
+  status             String             @default("SCHEDULED") // SCHEDULED, PREPARED, READY, DELIVERED, CANCELLED
+  scheduledDate      DateTime?
+  actualDeliveryDate DateTime?
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  booking            Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer           User               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicle            Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  variant            Variant            @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branch             Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  checklist          DeliveryChecklist?
+  timeline           DeliveryTimeline[]
+}
+
+// -----------------------------------------------------------------------------
+// DeliveryChecklist Model: Gate pass criteria verification
+// -----------------------------------------------------------------------------
+model DeliveryChecklist {
+  id                     String   @id @default(uuid())
+  deliveryId             String   @unique
+  insuranceCompleted     Boolean  @default(false)
+  rtoCompleted           Boolean  @default(false)
+  pdiCompleted           Boolean  @default(false)
+  accessoriesInstalled   Boolean  @default(false)
+  paymentCleared         Boolean  @default(false)
+  documentationCompleted Boolean  @default(false)
+  vehicleCleaned         Boolean  @default(false)
+  fuelFilled             Boolean  @default(false)
+  photographsTaken       Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  delivery               Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// DeliveryTimeline Model: Log audits of handover transitions
+// -----------------------------------------------------------------------------
+model DeliveryTimeline {
+  id           String   @id @default(uuid())
+  deliveryId   String
+  statusBefore String
+  statusAfter  String
+  comment      String?
+  performedBy  String?
+  createdAt    DateTime @default(now())
+
+  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
