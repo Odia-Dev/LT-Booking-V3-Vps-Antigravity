@@ -1800,3 +1800,14 @@ Notifications are fired automatically at the following lifecycle points. No exte
 Each dispatch creates:
 - One `NotificationLog` row per channel (with `deliveryId` and `bookingId`)
 - One `Notification` portal alert visible on `/dashboard/notifications`
+ 
+ # #   M o d u l e   1 5 :   F i n a n c e   M a n a g e m e n t  
+ # # #   G E T   / a p i / f i n a n c e  
+ -   L i s t   f i n a n c e   a p p l i c a t i o n s .   A d m i n s   s e e   a l l ,   E x e c u t i v e s   s e e   a s s i g n e d ,   C u s t o m e r s   s e e   o w n .  
+ # # #   P O S T   / a p i / f i n a n c e  
+ -   I n i t i a l i z e   a   n e w   f i n a n c e   a p p l i c a t i o n .  
+ # # #   P A T C H   / a p i / f i n a n c e / : i d  
+ -   U p d a t e   b a n k ,   E M I ,   l o a n   d e t a i l s .  
+ # # #   P O S T   / a p i / f i n a n c e / : i d / d o c u m e n t s  
+ -   U p l o a d   A a d h a a r ,   P A N ,   I T R ,   e t c . ,   ( m u l t i p a r t / f o r m - d a t a )  
+ 

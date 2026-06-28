@@ -104,3 +104,12 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
   * Built Admin Lead CRM Dashboard console under `/admin/leads` and details view `/admin/leads/[id]` supporting status transitions, coordinator assignments, bulk actions, and note logs.
 
 
+ 
+ # #   [ U n r e l e a s e d ]   -   M o d u l e   1 5   ( F i n a n c e   M a n a g e m e n t )  
+ # # #   A d d e d  
+ -   C o m p l e t e   e n d - t o - e n d   F i n a n c e   A p p l i c a t i o n   l i f e c y c l e  
+ -   D o c u m e n t   u p l o a d   w i t h   e x p i r y   v a l i d a t i o n   f o r   A a d h a a r ,   P A N ,   I T R ,   e t c .  
+ -   C u s t o m e r   f i n a n c e   d a s h b o a r d   f o r   t r a c k i n g   a n d   u p l o a d s  
+ -   A d m i n   f i n a n c e   d a s h b o a r d   f o r   e x t e n s i v e   o v e r s i g h t   a n d   s t a t u s   m a n a g e m e n t  
+ -   A u t o m a t e d   n o t i f i c a t i o n s   v i a   E m a i l ,   S M S ,   W h a t s A p p  
+ 

@@ -22,6 +22,7 @@ export const createFinanceSchema = z.object({
     "CLOSED"
   ]).optional(),
   assignedExecutive: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 export const updateFinanceSchema = createFinanceSchema.partial();

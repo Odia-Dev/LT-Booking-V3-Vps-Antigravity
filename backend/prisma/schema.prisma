@@ -431,6 +431,7 @@ model FinanceApplication {
   emiAmount         Float?
   status            String   @default("INITIATED") // INITIATED, DOCUMENT_PENDING, UNDER_REVIEW, SANCTION_APPROVED, SANCTION_REJECTED, DISBURSEMENT_PENDING, DISBURSED, CLOSED
   assignedExecutive String?
+  notes             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

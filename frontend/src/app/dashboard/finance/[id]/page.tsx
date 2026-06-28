@@ -219,7 +219,7 @@ export default function CustomerFinanceDetailPage({ params }: { params: Promise<
             
             <div className="mb-6">
               {application.documents?.length === 0 ? (
-                <p className="text-sm text-gray-500 mb-4">You haven't uploaded any documents yet.</p>
+                <p className="text-sm text-gray-500 mb-4">You haven&apos;t uploaded any documents yet.</p>
               ) : (
                 <ul className="space-y-3 mb-4">
                   {application.documents?.map(doc => (

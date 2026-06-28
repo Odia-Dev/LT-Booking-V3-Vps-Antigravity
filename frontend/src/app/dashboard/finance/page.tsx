@@ -62,7 +62,7 @@ export default function CustomerFinancePage() {
       {applications.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center border">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">No Finance Applications Found</h2>
-          <p className="text-gray-500">You don't have any ongoing vehicle financing requests yet.</p>
+          <p className="text-gray-500">You don&apos;t have any ongoing vehicle financing requests yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
