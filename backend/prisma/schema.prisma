@@ -197,6 +197,7 @@ model User {
   deliveries               Delivery[]
   financeApplications      FinanceApplication[]
   insuranceInquiries       InsuranceInquiry[]
+  exchangeInquiries        ExchangeInquiry[]
   preferredBranch          Branch?              @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
@@ -500,6 +501,33 @@ model InsuranceInquiry {
   assignedExecutive      String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
+
+  customer User? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+}
+
+// -----------------------------------------------------------------------------
+// ExchangeInquiry Model: Vehicle exchange inquiries (M17)
+// -----------------------------------------------------------------------------
+model ExchangeInquiry {
+  id                 String   @id @default(uuid())
+  customerId         String?
+  name               String
+  email              String
+  phone              String
+  brand              String
+  model              String
+  year               Int
+  kmDriven           Int
+  fuelType           String
+  expectedValue      Float?
+  registrationNumber String
+  images             Json? // Array of uploaded image paths
+  valuation          Float? // Admin valuation
+  notes              String?
+  status             String   @default("NEW") // NEW, EVALUATING, OFFER_MADE, ACCEPTED, REJECTED, CLOSED
+  assignedExecutive  String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   customer User? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 }
