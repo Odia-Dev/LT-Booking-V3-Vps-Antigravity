@@ -145,7 +145,7 @@ export default function AdminInventoryPage() {
           </div>
           
           <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Aging Inventory (> 90 Days)</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Aging Inventory (&gt; 90 Days)</h3>
             {alerts.agingInventory.length === 0 ? (
               <p className="text-sm text-gray-500">No aging inventory detected.</p>
             ) : (
