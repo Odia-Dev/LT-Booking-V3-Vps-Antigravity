@@ -1,6 +1,10 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import InventoryStatusWidget from "./InventoryStatusWidget";
+
+export const revalidate = 60;
 
 interface Vehicle {
   id: string;
@@ -119,16 +123,7 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
   const vehicle = await getVehicle(slug);
 
   if (!vehicle) {
-    return (
-      <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col items-center justify-center gap-4">
-        <span className="text-4xl">⚠️</span>
-        <h2 className="text-xl font-bold text-white">Vehicle Not Found</h2>
-        <p className="text-sm text-neutral-500">The requested vehicle slug does not exist.</p>
-        <Link href="/vehicles" className="text-xs uppercase tracking-wider font-bold text-[#eb0a1e] hover:underline mt-4">
-          ← Back to Catalog
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   const variants = vehicle.variants || [];
@@ -263,6 +258,7 @@ export default async function CustomerVehicleDetailPage({ params }: PageProps) {
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">{vehicle.name}</h1>
+            <InventoryStatusWidget vehicleId={vehicle.id} />
           </div>
 
           {/* Description */}
