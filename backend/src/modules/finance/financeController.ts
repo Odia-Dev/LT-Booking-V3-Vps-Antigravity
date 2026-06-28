@@ -4,8 +4,11 @@ import {
   createFinanceSchema,
   updateFinanceSchema,
   updateFinanceStatusSchema,
+  uploadFinanceDocumentSchema,
 } from "./financeValidation";
 import { AuthenticatedRequest } from "../../middleware/auth";
+import path from "path";
+import fs from "fs";
 
 const service = new FinanceService();
 
@@ -190,5 +193,155 @@ export async function deleteFinanceApplication(req: Request, res: Response): Pro
       success: false,
       message: error.message || "Failed to delete finance application",
     });
+  }
+}
+
+export async function uploadFinanceDocument(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const adminUser = (req as AuthenticatedRequest).admin;
+    const uploadedBy = adminUser?.id || "SYSTEM";
+
+    const existingApplication = await service.getApplication(id);
+    if (!existingApplication) {
+      res.status(404).json({ success: false, message: "Application not found" });
+      return;
+    }
+
+    if (adminUser?.role === "CUSTOMER" && existingApplication.customerId !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+    if (adminUser?.role === "FINANCE_EXECUTIVE" && existingApplication.assignedExecutive !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied. Not assigned to this application." });
+      return;
+    }
+
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      res.status(400).json({ success: false, message: "No files uploaded" });
+      return;
+    }
+
+    const bodyData = {
+      documentType: req.body.documentType,
+      remarks: req.body.remarks,
+      expiryDate: req.body.expiryDate,
+    };
+
+    const parseResult = uploadFinanceDocumentSchema.safeParse(bodyData);
+    if (!parseResult.success) {
+      // Cleanup uploaded files
+      files.forEach((f) => fs.unlinkSync(f.path));
+      res.status(400).json({ success: false, errors: parseResult.error.errors });
+      return;
+    }
+
+    // Expiry validation rule
+    if (parseResult.data.expiryDate && parseResult.data.expiryDate < new Date()) {
+      files.forEach((f) => fs.unlinkSync(f.path));
+      res.status(400).json({ success: false, message: "Document has expired and cannot be uploaded" });
+      return;
+    }
+
+    const uploadedDocuments = [];
+    for (const file of files) {
+      const doc = await service.addDocument(id, {
+        documentType: parseResult.data.documentType,
+        fileName: file.originalname,
+        storedName: file.filename,
+        filePath: path.join("uploads", "finance", id, file.filename).replace(/\\/g, "/"),
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        uploadedBy,
+        remarks: parseResult.data.remarks,
+        expiryDate: parseResult.data.expiryDate,
+        status: "PENDING_VERIFICATION",
+      });
+      uploadedDocuments.push(doc);
+    }
+
+    res.status(201).json({ success: true, message: "Documents uploaded successfully", documents: uploadedDocuments });
+  } catch (error: any) {
+    console.error("uploadFinanceDocument error:", error);
+    res.status(500).json({ success: false, message: "Failed to upload document" });
+  }
+}
+
+export async function getFinanceDocumentPreview(req: Request, res: Response): Promise<void> {
+  try {
+    const { id, docId } = req.params;
+    const adminUser = (req as AuthenticatedRequest).admin;
+
+    const application = await service.getApplication(id);
+    if (!application) {
+      res.status(404).json({ success: false, message: "Application not found" });
+      return;
+    }
+
+    if (adminUser?.role === "CUSTOMER" && application.customerId !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+    if (adminUser?.role === "FINANCE_EXECUTIVE" && application.assignedExecutive !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+
+    const doc = await service.getDocumentById(docId);
+    if (!doc || doc.financeApplicationId !== id) {
+      res.status(404).json({ success: false, message: "Document not found" });
+      return;
+    }
+
+    const fullPath = path.join(process.cwd(), doc.filePath);
+    if (!fs.existsSync(fullPath)) {
+      res.status(404).json({ success: false, message: "File not found on disk" });
+      return;
+    }
+
+    res.sendFile(fullPath);
+  } catch (error: any) {
+    console.error("getFinanceDocumentPreview error:", error);
+    res.status(500).json({ success: false, message: "Failed to preview document" });
+  }
+}
+
+export async function downloadFinanceDocument(req: Request, res: Response): Promise<void> {
+  try {
+    const { id, docId } = req.params;
+    const adminUser = (req as AuthenticatedRequest).admin;
+
+    const application = await service.getApplication(id);
+    if (!application) {
+      res.status(404).json({ success: false, message: "Application not found" });
+      return;
+    }
+
+    if (adminUser?.role === "CUSTOMER" && application.customerId !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+    if (adminUser?.role === "FINANCE_EXECUTIVE" && application.assignedExecutive !== adminUser.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+
+    const doc = await service.getDocumentById(docId);
+    if (!doc || doc.financeApplicationId !== id) {
+      res.status(404).json({ success: false, message: "Document not found" });
+      return;
+    }
+
+    const fullPath = path.join(process.cwd(), doc.filePath);
+    if (!fs.existsSync(fullPath)) {
+      res.status(404).json({ success: false, message: "File not found on disk" });
+      return;
+    }
+
+    res.download(fullPath, doc.fileName);
+  } catch (error: any) {
+    console.error("downloadFinanceDocument error:", error);
+    res.status(500).json({ success: false, message: "Failed to download document" });
   }
 }

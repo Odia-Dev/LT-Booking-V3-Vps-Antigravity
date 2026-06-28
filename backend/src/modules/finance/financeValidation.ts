@@ -38,3 +38,26 @@ export const updateFinanceStatusSchema = z.object({
     "CLOSED"
   ]),
 });
+
+export const uploadFinanceDocumentSchema = z.object({
+  documentType: z.enum([
+    "AADHAAR",
+    "PAN",
+    "BANK_STATEMENT",
+    "SALARY_SLIP",
+    "ITR",
+    "FORM_16",
+    "GST_DOCUMENTS",
+    "BUSINESS_PROOF",
+    "SANCTION_LETTER",
+    "OTHER"
+  ]),
+  remarks: z.string().optional().nullable(),
+  expiryDate: z.preprocess((val) => {
+    if (typeof val === "string" && val.trim() !== "") {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? undefined : d;
+    }
+    return val;
+  }, z.date().optional().nullable()),
+});

@@ -67,6 +67,10 @@ export class FinanceService {
     });
   }
 
+  async getDocumentById(id: string) {
+    return this.repository.getDocumentById(id);
+  }
+
   async deleteApplication(id: string) {
     const existing = await this.repository.getApplicationById(id);
     if (!existing) {

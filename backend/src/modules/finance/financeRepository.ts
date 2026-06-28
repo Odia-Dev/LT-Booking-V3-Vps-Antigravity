@@ -100,6 +100,12 @@ export class FinanceRepository {
     });
   }
 
+  async getDocumentById(id: string): Promise<FinanceDocument | null> {
+    return prisma.financeDocument.findUnique({
+      where: { id },
+    });
+  }
+
   async addTimeline(data: any): Promise<FinanceTimeline> {
     return prisma.financeTimeline.create({
       data,

@@ -447,19 +447,20 @@ model FinanceApplication {
 // FinanceDocument Model: Finance Document Uploads
 // -----------------------------------------------------------------------------
 model FinanceDocument {
-  id                   String   @id @default(uuid())
+  id                   String    @id @default(uuid())
   financeApplicationId String
-  documentType         String // AADHAAR, PAN, BANK_STATEMENT, SALARY_SLIP, ITR, SANCTION_LETTER, OTHER
+  documentType         String // AADHAAR, PAN, BANK_STATEMENT, SALARY_SLIP, ITR, FORM_16, GST_DOCUMENTS, BUSINESS_PROOF, SANCTION_LETTER, OTHER
   fileName             String
   storedName           String
   filePath             String
   mimeType             String
   fileSize             Int
   uploadedBy           String
-  status               String   @default("PENDING_VERIFICATION") // PENDING_VERIFICATION, VERIFIED, REJECTED
+  status               String    @default("PENDING_VERIFICATION") // PENDING_VERIFICATION, VERIFIED, REJECTED
   remarks              String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  expiryDate           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   financeApplication FinanceApplication @relation(fields: [financeApplicationId], references: [id], onDelete: Cascade)
 }
