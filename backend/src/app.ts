@@ -30,6 +30,7 @@ import deliveryRoutes from "./modules/delivery/deliveryRoutes";
 import financeRoutes from "./modules/finance/financeRoutes";
 import insuranceRoutes from "./modules/insurance/insuranceRoutes";
 import exchangeRoutes from "./modules/exchange/exchangeRoutes";
+import analyticsRoutes from "./modules/analytics/analyticsRoutes";
 
 dotenv.config();
 
@@ -197,6 +198,7 @@ app.use("/api/deliveries", deliveryRoutes);
 app.use("/api/finance", financeRoutes);
 app.use("/api", insuranceRoutes);
 app.use("/api", exchangeRoutes);
+app.use("/api", analyticsRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
 app.use("/api/public/vehicles", variantRoutes); // support GET /api/public/vehicles/:slug/variants
