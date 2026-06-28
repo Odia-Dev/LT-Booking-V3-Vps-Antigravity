@@ -53,8 +53,8 @@ export default function InsuranceInquiryPage() {
         preferredContactTime: "MORNING",
         notes: "",
       });
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function InsuranceInquiryPage() {
   return (
     <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Toyota Protect Insurance</h1>
-      <p className="text-gray-600 mb-8">Get the best quote for your vehicle. Fill out the form below and we'll get in touch with you.</p>
+      <p className="text-gray-600 mb-8">Get the best quote for your vehicle. Fill out the form below and we&apos;ll get in touch with you.</p>
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded mb-6 border-l-4 border-red-500">{error}</div>}
 

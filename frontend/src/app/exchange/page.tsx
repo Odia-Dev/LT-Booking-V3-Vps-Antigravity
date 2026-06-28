@@ -66,8 +66,8 @@ export default function ExchangeInquiryPage() {
         registrationNumber: "", notes: "",
       });
       setImages([]);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Something went wrong");
     } finally {
       setLoading(false);
     }

@@ -37,8 +37,8 @@ export default function AdminExchangePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch inquiries");
       setInquiries(data.data || []);
-    } catch (err: any) {
-      setError(err.message || "Error fetching data");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Error fetching data");
     } finally {
       setLoading(false);
     }
@@ -58,8 +58,8 @@ export default function AdminExchangePage() {
       });
       if (!res.ok) throw new Error("Failed to update");
       fetchInquiries();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert((err as Error).message);
     }
   };
 

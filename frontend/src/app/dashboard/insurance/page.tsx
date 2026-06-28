@@ -27,8 +27,8 @@ export default function CustomerInsuranceDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to load your inquiries");
       setInquiries(data.data || []);
-    } catch (err: any) {
-      setError(err.message || "Error fetching data");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Error fetching data");
     } finally {
       setLoading(false);
     }
