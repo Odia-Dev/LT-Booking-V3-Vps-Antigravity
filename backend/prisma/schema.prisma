@@ -12,36 +12,37 @@ generator client {
 // Branch Model: Dealership Locations
 // -----------------------------------------------------------------------------
 model Branch {
-  id            String   @id @default(uuid())
-  name          String
-  slug          String   @unique
-  code          String   @unique
-  address       String
-  city          String
-  district      String
-  state         String
-  pincode       String
-  phone         String
-  email         String
-  googleMapsUrl String
-  workingHours  String   @default("9:00 AM - 7:00 PM")
-  latitude      Float?
-  longitude     Float?
-  managerName   String?
-  managerPhone  String?
-  salesManager  String?
+  id             String   @id @default(uuid())
+  name           String
+  slug           String   @unique
+  code           String   @unique
+  address        String
+  city           String
+  district       String
+  state          String
+  pincode        String
+  phone          String
+  email          String
+  googleMapsUrl  String
+  workingHours   String   @default("9:00 AM - 7:00 PM")
+  latitude       Float?
+  longitude      Float?
+  managerName    String?
+  managerPhone   String?
+  salesManager   String?
   serviceManager String?
-  sortOrder     Int      @default(0)
-  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  sortOrder      Int      @default(0)
+  status         String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  leads Lead[]
-  testDrives TestDrive[]
-  bookings Booking[]
-  preferredUsers User[] @relation("UserPreferredBranch")
-  deliveries Delivery[]
+  leads               Lead[]
+  testDrives          TestDrive[]
+  bookings            Booking[]
+  preferredUsers      User[]               @relation("UserPreferredBranch")
+  deliveries          Delivery[]
+  financeApplications FinanceApplication[]
 }
 
 // -----------------------------------------------------------------------------
@@ -67,11 +68,12 @@ model Vehicle {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  variants       Variant[]
-  colors         VehicleColor[]
-  testDrives     TestDrive[]
-  bookings       Booking[]
-  deliveries     Delivery[]
+  variants            Variant[]
+  colors              VehicleColor[]
+  testDrives          TestDrive[]
+  bookings            Booking[]
+  deliveries          Delivery[]
+  financeApplications FinanceApplication[]
 }
 
 // -----------------------------------------------------------------------------
@@ -90,8 +92,8 @@ model Variant {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  leads   Lead[]
+  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  leads      Lead[]
   testDrives TestDrive[]
   bookings   Booking[]
   deliveries Delivery[]
@@ -103,8 +105,8 @@ model Variant {
 model VehicleColor {
   id        String   @id @default(uuid())
   vehicleId String
-  name      String   // e.g., "Attitude Black"
-  colorCode String   // e.g., "#1C1C1E" — hex color code for CSS swatch
+  name      String // e.g., "Attitude Black"
+  colorCode String // e.g., "#1C1C1E" — hex color code for CSS swatch
   status    String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,9 +133,9 @@ model Lead {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  branch  Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  variant Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
-  booking Booking?
+  branch     Branch?     @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  variant    Variant?    @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  booking    Booking?
   testDrives TestDrive[]
 }
 
@@ -141,58 +143,60 @@ model Lead {
 // Booking Model: Online Vehicle Bookings
 // -----------------------------------------------------------------------------
 model Booking {
-  id             String   @id @default(uuid())
-  bookingId      String   @unique // LT-YYYYMM-000001
-  customerId     String
-  leadId         String?  @unique
-  testDriveId    String?  @unique
-  vehicleId      String
-  variantId      String
-  branchId       String
-  bookingAmount  Float
-  paymentGateway String?  // RAZORPAY, ICICI (make optional to support init state)
-  paymentId      String?  @unique // Gateway transaction ref (make optional)
-  orderId        String?  @unique // Gateway order ref (make optional)
-  paymentStatus  String   @default("PENDING") // PENDING, SUCCESS, FAILED, REFUNDED
-  bookingStatus  String   @default("INITIATED") // INITIATED, PAYMENT_PENDING, PAYMENT_SUCCESS, CONFIRMED, VEHICLE_ALLOCATED, DELIVERED, CLOSED, CANCELLED, REFUNDED, EXPIRED
+  id                String   @id @default(uuid())
+  bookingId         String   @unique // LT-YYYYMM-000001
+  customerId        String
+  leadId            String?  @unique
+  testDriveId       String?  @unique
+  vehicleId         String
+  variantId         String
+  branchId          String
+  bookingAmount     Float
+  paymentGateway    String? // RAZORPAY, ICICI (make optional to support init state)
+  paymentId         String?  @unique // Gateway transaction ref (make optional)
+  orderId           String?  @unique // Gateway order ref (make optional)
+  paymentStatus     String   @default("PENDING") // PENDING, SUCCESS, FAILED, REFUNDED
+  bookingStatus     String   @default("INITIATED") // INITIATED, PAYMENT_PENDING, PAYMENT_SUCCESS, CONFIRMED, VEHICLE_ALLOCATED, DELIVERED, CLOSED, CANCELLED, REFUNDED, EXPIRED
   assignedExecutive String?
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  customer       User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  lead           Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  testDrive      TestDrive? @relation(fields: [testDriveId], references: [id], onDelete: SetNull)
-  vehicle        Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  variant        Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  payment        Payment?
-  delivery       Delivery?
+  customer           User                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead               Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  testDrive          TestDrive?          @relation(fields: [testDriveId], references: [id], onDelete: SetNull)
+  vehicle            Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  variant            Variant             @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branch             Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  payment            Payment?
+  delivery           Delivery?
+  financeApplication FinanceApplication?
 }
 
 // -----------------------------------------------------------------------------
 // User Model: Platform Users (Admins, Customers)
 // -----------------------------------------------------------------------------
 model User {
-  id           String   @id @default(uuid())
-  email        String?  @unique
-  phone        String?  @unique
-  passwordHash String? // Only for ADMIN
-  name         String?
-  city         String?
-  state        String?
-  role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
-  address      String?
-  preferredBranchId String?
+  id                       String               @id @default(uuid())
+  email                    String?              @unique
+  phone                    String?              @unique
+  passwordHash             String? // Only for ADMIN
+  name                     String?
+  city                     String?
+  state                    String?
+  role                     String               @default("CUSTOMER") // ADMIN, CUSTOMER
+  address                  String?
+  preferredBranchId        String?
   communicationPreferences Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  testDrives   TestDrive[]
-  bookings     Booking[]
-  payments     Payment[]
-  notifications Notification[]
-  deliveries   Delivery[]
-  preferredBranch Branch? @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  testDrives               TestDrive[]
+  bookings                 Booking[]
+  payments                 Payment[]
+  notifications            Notification[]
+  deliveries               Delivery[]
+  financeApplications      FinanceApplication[]
+  preferredBranch          Branch?              @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
 // -----------------------------------------------------------------------------
@@ -226,12 +230,12 @@ model TestDrive {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  customer User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  vehicle  Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  variant  Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  booking  Booking?
+  customer       User            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lead           Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  vehicle        Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  variant        Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branch         Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  booking        Booking?
   calendarEvents CalendarEvent[]
 }
 
@@ -241,17 +245,17 @@ model TestDrive {
 model CalendarEvent {
   id          String   @id @default(uuid())
   testDriveId String
-  type        String   // APPOINTMENT, REMINDER, COMPLETION
+  type        String // APPOINTMENT, REMINDER, COMPLETION
   title       String
   description String?
   eventDate   DateTime
   provider    String   @default("LOCAL") // LOCAL, GOOGLE, OUTLOOK
-  externalId  String?  // ID in external calendar provider
+  externalId  String? // ID in external calendar provider
   status      String   @default("PENDING") // PENDING, SYNCED, CANCELLED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  testDrive   TestDrive @relation(fields: [testDriveId], references: [id], onDelete: Cascade)
+  testDrive TestDrive @relation(fields: [testDriveId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
@@ -260,12 +264,12 @@ model CalendarEvent {
 model NotificationLog {
   id           String   @id @default(uuid())
   bookingId    String?
-  deliveryId   String?  // Delivery-specific notification reference
+  deliveryId   String? // Delivery-specific notification reference
   testDriveId  String?
-  recipient    String   // phone or email
-  channel      String   // EMAIL, SMS, WHATSAPP, PUSH
-  type         String   // e.g. BOOKING_CREATED, BOOKING_CONFIRMED, DELIVERY_SCHEDULED, etc.
-  status       String   // SUCCESS, FAILED, PENDING
+  recipient    String // phone or email
+  channel      String // EMAIL, SMS, WHATSAPP, PUSH
+  type         String // e.g. BOOKING_CREATED, BOOKING_CONFIRMED, DELIVERY_SCHEDULED, etc.
+  status       String // SUCCESS, FAILED, PENDING
   content      String
   errorMessage String?
   createdAt    DateTime @default(now())
@@ -275,21 +279,21 @@ model NotificationLog {
 // Payment Model: Razorpay Transaction Logs
 // -----------------------------------------------------------------------------
 model Payment {
-  id                 String         @id @default(uuid())
-  bookingId          String         @unique
-  customerId         String
-  razorpayOrderId    String         @unique
-  razorpayPaymentId  String?        @unique
-  amount             Float
-  currency           String         @default("INR")
-  status             String         @default("CREATED") // CREATED, PENDING, SUCCESS, FAILED, REFUNDED, EXPIRED
-  gatewayResponse    Json?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  customerId        String
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?  @unique
+  amount            Float
+  currency          String   @default("INR")
+  status            String   @default("CREATED") // CREATED, PENDING, SUCCESS, FAILED, REFUNDED, EXPIRED
+  gatewayResponse   Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  booking            Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer           User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  audits             PaymentAudit[]
+  booking  Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  audits   PaymentAudit[]
 }
 
 // -----------------------------------------------------------------------------
@@ -304,7 +308,7 @@ model PaymentAudit {
   metadata   Json?
   createdAt  DateTime @default(now())
 
-  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
@@ -315,62 +319,62 @@ model Notification {
   userId    String
   title     String
   content   String
-  type      String   // BOOKING, PAYMENT, TEST_DRIVE, DELIVERY, PROMOTION
+  type      String // BOOKING, PAYMENT, TEST_DRIVE, DELIVERY, PROMOTION
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
 // Delivery Model: Vehicle Handover & Delivery Management
 // -----------------------------------------------------------------------------
 model Delivery {
-  id                 String             @id @default(uuid())
-  bookingId          String             @unique
+  id                 String    @id @default(uuid())
+  bookingId          String    @unique
   customerId         String
   vehicleId          String
   variantId          String
   branchId           String
   assignedExecutive  String?
-  status             String             @default("SCHEDULED") // SCHEDULED, PREPARED, READY, DELIVERED, CANCELLED
+  status             String    @default("SCHEDULED") // SCHEDULED, PREPARED, READY, DELIVERED, CANCELLED
   scheduledDate      DateTime?
   actualDeliveryDate DateTime?
   notes              String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  booking            Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer           User               @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  vehicle            Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  variant            Variant            @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  branch             Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  checklist          DeliveryChecklist?
-  timeline           DeliveryTimeline[]
-  documents          DeliveryDocument[]
+  booking   Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer  User               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  variant   Variant            @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  branch    Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  checklist DeliveryChecklist?
+  timeline  DeliveryTimeline[]
+  documents DeliveryDocument[]
 }
 
 // -----------------------------------------------------------------------------
 // DeliveryChecklist Model: Gate pass criteria verification
 // -----------------------------------------------------------------------------
 model DeliveryChecklist {
-  id                            String   @id @default(uuid())
-  deliveryId                    String   @unique
-  paymentCleared                Boolean  @default(false)
-  insuranceIssued               Boolean  @default(false)
-  rtoCompleted                  Boolean  @default(false)
-  pdiCompleted                  Boolean  @default(false)
-  accessoriesInstalled          Boolean  @default(false)
-  fuelFilled                    Boolean  @default(false)
-  cleaningCompleted             Boolean  @default(false)
-  documentationPrepared         Boolean  @default(false)
-  deliveryKitPrepared           Boolean  @default(false)
-  customerOrientationCompleted  Boolean  @default(false)
-  createdAt                     DateTime @default(now())
-  updatedAt                     DateTime @updatedAt
+  id                           String   @id @default(uuid())
+  deliveryId                   String   @unique
+  paymentCleared               Boolean  @default(false)
+  insuranceIssued              Boolean  @default(false)
+  rtoCompleted                 Boolean  @default(false)
+  pdiCompleted                 Boolean  @default(false)
+  accessoriesInstalled         Boolean  @default(false)
+  fuelFilled                   Boolean  @default(false)
+  cleaningCompleted            Boolean  @default(false)
+  documentationPrepared        Boolean  @default(false)
+  deliveryKitPrepared          Boolean  @default(false)
+  customerOrientationCompleted Boolean  @default(false)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 
-  delivery                      Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
@@ -385,7 +389,7 @@ model DeliveryTimeline {
   performedBy  String?
   createdAt    DateTime @default(now())
 
-  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
@@ -395,17 +399,82 @@ model DeliveryDocument {
   id           String   @id @default(uuid())
   deliveryId   String
   bookingId    String
-  uploadedBy   String   // user ID or email of uploader
-  documentType String   // INVOICE, INSURANCE, RC_RECEIPT, CHECKLIST_PDF, DELIVERY_PHOTO, OTHER
-  fileName     String   // original file name
-  storedName   String   // sanitized disk file name
-  filePath     String   // relative server path e.g. uploads/delivery/<deliveryId>/file.pdf
-  mimeType     String   // application/pdf | image/jpeg | image/png | image/webp
-  fileSize     Int      // bytes
+  uploadedBy   String // user ID or email of uploader
+  documentType String // INVOICE, INSURANCE, RC_RECEIPT, CHECKLIST_PDF, DELIVERY_PHOTO, OTHER
+  fileName     String // original file name
+  storedName   String // sanitized disk file name
+  filePath     String // relative server path e.g. uploads/delivery/<deliveryId>/file.pdf
+  mimeType     String // application/pdf | image/jpeg | image/png | image/webp
+  fileSize     Int // bytes
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 }
 
+// -----------------------------------------------------------------------------
+// FinanceApplication Model: Finance processing
+// -----------------------------------------------------------------------------
+model FinanceApplication {
+  id                String   @id @default(uuid())
+  financeId         String   @unique // LT-FIN-YYYYMM-000001
+  bookingId         String   @unique
+  customerId        String
+  branchId          String
+  vehicleId         String
+  bankName          String?
+  loanAmount        Float?
+  downPayment       Float?
+  interestRate      Float?
+  loanTenure        Int? // in months
+  emiAmount         Float?
+  status            String   @default("INITIATED") // INITIATED, DOCUMENT_PENDING, UNDER_REVIEW, SANCTION_APPROVED, SANCTION_REJECTED, DISBURSEMENT_PENDING, DISBURSED, CLOSED
+  assignedExecutive String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer User    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  documents FinanceDocument[]
+  timelines FinanceTimeline[]
+}
+
+// -----------------------------------------------------------------------------
+// FinanceDocument Model: Finance Document Uploads
+// -----------------------------------------------------------------------------
+model FinanceDocument {
+  id                   String   @id @default(uuid())
+  financeApplicationId String
+  documentType         String // AADHAAR, PAN, BANK_STATEMENT, SALARY_SLIP, ITR, SANCTION_LETTER, OTHER
+  fileName             String
+  storedName           String
+  filePath             String
+  mimeType             String
+  fileSize             Int
+  uploadedBy           String
+  status               String   @default("PENDING_VERIFICATION") // PENDING_VERIFICATION, VERIFIED, REJECTED
+  remarks              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  financeApplication FinanceApplication @relation(fields: [financeApplicationId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// FinanceTimeline Model: Log audits of finance transitions
+// -----------------------------------------------------------------------------
+model FinanceTimeline {
+  id                   String   @id @default(uuid())
+  financeApplicationId String
+  statusBefore         String
+  statusAfter          String
+  comment              String?
+  performedBy          String?
+  createdAt            DateTime @default(now())
+
+  financeApplication FinanceApplication @relation(fields: [financeApplicationId], references: [id], onDelete: Cascade)
+}
