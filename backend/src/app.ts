@@ -27,6 +27,8 @@ import paymentRoutes, { publicPaymentsRouter } from "./modules/payment/paymentRo
 import dashboardPaymentRoutes from "./modules/payment/dashboardPaymentRoutes";
 import webhookRoutes from "./modules/payment/webhookRoutes";
 import deliveryRoutes from "./modules/delivery/deliveryRoutes";
+import financeRoutes from "./modules/finance/financeRoutes";
+import insuranceRoutes from "./modules/insurance/insuranceRoutes";
 
 dotenv.config();
 
@@ -191,6 +193,8 @@ app.use("/api/dashboard/test-drives", dashboardTestDriveRoutes);
 app.use("/api/dashboard/notifications", dashboardNotificationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/deliveries", deliveryRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api", insuranceRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", variantRoutes);
 app.use("/api/public/vehicles", variantRoutes); // support GET /api/public/vehicles/:slug/variants

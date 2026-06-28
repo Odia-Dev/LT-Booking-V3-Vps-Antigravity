@@ -196,6 +196,7 @@ model User {
   notifications            Notification[]
   deliveries               Delivery[]
   financeApplications      FinanceApplication[]
+  insuranceInquiries       InsuranceInquiry[]
   preferredBranch          Branch?              @relation("UserPreferredBranch", fields: [preferredBranchId], references: [id], onDelete: SetNull)
 }
 
@@ -479,4 +480,26 @@ model FinanceTimeline {
   createdAt            DateTime @default(now())
 
   financeApplication FinanceApplication @relation(fields: [financeApplicationId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// InsuranceInquiry Model: Customer insurance inquiries (M16)
+// -----------------------------------------------------------------------------
+model InsuranceInquiry {
+  id                     String   @id @default(uuid())
+  customerId             String?
+  name                   String
+  email                  String
+  phone                  String
+  vehicleSelection       String
+  existingPolicyProvider String?
+  policyType             String // NEW, RENEWAL
+  preferredContactTime   String?
+  notes                  String?
+  status                 String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED, CLOSED
+  assignedExecutive      String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  customer User? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 }
