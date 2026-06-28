@@ -7,6 +7,8 @@ export interface FinanceFilters {
   customerId?: string;
   vehicleId?: string;
   search?: string;
+  assignedExecutive?: string;
+  bankName?: string;
   page?: number;
   limit?: number;
 }
@@ -58,6 +60,8 @@ export class FinanceRepository {
     if (filters?.branchId) whereClause.branchId = filters.branchId;
     if (filters?.customerId) whereClause.customerId = filters.customerId;
     if (filters?.vehicleId) whereClause.vehicleId = filters.vehicleId;
+    if (filters?.assignedExecutive) whereClause.assignedExecutive = filters.assignedExecutive;
+    if (filters?.bankName) whereClause.bankName = filters.bankName;
 
     if (filters?.search) {
       whereClause.OR = [
@@ -99,6 +103,12 @@ export class FinanceRepository {
   async addTimeline(data: any): Promise<FinanceTimeline> {
     return prisma.financeTimeline.create({
       data,
+    });
+  }
+
+  async deleteApplication(id: string): Promise<FinanceApplication> {
+    return prisma.financeApplication.delete({
+      where: { id },
     });
   }
 }

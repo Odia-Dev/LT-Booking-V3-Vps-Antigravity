@@ -66,4 +66,12 @@ export class FinanceService {
       financeApplicationId,
     });
   }
+
+  async deleteApplication(id: string) {
+    const existing = await this.repository.getApplicationById(id);
+    if (!existing) {
+      throw new Error("Application not found");
+    }
+    return this.repository.deleteApplication(id);
+  }
 }
