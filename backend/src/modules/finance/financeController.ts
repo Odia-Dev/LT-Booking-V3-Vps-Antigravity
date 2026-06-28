@@ -7,6 +7,7 @@ import {
   uploadFinanceDocumentSchema,
 } from "./financeValidation";
 import { AuthenticatedRequest } from "../../middleware/auth";
+import { FinanceNotificationService } from "../../services/financeNotificationService";
 import path from "path";
 import fs from "fs";
 
@@ -126,6 +127,12 @@ export async function updateFinanceApplication(req: Request, res: Response): Pro
     }
 
     const application = await service.updateApplication(id, parseResult.data, performedBy);
+
+    // Notification
+    if (parseResult.data.status) {
+      await FinanceNotificationService.notifyStatusChange(application, existingApplication.status, parseResult.data.status);
+    }
+
     res.status(200).json({ success: true, message: "Finance application updated successfully", application });
   } catch (error: any) {
     console.error("updateFinanceApplication error:", error);
@@ -165,6 +172,10 @@ export async function updateFinanceStatus(req: Request, res: Response): Promise<
     }
 
     const application = await service.updateApplication(id, { status: parseResult.data.status }, performedBy);
+
+    // Notification
+    await FinanceNotificationService.notifyStatusChange(application, existingApplication.status, parseResult.data.status);
+
     res.status(200).json({ success: true, message: "Finance application status updated successfully", application });
   } catch (error: any) {
     console.error("updateFinanceStatus error:", error);
