@@ -1,6 +1,6 @@
 import { prisma } from "../../config/db";
-import { User, OtpVerification } from "@prisma/client";
-import { mockUsers, mockOtps, offlineState } from "../../config/mockDb";
+import { User } from "@prisma/client";
+import { mockUsers, offlineState } from "../../config/mockDb";
 
 export class AuthRepository {
   private async runWithFallback<T>(dbOp: () => Promise<T>, fallbackOp: () => Promise<T>): Promise<T> {
@@ -60,6 +60,12 @@ export class AuthRepository {
           communicationPreferences: null,
           createdAt: new Date(),
           updatedAt: new Date(),
+          verificationToken: null,
+          resetPasswordToken: null,
+          isVerified: false,
+          verificationTokenExpires: null,
+          resetPasswordExpires: null,
+
         };
         mockUsers.push(newUser);
         return newUser;
@@ -67,53 +73,4 @@ export class AuthRepository {
     );
   }
 
-  async findOtp(phone: string): Promise<OtpVerification | null> {
-    return this.runWithFallback(
-      () => prisma.otpVerification.findUnique({ where: { phone } }),
-      async () => mockOtps.find((o) => o.phone === phone) || null
-    );
-  }
-
-  async saveOtp(phone: string, code: string, expiresAt: Date): Promise<OtpVerification> {
-    return this.runWithFallback(
-      () => prisma.otpVerification.upsert({
-        where: { phone },
-        update: { code, expiresAt },
-        create: { phone, code, expiresAt }
-      }),
-      async () => {
-        const existing = mockOtps.find((o) => o.phone === phone);
-        if (existing) {
-          existing.code = code;
-          existing.expiresAt = expiresAt;
-          existing.updatedAt = new Date();
-          return existing;
-        }
-        const newOtp: OtpVerification = {
-          id: Math.random().toString(),
-          phone,
-          code,
-          expiresAt,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        mockOtps.push(newOtp);
-        return newOtp;
-      }
-    );
-  }
-
-  async deleteOtp(phone: string): Promise<void> {
-    return this.runWithFallback(
-      async () => {
-        await prisma.otpVerification.delete({ where: { phone } }).catch(() => {});
-      },
-      async () => {
-        const index = mockOtps.findIndex((o) => o.phone === phone);
-        if (index !== -1) {
-          mockOtps.splice(index, 1);
-        }
-      }
-    );
-  }
 }

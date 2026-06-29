@@ -1,4 +1,4 @@
-import { User, OtpVerification } from "@prisma/client";
+import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 export const mockUsers: User[] = [
@@ -16,10 +16,14 @@ export const mockUsers: User[] = [
     communicationPreferences: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    verificationToken: null,
+    resetPasswordToken: null,
+    isVerified: true,
+    verificationTokenExpires: null,
+    resetPasswordExpires: null,
   }
 ];
 
-export const mockOtps: OtpVerification[] = [];
 
 export const offlineState = {
   isOfflineMode: false,

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
+import MainHeader from "@/components/MainHeader";
 
 interface Branch {
   id: string;
@@ -56,24 +57,7 @@ export default async function PublicBranchesPage() {
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans antialiased pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="w-9 h-6 rounded-full border-2 border-[#eb0a1e] flex items-center justify-center font-black text-[10px] tracking-widest text-[#eb0a1e]">
-              T
-            </span>
-            <span className="font-extrabold text-lg tracking-wider bg-gradient-to-r from-white to-[#a1a1aa] bg-clip-text text-transparent">
-              LAXMI TOYOTA
-            </span>
-          </Link>
-          <Link
-            href="/vehicles"
-            className="text-xs font-bold uppercase tracking-wider text-neutral-400 hover:text-white transition-colors"
-          >
-            Explore Fleet
-          </Link>
-        </div>
-      </header>
+      <MainHeader />
 
       <main className="max-w-7xl mx-auto px-6 pt-16 space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-4">

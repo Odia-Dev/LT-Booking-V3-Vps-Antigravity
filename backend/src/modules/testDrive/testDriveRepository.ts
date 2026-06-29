@@ -14,7 +14,7 @@ export interface TestDriveFilters {
 export class TestDriveRepository {
   async createTestDrive(data: {
     testDriveId: string;
-    customerId: string;
+    customerId?: string | null;
     leadId?: string | null;
     vehicleId: string;
     variantId: string;
@@ -24,6 +24,9 @@ export class TestDriveRepository {
     status?: string;
     assignedExecutive?: string | null;
     notes?: string | null;
+    guestName?: string | null;
+    guestEmail?: string | null;
+    guestPhone?: string | null;
   }): Promise<TestDrive> {
     return prisma.testDrive.create({
       data,
@@ -40,7 +43,7 @@ export class TestDriveRepository {
   async updateTestDrive(
     id: string,
     data: {
-      customerId?: string;
+      customerId?: string | null;
       leadId?: string | null;
       vehicleId?: string;
       variantId?: string;
@@ -50,6 +53,9 @@ export class TestDriveRepository {
       status?: string;
       assignedExecutive?: string | null;
       notes?: string | null;
+      guestName?: string | null;
+      guestEmail?: string | null;
+      guestPhone?: string | null;
     }
   ): Promise<TestDrive> {
     return prisma.testDrive.update({

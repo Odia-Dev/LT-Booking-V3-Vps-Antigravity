@@ -9,7 +9,7 @@ import {
 interface DeliveryForNotification {
   id: string;
   bookingId: string;
-  customerId: string;
+  customerId?: string | null;
   scheduledDate: Date | null;
   branch?: { name: string; phone?: string | null; email?: string | null } | null;
 }
@@ -29,13 +29,32 @@ export class DeliveryNotificationService {
     type: string
   ): Promise<void> {
     try {
-      const customer = await prisma.user.findUnique({
-        where: { id: delivery.customerId },
-        select: { email: true, phone: true },
-      });
-      if (!customer) return;
+      let email: string | null | undefined = undefined;
+      let phone: string | null | undefined = undefined;
 
-      const { email, phone } = customer;
+      if (delivery.customerId) {
+        const customer = await prisma.user.findUnique({
+          where: { id: delivery.customerId },
+          select: { email: true, phone: true },
+        });
+        if (customer) {
+          email = customer.email;
+          phone = customer.phone;
+        }
+      }
+
+      if (!email || !phone) {
+        const booking = await prisma.booking.findUnique({
+          where: { id: delivery.bookingId },
+          select: { guestEmail: true, guestPhone: true },
+        });
+        if (booking) {
+          email = email || booking.guestEmail;
+          phone = phone || booking.guestPhone;
+        }
+      }
+
+      if (!email && !phone) return;
 
       // 1. Email
       if (email) {
@@ -85,15 +104,17 @@ export class DeliveryNotificationService {
       }
 
       // 4. Portal Alert (Notification model → shows in /dashboard/notifications)
-      await prisma.notification.create({
-        data: {
-          userId: delivery.customerId,
-          title,
-          content,
-          type: "DELIVERY",
-          isRead: false,
-        },
-      });
+      if (delivery.customerId) {
+        await prisma.notification.create({
+          data: {
+            userId: delivery.customerId,
+            title,
+            content,
+            type: "DELIVERY",
+            isRead: false,
+          },
+        });
+      }
     } catch (err) {
       console.error(`[DeliveryNotificationService] Failed dispatching "${type}":`, err);
     }

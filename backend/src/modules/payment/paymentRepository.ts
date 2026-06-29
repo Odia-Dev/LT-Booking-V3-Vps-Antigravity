@@ -11,7 +11,7 @@ export interface PaymentFilters {
 export class PaymentRepository {
   async createPayment(data: {
     bookingId: string;
-    customerId: string;
+    customerId?: string | null;
     razorpayOrderId: string;
     amount: number;
     currency?: string;
@@ -20,7 +20,7 @@ export class PaymentRepository {
       const payment = await tx.payment.create({
         data: {
           bookingId: data.bookingId,
-          customerId: data.customerId,
+          customerId: data.customerId || null,
           razorpayOrderId: data.razorpayOrderId,
           amount: data.amount,
           currency: data.currency || "INR",

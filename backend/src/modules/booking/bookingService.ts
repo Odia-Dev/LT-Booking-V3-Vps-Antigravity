@@ -78,7 +78,7 @@ export class BookingService {
   }
 
   async createBooking(data: {
-    customerId: string;
+    customerId?: string | null;
     leadId?: string | null;
     testDriveId?: string | null;
     vehicleId: string;
@@ -90,13 +90,22 @@ export class BookingService {
     paymentGateway?: string | null;
     paymentId?: string | null;
     orderId?: string | null;
+    guestName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
+    guestCity?: string;
+    guestState?: string;
+    financeRequired?: boolean;
+    exchangeRequired?: boolean;
   }): Promise<Booking> {
-    // 1. Validate Customer Exists
-    const customer = await prisma.user.findUnique({
-      where: { id: data.customerId },
-    });
-    if (!customer) {
-      throw new Error("Customer user does not exist");
+    // 1. Validate Customer Exists if provided
+    if (data.customerId) {
+      const customer = await prisma.user.findUnique({
+        where: { id: data.customerId },
+      });
+      if (!customer) {
+        throw new Error("Customer user does not exist");
+      }
     }
 
     // 2. Validate Vehicle Exists & Active
@@ -271,58 +280,59 @@ export class BookingService {
     return booking;
   }
 
-  async createPublicBooking(data: {
-    name: string;
-    email: string;
-    phone: string;
-    city?: string | null;
-    state?: string | null;
-    vehicleId: string;
-    variantId: string;
-    branchId: string;
-    bookingAmount: number;
-    notes?: string | null;
-    campaign?: string;
-    medium?: string;
-    source?: string;
-    referrer?: string;
-    landingPageUrl?: string;
-  }): Promise<Booking> {
-    // 1. Find or create customer User
-    let customer = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: data.email },
-          { phone: data.phone }
-        ]
-      }
-    });
 
-    if (!customer) {
-      customer = await prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          city: data.city || undefined,
-          state: data.state || undefined,
-          role: "CUSTOMER"
-        }
-      });
-    } else {
-      if ((data.city || data.state) && (!customer.city || !customer.state)) {
-        await prisma.user.update({
-          where: { id: customer.id },
-          data: {
-            city: customer.city || data.city || undefined,
-            state: customer.state || data.state || undefined,
-            name: customer.name || data.name
-          }
-        });
-      }
+  async createPublicBooking(data: any): Promise<Booking> {
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
+    if (!vehicle || vehicle.status !== "ACTIVE") {
+      throw new Error("Specified Vehicle does not exist or is inactive");
     }
 
-    // 2. Find or create Lead
+    const variant = await prisma.variant.findUnique({ where: { id: data.variantId } });
+    if (!variant || variant.vehicleId !== data.vehicleId || variant.status !== "ACTIVE") {
+      throw new Error("Specified Variant does not exist or does not match vehicle");
+    }
+
+    const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
+    if (!branch || !branch.isActive || branch.status !== "ACTIVE") {
+      throw new Error("Specified Branch does not exist or is inactive");
+    }
+
+    if (data.bookingAmount <= 0) {
+      throw new Error("Booking amount must be positive");
+    }
+
+    let customerId = null;
+
+    if (data.createAccount) {
+      let customer = await prisma.user.findFirst({
+        where: { email: data.email }
+      });
+
+      if (!customer) {
+        const crypto = require("crypto");
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); 
+
+        customer = await prisma.user.create({
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            city: data.city || undefined,
+            state: data.state || undefined,
+            role: "CUSTOMER",
+            isVerified: false,
+            verificationToken,
+            verificationTokenExpires
+          }
+        });
+
+        const { sendVerificationEmail } = require("../../services/email/emailService");
+        sendVerificationEmail(data.email, data.name, verificationToken).catch(console.error);
+      }
+      customerId = customer.id;
+    }
+
     let lead = await prisma.lead.findFirst({
       where: {
         phone: data.phone,
@@ -356,47 +366,25 @@ export class BookingService {
       });
     }
 
-    // 3. Validate Vehicle, Variant, Branch Active
-    const vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
-    if (!vehicle || vehicle.status !== "ACTIVE") {
-      throw new Error("Specified Vehicle does not exist or is inactive");
-    }
-
-    const variant = await prisma.variant.findUnique({ where: { id: data.variantId } });
-    if (!variant || variant.vehicleId !== data.vehicleId || variant.status !== "ACTIVE") {
-      throw new Error("Specified Variant does not exist or does not match vehicle");
-    }
-
-    const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
-    if (!branch || !branch.isActive || branch.status !== "ACTIVE") {
-      throw new Error("Specified Branch does not exist or is inactive");
-    }
-
-    if (data.bookingAmount <= 0) {
-      throw new Error("Booking amount must be positive");
-    }
-
-    // 4. Prevent duplicate active bookings for the same customer/vehicle
-    const activeBooking = await prisma.booking.findFirst({
-      where: {
-        customerId: customer.id,
-        vehicleId: data.vehicleId,
-        bookingStatus: {
-          notIn: ["CANCELLED", "REFUNDED", "EXPIRED"],
+    if (customerId) {
+      const activeBooking = await prisma.booking.findFirst({
+        where: {
+          customerId: customerId,
+          vehicleId: data.vehicleId,
+          bookingStatus: {
+            notIn: ["CANCELLED", "REFUNDED", "EXPIRED"],
+          },
         },
-      },
-    });
-    if (activeBooking) {
-      throw new Error("Customer already has an active booking for this vehicle");
+      });
+      if (activeBooking) {
+        throw new Error("Customer already has an active booking for this vehicle");
+      }
     }
 
-    // 5. Generate unique Booking ID
     const bookingId = await this.generateUniqueBookingId();
 
-    // 6. Create Booking
-    const booking = await this.repo.createBooking({
+    const bookingData: any = {
       bookingId,
-      customerId: customer.id,
       leadId: lead.id,
       vehicleId: data.vehicleId,
       variantId: data.variantId,
@@ -404,8 +392,26 @@ export class BookingService {
       bookingAmount: data.bookingAmount,
       notes: data.notes,
       paymentStatus: "PENDING",
-      bookingStatus: "INITIATED"
-    });
+      bookingStatus: "INITIATED",
+      financeRequired: data.financeRequired || false,
+      exchangeRequired: data.exchangeRequired || false,
+      colorPreference: data.colorPreference || undefined,
+    };
+
+    if (customerId) {
+      bookingData.customerId = customerId;
+    } else {
+      bookingData.guestName = data.name;
+      bookingData.guestEmail = data.email;
+      bookingData.guestPhone = data.phone;
+      bookingData.guestCity = data.city;
+      bookingData.guestState = data.state;
+    }
+
+    const booking = await this.repo.createBooking(bookingData);
+
+    const { sendBookingConfirmationEmail } = require("../../services/email/emailService");
+    sendBookingConfirmationEmail(data.email, data.name, bookingId, vehicle.name).catch(console.error);
 
     bookingNotificationEvents.emit("booking.created", booking);
     return booking;

@@ -22,6 +22,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
+    if (pathname === "/admin/login") {
+      setLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
@@ -66,6 +71,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace("/admin/login");
     }
   };
+
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

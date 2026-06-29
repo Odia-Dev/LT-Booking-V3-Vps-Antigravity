@@ -60,7 +60,7 @@ export class TestDriveService {
   }
 
   async createTestDrive(data: {
-    customerId: string;
+    customerId?: string | null;
     leadId?: string | null;
     vehicleId: string;
     variantId: string;
@@ -70,13 +70,18 @@ export class TestDriveService {
     status?: string;
     assignedExecutive?: string | null;
     notes?: string | null;
+    guestName?: string;
+    guestEmail?: string;
+    guestPhone?: string;
   }): Promise<TestDrive> {
-    // 1. Validate Customer Exists
-    const customer = await prisma.user.findUnique({
-      where: { id: data.customerId },
-    });
-    if (!customer) {
-      throw new Error("Customer user does not exist");
+    // 1. Validate Customer Exists if provided
+    if (data.customerId) {
+      const customer = await prisma.user.findUnique({
+        where: { id: data.customerId },
+      });
+      if (!customer) {
+        throw new Error("Customer user does not exist");
+      }
     }
 
     // 2. Validate Vehicle Exists
@@ -133,19 +138,22 @@ export class TestDriveService {
     const startOfDay = new Date(preferredDate.getFullYear(), preferredDate.getMonth(), preferredDate.getDate());
     const endOfDay = new Date(preferredDate.getFullYear(), preferredDate.getMonth(), preferredDate.getDate(), 23, 59, 59);
 
-    const existingOnSameDay = await prisma.testDrive.findFirst({
-      where: {
-        customerId: data.customerId,
-        preferredDate: {
-          gte: startOfDay,
-          lte: endOfDay,
+    if (data.customerId) {
+      const existingOnSameDay = await prisma.testDrive.findFirst({
+        where: {
+          customerId: data.customerId,
+          preferredDate: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          status: {
+            notIn: ["CANCELLED", "NO_SHOW"],
+          },
         },
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
-      },
-    });
-
-    if (existingOnSameDay) {
-      throw new Error("Customer already has a test drive scheduled on this day");
+      });
+      if (existingOnSameDay) {
+        throw new Error("Customer already has a test drive booked for this date");
+      }
     }
 
     // 8. Prevent duplicate variant-branch bookings at same day and time slot
@@ -215,28 +223,8 @@ export class TestDriveService {
     referrer?: string;
     landingPageUrl?: string;
   }): Promise<TestDrive> {
-    // 1. Find or create customer User
-    let customer = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: data.email },
-          { phone: data.phone }
-        ]
-      }
-    });
-
-    if (!customer) {
-      customer = await prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          role: "CUSTOMER"
-        }
-      });
-    }
-
-    // 2. Find or create Lead
+    
+    // 1. Find or create Lead
     let lead = await prisma.lead.findFirst({
       where: {
         phone: data.phone,
@@ -272,16 +260,18 @@ export class TestDriveService {
       });
     }
 
-    // 3. Create test drive linking to user and lead
+    // 2. Create test drive linking to lead (and store guest fields)
     return this.createTestDrive({
-      customerId: customer.id,
       leadId: lead.id,
       vehicleId: data.vehicleId,
       variantId: data.variantId,
       branchId: data.branchId,
       preferredDate: data.preferredDate,
       preferredTime: data.preferredTime,
-      notes: data.notes
+      notes: data.notes,
+      guestName: data.name,
+      guestEmail: data.email,
+      guestPhone: data.phone
     });
   }
 

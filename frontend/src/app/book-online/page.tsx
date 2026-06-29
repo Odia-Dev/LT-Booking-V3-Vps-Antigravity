@@ -18,6 +18,12 @@ interface Variant {
   price: number;
 }
 
+interface Color {
+  id: string;
+  name: string;
+  hexCode?: string;
+}
+
 interface Branch {
   id: string;
   name: string;
@@ -35,6 +41,7 @@ function BookOnlineContent() {
   // Lists
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
 
   // Form Fields
@@ -45,9 +52,13 @@ function BookOnlineContent() {
   const [state, setState] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedVariant, setSelectedVariant] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [selectedBranch, setSelectedBranch] = useState(presetBranchId);
   const [message, setMessage] = useState("");
   const [consent, setConsent] = useState(false);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [financeRequired, setFinanceRequired] = useState(false);
+  const [exchangeRequired, setExchangeRequired] = useState(false);
 
   // States
   const [loading, setLoading] = useState(false);
@@ -110,11 +121,13 @@ function BookOnlineContent() {
     fetchData();
   }, [apiBaseUrl, presetVehicleSlug]);
 
-  // Fetch variants when vehicle changes
+  // Fetch variants and colors when vehicle changes
   useEffect(() => {
     if (!selectedVehicle) {
       setVariants([]);
+      setColors([]);
       setSelectedVariant("");
+      setSelectedColor("");
       return;
     }
 
@@ -122,20 +135,29 @@ function BookOnlineContent() {
     if (!vehicle) return;
 
     const vehicleSlug = vehicle.slug;
+    const vehicleId = vehicle.id;
 
-    async function fetchVariants() {
+    async function fetchOptions() {
       try {
-        const res = await fetch(`${apiBaseUrl}/api/public/vehicles/${vehicleSlug}/variants`);
-        if (res.ok) {
-          const data = await res.json();
+        const [variantsRes, colorsRes] = await Promise.all([
+          fetch(`${apiBaseUrl}/api/public/vehicles/${vehicleSlug}/variants`),
+          fetch(`${apiBaseUrl}/api/vehicles/${vehicleId}/colors`),
+        ]);
+
+        if (variantsRes.ok) {
+          const data = await variantsRes.json();
           setVariants(data.variants || []);
         }
+        if (colorsRes.ok) {
+          const data = await colorsRes.json();
+          setColors(data.colors || []);
+        }
       } catch (err) {
-        console.error("Failed to load variants", err);
+        console.error("Failed to load variants and colors", err);
       }
     }
 
-    fetchVariants();
+    fetchOptions();
   }, [selectedVehicle, vehicles, apiBaseUrl]);
 
   // Capture UTM parameters & Referrer info
@@ -250,6 +272,7 @@ function BookOnlineContent() {
         state,
         vehicleId: selectedVehicle,
         variantId: selectedVariant,
+        colorPreference: selectedColor || undefined,
         branchId: selectedBranch,
         bookingAmount: getBookingAmount(),
         notes: message || undefined,
@@ -258,6 +281,9 @@ function BookOnlineContent() {
         source: utmSource || undefined,
         referrer: referrer || undefined,
         landingPageUrl: landingPageUrl || undefined,
+        createAccount,
+        financeRequired,
+        exchangeRequired,
       };
 
       const res = await fetch(`${apiBaseUrl}/api/public/bookings`, {
@@ -370,6 +396,18 @@ function BookOnlineContent() {
                 {variants.find((v) => v.id === selectedVariant)?.name}
               </span>
             </div>
+            {selectedColor && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-neutral-400">Color Preference:</span>
+                <span className="text-white font-semibold flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full border border-neutral-700"
+                    style={{ backgroundColor: colors.find((c) => c.name === selectedColor)?.hexCode || "#fff" }}
+                  ></div>
+                  {selectedColor}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-sm">
               <span className="text-neutral-400">Dealership Branch:</span>
               <span className="text-white font-semibold">
@@ -546,6 +584,25 @@ function BookOnlineContent() {
                 </select>
               </div>
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-[10px] text-neutral-500 font-extrabold uppercase tracking-wider mb-2">Color Preference (Optional)</label>
+              <div className="relative">
+                <select
+                  value={selectedColor}
+                  disabled={!selectedVehicle || colors.length === 0}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#09090b]/60 border border-neutral-800 rounded-lg text-sm text-white focus:outline-none focus:border-neutral-700 disabled:opacity-40 appearance-none"
+                >
+                  <option value="" className="bg-[#18181b]">{colors.length === 0 ? "No colors available" : "Select Color Preference"}</option>
+                  {colors.map((c) => (
+                    <option key={c.id} value={c.name} className="bg-[#18181b]">
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -669,7 +726,50 @@ function BookOnlineContent() {
             </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 pt-2">
+            <div className="flex items-start gap-3">
+              <input
+                id="financeRequired"
+                type="checkbox"
+                checked={financeRequired}
+                onChange={(e) => setFinanceRequired(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-neutral-800 bg-[#09090b]/60 text-[#eb0a1e] focus:ring-0 focus:ring-offset-0"
+              />
+              <label htmlFor="financeRequired" className="text-xs text-neutral-300 leading-relaxed font-light">
+                I am interested in vehicle finance options
+              </label>
+            </div>
+            <div className="flex items-start gap-3">
+              <input
+                id="exchangeRequired"
+                type="checkbox"
+                checked={exchangeRequired}
+                onChange={(e) => setExchangeRequired(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-neutral-800 bg-[#09090b]/60 text-[#eb0a1e] focus:ring-0 focus:ring-offset-0"
+              />
+              <label htmlFor="exchangeRequired" className="text-xs text-neutral-300 leading-relaxed font-light">
+                I want to exchange my old vehicle
+              </label>
+            </div>
+          </div>
+
+          <div className="bg-[#18181b] border border-neutral-800/80 rounded-xl p-6 mt-4">
+            <div className="flex items-start gap-3">
+              <input
+                id="createAccount"
+                type="checkbox"
+                checked={createAccount}
+                onChange={(e) => setCreateAccount(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-neutral-800 bg-[#09090b]/60 text-[#eb0a1e] focus:ring-0 focus:ring-offset-0"
+              />
+              <label htmlFor="createAccount" className="text-xs text-neutral-200 leading-relaxed font-semibold">
+                Create an account to track booking status and delivery progress
+                <p className="font-light text-neutral-500 mt-1">If unchecked, you will complete this booking as a guest. You will still receive booking updates via email.</p>
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-3 mt-4">
             <div className="flex items-start gap-3">
               <input
                 id="consent"

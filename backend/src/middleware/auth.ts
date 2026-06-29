@@ -13,7 +13,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  const token = req.cookies?.admin_session;
+  const token = req.cookies?.admin_session || req.cookies?.token;
 
   if (!token) {
     res.status(401).json({ success: false, message: "Authentication required" });

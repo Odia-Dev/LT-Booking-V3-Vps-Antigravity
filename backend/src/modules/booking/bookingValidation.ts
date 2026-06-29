@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CreateBookingSchema = z.object({
-  customerId: z.string().uuid("Invalid customer ID"),
+  customerId: z.string().uuid("Invalid customer ID").optional(),
   leadId: z.string().uuid("Invalid lead ID").nullable().optional(),
   testDriveId: z.string().uuid("Invalid test drive ID").nullable().optional(),
   vehicleId: z.string().uuid("Invalid vehicle ID"),
@@ -13,6 +13,13 @@ export const CreateBookingSchema = z.object({
   paymentGateway: z.enum(["RAZORPAY", "ICICI"]).nullable().optional(),
   paymentId: z.string().min(1).nullable().optional(),
   orderId: z.string().min(1).nullable().optional(),
+  guestName: z.string().optional(),
+  guestEmail: z.string().optional(),
+  guestPhone: z.string().optional(),
+  guestCity: z.string().optional(),
+  guestState: z.string().optional(),
+  financeRequired: z.boolean().optional(),
+  exchangeRequired: z.boolean().optional(),
 });
 
 export const UpdateBookingSchema = z.object({
@@ -73,6 +80,10 @@ export const CreatePublicBookingSchema = z.object({
   branchId: z.string().uuid("Invalid branch ID"),
   bookingAmount: z.number().positive("Booking amount must be positive"),
   notes: z.string().max(1000).nullable().optional(),
+  createAccount: z.boolean().optional().default(false),
+  financeRequired: z.boolean().optional().default(false),
+  exchangeRequired: z.boolean().optional().default(false),
+  colorPreference: z.string().optional(),
   campaign: z.string().optional(),
   medium: z.string().optional(),
   source: z.string().optional(),

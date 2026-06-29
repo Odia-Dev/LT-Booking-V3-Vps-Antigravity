@@ -149,7 +149,7 @@ model Lead {
 model Booking {
   id                String   @id @default(uuid())
   bookingId         String   @unique // LT-YYYYMM-000001
-  customerId        String
+  customerId        String?
   leadId            String?  @unique
   testDriveId       String?  @unique
   vehicleId         String
@@ -163,10 +163,18 @@ model Booking {
   bookingStatus     String   @default("INITIATED") // INITIATED, PAYMENT_PENDING, PAYMENT_SUCCESS, CONFIRMED, VEHICLE_ALLOCATED, DELIVERED, CLOSED, CANCELLED, REFUNDED, EXPIRED
   assignedExecutive String?
   notes             String?
+  guestName         String?
+  guestEmail        String?
+  guestPhone        String?
+  guestCity         String?
+  guestState        String?
+  financeRequired   Boolean  @default(false)
+  exchangeRequired  Boolean  @default(false)
+  colorPreference   String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  customer           User                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer           User?               @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead               Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull)
   testDrive          TestDrive?          @relation(fields: [testDriveId], references: [id], onDelete: SetNull)
   vehicle            Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
@@ -184,7 +192,12 @@ model User {
   id                       String               @id @default(uuid())
   email                    String?              @unique
   phone                    String?              @unique
-  passwordHash             String? // Only for ADMIN
+  passwordHash             String?
+  isVerified               Boolean              @default(false)
+  verificationToken        String?              @unique
+  verificationTokenExpires DateTime?
+  resetPasswordToken       String?              @unique
+  resetPasswordExpires     DateTime?
   name                     String?
   city                     String?
   state                    String?
@@ -206,24 +219,12 @@ model User {
 }
 
 // -----------------------------------------------------------------------------
-// OtpVerification Model: Dynamic OTP management
-// -----------------------------------------------------------------------------
-model OtpVerification {
-  id        String   @id @default(uuid())
-  phone     String   @unique
-  code      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// -----------------------------------------------------------------------------
 // TestDrive Model: Dealership test drive appointments
 // -----------------------------------------------------------------------------
 model TestDrive {
   id                String   @id @default(uuid())
   testDriveId       String   @unique
-  customerId        String
+  customerId        String?
   leadId            String?
   vehicleId         String
   variantId         String
@@ -233,10 +234,13 @@ model TestDrive {
   status            String   @default("REQUESTED") // REQUESTED, CONFIRMED, COMPLETED, BOOKED, CANCELLED, NO_SHOW
   assignedExecutive String?
   notes             String?
+  guestName         String?
+  guestEmail        String?
+  guestPhone        String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  customer       User            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer       User?           @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead           Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
   vehicle        Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   variant        Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
@@ -287,7 +291,7 @@ model NotificationLog {
 model Payment {
   id                String   @id @default(uuid())
   bookingId         String   @unique
-  customerId        String
+  customerId        String?
   razorpayOrderId   String   @unique
   razorpayPaymentId String?  @unique
   amount            Float
@@ -298,7 +302,7 @@ model Payment {
   updatedAt         DateTime @updatedAt
 
   booking  Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
   audits   PaymentAudit[]
 }
 
@@ -339,7 +343,7 @@ model Notification {
 model Delivery {
   id                 String    @id @default(uuid())
   bookingId          String    @unique
-  customerId         String
+  customerId         String?
   vehicleId          String
   variantId          String
   branchId           String
@@ -352,7 +356,7 @@ model Delivery {
   updatedAt          DateTime  @updatedAt
 
   booking   Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer  User               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer  User?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
   vehicle   Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   variant   Variant            @relation(fields: [variantId], references: [id], onDelete: Cascade)
   branch    Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
@@ -426,7 +430,7 @@ model FinanceApplication {
   id                String   @id @default(uuid())
   financeId         String   @unique // LT-FIN-YYYYMM-000001
   bookingId         String   @unique
-  customerId        String
+  customerId        String?
   branchId          String
   vehicleId         String
   bankName          String?
@@ -442,7 +446,7 @@ model FinanceApplication {
   updatedAt         DateTime @updatedAt
 
   booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer User    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer User?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
   branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   vehicle  Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 

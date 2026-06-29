@@ -7,6 +7,12 @@ All notable changes to the Laxmi Toyota Booking Portal V3 will be documented in 
 ## [1.2.0] - 2026-06-27
 
 ### Added
+* **Guest Checkout (Milestone M20)**:
+  - Replaced OTP authentication with WooCommerce-style guest checkout.
+  - Added option to "Create Account" during online booking.
+  - Implemented standard Email/Password authentication for customers.
+  - Added `/verify-email`, `/forgot-password`, and `/reset-password` flows with Resend integration.
+  - Updated `Booking` and `TestDrive` models to store guest information.
 * **Delivery Management (Milestone M14)**:
   - Extended Prisma schema with four new models: `Delivery`, `DeliveryChecklist`, `DeliveryTimeline`, and `DeliveryDocument`.
   - Implemented `deliveryRepository.ts` and `deliveryService.ts` for lifecycle management including 5 status states: `SCHEDULED → PREPARED → READY → DELIVERED / CANCELLED`.

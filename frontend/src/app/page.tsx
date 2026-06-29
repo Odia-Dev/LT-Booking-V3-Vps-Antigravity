@@ -1,8 +1,10 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
+import { ArrowRight, CheckCircle2, Shield, Zap, Sparkles } from "lucide-react";
 import FeaturedVehicles from "@/components/FeaturedVehicles";
 import FaqSection from "@/components/FaqSection";
+import MainHeader from "@/components/MainHeader";
 
 interface Vehicle {
   name: string;
@@ -158,35 +160,7 @@ export default function PremiumHomepage() {
       />
 
       {/* 1. Header/Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-6 rounded-full border-2 border-[#eb0a1e] flex items-center justify-center font-black text-[10px] tracking-widest text-[#eb0a1e]">
-              T
-            </span>
-            <span className="font-extrabold text-lg tracking-wider bg-gradient-to-r from-white to-[#a1a1aa] bg-clip-text text-transparent">
-              LAXMI TOYOTA
-            </span>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#a1a1aa]">
-            <a href="#featured" className="hover:text-white transition-colors">Vehicles</a>
-            <a href="#benefits" className="hover:text-white transition-colors">Why Book Online</a>
-            <a href="#offers" className="hover:text-white transition-colors">Offers</a>
-            <a href="#branches" className="hover:text-white transition-colors">Branches</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-xs font-semibold uppercase tracking-wider text-white bg-gradient-to-r from-[#e11d48] to-[#be123c] px-5 py-2.5 rounded hover:opacity-90 transition-opacity"
-            >
-              Client Portal
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MainHeader />
 
       {/* 2. Hero Banner */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#27272a]/50">

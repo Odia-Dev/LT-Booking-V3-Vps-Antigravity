@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createTestDriveSchema = z.object({
-  customerId: z.string().min(1, "Customer ID is required"),
+  customerId: z.string().min(1, "Customer ID is required").optional(),
   leadId: z.string().optional().nullable(),
   vehicleId: z.string().min(1, "Vehicle ID is required"),
   variantId: z.string().min(1, "Variant ID is required"),
@@ -17,6 +17,9 @@ export const createTestDriveSchema = z.object({
   status: z.enum(["REQUESTED", "CONFIRMED", "COMPLETED", "BOOKED", "CANCELLED", "NO_SHOW"]).optional(),
   assignedExecutive: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  guestName: z.string().optional(),
+  guestEmail: z.string().optional(),
+  guestPhone: z.string().optional(),
 });
 
 export const updateTestDriveSchema = createTestDriveSchema.partial();

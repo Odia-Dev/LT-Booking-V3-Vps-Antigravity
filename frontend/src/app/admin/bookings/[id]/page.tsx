@@ -55,6 +55,13 @@ interface Booking {
   vehicle?: Vehicle | null;
   variant?: Variant | null;
   branch?: Branch | null;
+  guestName?: string | null;
+  guestEmail?: string | null;
+  guestPhone?: string | null;
+  guestCity?: string | null;
+  guestState?: string | null;
+  financeRequired?: boolean | null;
+  exchangeRequired?: boolean | null;
 }
 
 interface NoteHistoryItem {
@@ -461,27 +468,39 @@ export default function AdminBookingDetailPage() {
             <div className="space-y-3 text-xs">
               <div>
                 <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Full Name</span>
-                <span className="text-white font-semibold text-sm">{booking.customer?.name}</span>
+                <span className="text-white font-semibold text-sm">{booking.customer?.name || booking.guestName} {booking.customer ? "" : "(Guest)"}</span>
               </div>
               
               <div>
                 <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Phone Number</span>
-                <span className="text-white font-semibold">{booking.customer?.phone}</span>
+                <span className="text-white font-semibold">{booking.customer?.phone || booking.guestPhone}</span>
               </div>
 
               <div>
                 <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Email Address</span>
-                <span className="text-white font-semibold">{booking.customer?.email}</span>
+                <span className="text-white font-semibold">{booking.customer?.email || booking.guestEmail}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider">City</span>
-                  <span className="text-white font-semibold">{booking.customer?.city || "N/A"}</span>
+                  <span className="text-white font-semibold">{booking.customer?.city || booking.guestCity || "N/A"}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider">State</span>
-                  <span className="text-white font-semibold">{booking.customer?.state || "N/A"}</span>
+                  <span className="text-white font-semibold">{booking.customer?.state || booking.guestState || "N/A"}</span>
+                </div>
+              </div>
+
+              <div className="pt-3 mt-3 border-t border-neutral-800">
+                <span className="block text-[10px] text-neutral-500 font-bold uppercase tracking-wider mb-2">Requirements</span>
+                <div className="flex gap-2">
+                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${booking.financeRequired ? "bg-blue-950/40 text-blue-400" : "bg-neutral-900 text-neutral-500"}`}>
+                    Finance: {booking.financeRequired ? "Yes" : "No"}
+                  </span>
+                  <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${booking.exchangeRequired ? "bg-purple-950/40 text-purple-400" : "bg-neutral-900 text-neutral-500"}`}>
+                    Exchange: {booking.exchangeRequired ? "Yes" : "No"}
+                  </span>
                 </div>
               </div>
             </div>

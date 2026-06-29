@@ -2,7 +2,7 @@ process.env.NODE_ENV = "test";
 import http from "http";
 import { AuthRepository } from "./modules/auth/authRepository";
 import { ProfileRepository } from "./modules/profile/profileRepository";
-import { User, OtpVerification } from "@prisma/client";
+import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 // -----------------------------------------------------------------------------
@@ -23,9 +23,32 @@ const mockUsers: User[] = [
     communicationPreferences: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    resetPasswordToken: null,
+    isVerified: true,
+    verificationTokenExpires: null,
+    resetPasswordExpires: null,
+  },
+  {
+    id: "customer-id",
+    email: "customer@example.com",
+    phone: "+919876543220",
+    passwordHash: bcrypt.hashSync("cust123", 10),
+    name: "John Customer",
+    city: "Bhubaneswar",
+    state: "Odisha",
+    role: "CUSTOMER",
+    address: null,
+    preferredBranchId: null,
+    communicationPreferences: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    verificationToken: null,
+    resetPasswordToken: null,
+    isVerified: true,
+    verificationTokenExpires: null,
+    resetPasswordExpires: null,
   }
 ];
-const mockOtps: OtpVerification[] = [];
 
 // Overriding prototype methods for offline test isolation
 AuthRepository.prototype.findUserByPhone = async function (phone: string) {
@@ -51,41 +74,16 @@ AuthRepository.prototype.createUser = async function (data: any) {
     communicationPreferences: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    verificationToken: null,
+    resetPasswordToken: null,
+    isVerified: false,
+    verificationTokenExpires: null,
+    resetPasswordExpires: null,
   };
   mockUsers.push(newUser);
   return newUser;
 };
 
-AuthRepository.prototype.findOtp = async function (phone: string) {
-  return mockOtps.find((o) => o.phone === phone) || null;
-};
-
-AuthRepository.prototype.saveOtp = async function (phone: string, code: string, expiresAt: Date) {
-  const existing = mockOtps.find((o) => o.phone === phone);
-  if (existing) {
-    existing.code = code;
-    existing.expiresAt = expiresAt;
-    existing.updatedAt = new Date();
-    return existing;
-  }
-  const newOtp: OtpVerification = {
-    id: Math.random().toString(),
-    phone,
-    code,
-    expiresAt,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  mockOtps.push(newOtp);
-  return newOtp;
-};
-
-AuthRepository.prototype.deleteOtp = async function (phone: string) {
-  const index = mockOtps.findIndex((o) => o.phone === phone);
-  if (index !== -1) {
-    mockOtps.splice(index, 1);
-  }
-};
 
 ProfileRepository.prototype.findUserById = async function (id: string) {
   return mockUsers.find((u) => u.id === id) || null;
@@ -166,50 +164,7 @@ async function verifyAll() {
 
     // Edge Case Tests:
     
-    // 2. Invalid OTP
-    console.log("Testing Invalid OTP...");
-    await query("/api/auth/send-otp", "POST", { phone: "+919876543211" });
-    const invalidOtpRes = await query("/api/auth/verify-otp", "POST", {
-      phone: "+919876543211",
-      code: "000000",
-    });
-    if (invalidOtpRes.status === 400) {
-      console.log("✓ Invalid OTP correctly rejected with 400");
-    } else {
-      throw new Error(`Failed Invalid OTP test: status ${invalidOtpRes.status}`);
-    }
 
-    // 3. Expired OTP
-    console.log("Testing Expired OTP...");
-    const otpRecord = mockOtps.find(o => o.phone === "+919876543211");
-    if (otpRecord) {
-      otpRecord.expiresAt = new Date(Date.now() - 1000); // Backdate expiry
-    }
-    const expiredOtpRes = await query("/api/auth/verify-otp", "POST", {
-      phone: "+919876543211",
-      code: otpRecord?.code || "123456",
-    });
-    if (expiredOtpRes.status === 400) {
-      console.log("✓ Expired OTP correctly rejected with 400");
-    } else {
-      throw new Error(`Failed Expired OTP test: status ${expiredOtpRes.status}`);
-    }
-
-    // 3. Reused OTP
-    console.log("Testing Reused OTP...");
-    const sendRes = await query("/api/auth/send-otp", "POST", { phone: "+919876543212" });
-    const code = JSON.parse(sendRes.body).code;
-    const verify1 = await query("/api/auth/verify-otp", "POST", { phone: "+919876543212", code });
-    if (verify1.status === 200) {
-      const verify2 = await query("/api/auth/verify-otp", "POST", { phone: "+919876543212", code });
-      if (verify2.status === 400) {
-        console.log("✓ OTP reuse correctly prevented (OTP deleted on first use)");
-      } else {
-        throw new Error(`Failed OTP reuse test: second verify returned status ${verify2.status}`);
-      }
-    } else {
-      throw new Error("First verification failed unexpectedly");
-    }
 
     // 4. Missing JWT
     console.log("Testing Missing JWT...");
@@ -255,13 +210,11 @@ async function verifyAll() {
 
     // 8. User Profile retrieval and updates
     console.log("Testing Profile APIs...");
-    const custOtpSendRes = await query("/api/auth/send-otp", "POST", { phone: "+919876543220" });
-    const custOtpBody = JSON.parse(custOtpSendRes.body);
-    const custOtpVerifyRes = await query("/api/auth/verify-otp", "POST", {
-      phone: "+919876543220",
-      code: custOtpBody.code,
+    const custLoginRes = await query("/api/auth/login", "POST", { 
+      email: "customer@example.com",
+      password: "cust123"
     });
-    const custCookie = custOtpVerifyRes.headers["set-cookie"]?.[0];
+    const custCookie = custLoginRes.headers["set-cookie"]?.[0];
     if (!custCookie) {
       throw new Error("Customer cookie missing");
     }
@@ -271,7 +224,7 @@ async function verifyAll() {
       cookie: custCookie,
     });
     const getProfileBody = JSON.parse(getProfileRes.body);
-    if (getProfileRes.status === 200 && getProfileBody.success && getProfileBody.profile.phone === "+919876543220") {
+    if (getProfileRes.status === 200 && getProfileBody.success && getProfileBody.profile.email === "customer@example.com") {
       console.log("✓ GET /api/profile retrieves own profile details");
     } else {
       throw new Error(`Failed GET profile: Status ${getProfileRes.status}, Body: ${getProfileRes.body}`);

@@ -43,6 +43,9 @@ interface Booking {
   vehicle?: Vehicle | null;
   variant?: Variant | null;
   branch?: Branch | null;
+  guestName?: string | null;
+  guestEmail?: string | null;
+  guestPhone?: string | null;
 }
 
 export default function AdminBookingsPage() {
@@ -453,8 +456,8 @@ export default function AdminBookingsPage() {
                       </Link>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="font-semibold text-neutral-200">{b.customer?.name}</div>
-                      <div className="text-[10px] text-neutral-500">{b.customer?.phone}</div>
+                      <div className="font-semibold text-neutral-200">{b.customer?.name || b.guestName} {b.customer ? "" : "(Guest)"}</div>
+                      <div className="text-[10px] text-neutral-500">{b.customer?.phone || b.guestPhone}</div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="font-semibold text-neutral-200">{b.vehicle?.name}</div>

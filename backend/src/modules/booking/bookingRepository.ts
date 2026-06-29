@@ -18,7 +18,7 @@ export interface BookingFilters {
 export class BookingRepository {
   async createBooking(data: {
     bookingId: string;
-    customerId: string;
+    customerId?: string | null;
     leadId?: string | null;
     testDriveId?: string | null;
     vehicleId: string;
@@ -32,6 +32,13 @@ export class BookingRepository {
     paymentGateway?: string | null;
     paymentId?: string | null;
     orderId?: string | null;
+    guestName?: string | null;
+    guestEmail?: string | null;
+    guestPhone?: string | null;
+    guestCity?: string | null;
+    guestState?: string | null;
+    financeRequired?: boolean;
+    exchangeRequired?: boolean;
   }): Promise<Booking> {
     return prisma.booking.create({
       data,
@@ -49,7 +56,7 @@ export class BookingRepository {
   async updateBooking(
     id: string,
     data: {
-      customerId?: string;
+      customerId?: string | null;
       leadId?: string | null;
       testDriveId?: string | null;
       vehicleId?: string;
@@ -63,6 +70,13 @@ export class BookingRepository {
       paymentGateway?: string | null;
       paymentId?: string | null;
       orderId?: string | null;
+      guestName?: string | null;
+      guestEmail?: string | null;
+      guestPhone?: string | null;
+      guestCity?: string | null;
+      guestState?: string | null;
+      financeRequired?: boolean;
+      exchangeRequired?: boolean;
     }
   ): Promise<Booking> {
     return prisma.booking.update({
