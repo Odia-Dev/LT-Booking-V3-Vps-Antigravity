@@ -11,7 +11,9 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiBaseUrl = typeof window !== "undefined"
+    ? (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== "http://localhost:5000" ? process.env.NEXT_PUBLIC_API_URL : "")
+    : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

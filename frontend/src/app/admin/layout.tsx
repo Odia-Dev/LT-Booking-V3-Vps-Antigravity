@@ -19,7 +19,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiBaseUrl = typeof window !== "undefined"
+    ? (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== "http://localhost:5000" ? process.env.NEXT_PUBLIC_API_URL : "")
+    : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
 
   useEffect(() => {
     if (pathname === "/admin/login") {
