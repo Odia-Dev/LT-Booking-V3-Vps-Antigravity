@@ -27,8 +27,13 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email?: string; phone?: string; role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const userId = decoded.userId || decoded.id;
+    decoded.id = userId;
+    decoded.userId = userId;
+
     req.admin = decoded;
+    (req as any).user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid or expired session token" });
