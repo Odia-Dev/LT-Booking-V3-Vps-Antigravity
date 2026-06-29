@@ -25,6 +25,7 @@ const mockUsers: User[] = [
     updatedAt: new Date(),
     resetPasswordToken: null,
     isVerified: true,
+    verificationToken: null,
     verificationTokenExpires: null,
     resetPasswordExpires: null,
   },
