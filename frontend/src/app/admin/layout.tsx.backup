@@ -72,16 +72,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         setUser(currentUser);
       } catch (err) {
-          console.error("AUTH CHECK FAILED:", err);
-
-     alert(
-       "Auth Error: " +
-       (err instanceof Error ? err.message : JSON.stringify(err))
-     );
-
-    return;
-   } finally {
-
+        console.error("Auth check error:", err);
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        router.replace("/admin/login");
+      } finally {
         setLoading(false);
       }
     };
