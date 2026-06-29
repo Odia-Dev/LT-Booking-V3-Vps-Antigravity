@@ -38,12 +38,18 @@ export default function AdminLoginPage() {
           responseData.data?.user ||
           responseData.data;
 
-      if(token){
-          localStorage.setItem("adminToken", token);
+      if (token) {
+        localStorage.setItem(
+          "adminToken",
+          token
+        );
       }
 
-      if(user){
-          localStorage.setItem("adminUser", JSON.stringify(user));
+      if (user) {
+        localStorage.setItem(
+          "adminUser",
+          JSON.stringify(user)
+        );
       }
 
       router.push("/admin/dashboard");

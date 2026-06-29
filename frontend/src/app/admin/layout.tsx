@@ -29,21 +29,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem("adminToken");
+        const token =
+          localStorage.getItem(
+            "adminToken"
+          );
         
         if (!token) {
           router.push("/admin/login");
           return;
         }
 
-        const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          credentials: "omit", // Using Bearer token instead of cookies for this flow
-        });
+        const res = await fetch(
+          `${apiBaseUrl}/api/auth/me`,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        );
 
         if (res.status === 401) {
           localStorage.removeItem("adminToken");
