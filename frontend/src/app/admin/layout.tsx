@@ -30,6 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     const checkAuth = async () => {
+      console.log("[AuthCheck] Starting checkAuth...");
       try {
         const token =
           localStorage.getItem(
@@ -37,10 +38,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           );
 
         if (!token) {
+          console.log("[AuthCheck] No adminToken found in localStorage. Redirecting to login.");
           router.push("/admin/login");
           return;
         }
 
+        console.log("[AuthCheck] Sending GET /api/auth/me request...");
         const res = await fetch(
           `${apiBaseUrl}/api/auth/me`,
           {
@@ -51,33 +54,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         );
 
-        if (res.status === 401) {
+        console.log("[AuthCheck] Response status:", res.status, "ok:", res.ok);
+
+        if (res.status === 401 || res.status === 403) {
+          console.warn(`[AuthCheck] Auth rejected with status ${res.status}. Clearing local storage and redirecting.`);
           localStorage.removeItem("adminToken");
           localStorage.removeItem("adminUser");
           router.replace("/admin/login");
           return;
         }
 
+        if (!res.ok) {
+          console.error(`[AuthCheck] Server error or rate limit encountered (status: ${res.status}). Keeping credentials intact.`);
+          return;
+        }
+
         const responseData = await res.json();
+        console.log("[AuthCheck] Response body:", responseData);
 
         const currentUser =
           responseData.user ||
           responseData.data?.user ||
           responseData.data;
 
-        if (!res.ok || currentUser?.role !== "ADMIN") {
+        if (currentUser?.role !== "ADMIN") {
+          console.warn(`[AuthCheck] User is authenticated but is not an ADMIN (role: ${currentUser?.role}). Redirecting.`);
           localStorage.removeItem("adminToken");
           localStorage.removeItem("adminUser");
           router.replace("/admin/login");
           return;
         }
 
+        console.log("[AuthCheck] Authentication successful. User is ADMIN.");
         setUser(currentUser);
       } catch (err) {
-        console.error("Auth check error:", err);
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminUser");
-        router.replace("/admin/login");
+        console.error("[AuthCheck] Network or unexpected error during verification:", err);
       } finally {
         setLoading(false);
       }
