@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           localStorage.getItem(
             "adminToken"
           );
-        
+
         if (!token) {
           router.push("/admin/login");
           return;
@@ -56,15 +56,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
 
-        const data = await res.json();
-        if (!res.ok || data.user?.role !== "ADMIN") {
+        const responseData = await res.json();
+
+        const currentUser =
+          responseData.user ||
+          responseData.data?.user ||
+          responseData.data;
+
+        if (!res.ok || currentUser?.role !== "ADMIN") {
           localStorage.removeItem("adminToken");
           localStorage.removeItem("adminUser");
           router.replace("/admin/login");
           return;
         }
 
-        setUser(data.user);
+        setUser(currentUser);
       } catch (err) {
         console.error("Auth check error:", err);
         localStorage.removeItem("adminToken");
@@ -82,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
-      
+
       await fetch(`${apiBaseUrl}/api/auth/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,9 +154,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans flex">
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed md:sticky top-0 z-40 h-screen bg-[#09090b] border-r border-[#27272a]/60 transition-all duration-300 flex flex-col justify-between ${
-          sidebarOpen ? "w-64" : "w-0 md:w-20 overflow-hidden"
-        }`}
+        className={`fixed md:sticky top-0 z-40 h-screen bg-[#09090b] border-r border-[#27272a]/60 transition-all duration-300 flex flex-col justify-between ${sidebarOpen ? "w-64" : "w-0 md:w-20 overflow-hidden"
+          }`}
       >
         <div>
           {/* Brand Logo header */}
@@ -173,11 +178,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
-                    isActive
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${isActive
                       ? "bg-[#18181b] text-white border-l-2 border-[#eb0a1e]"
                       : "text-neutral-400 hover:text-white hover:bg-[#18181b]/45"
-                  }`}
+                    }`}
                 >
                   <span className="text-base shrink-0">{item.icon}</span>
                   {sidebarOpen && <span className="whitespace-nowrap">{item.name}</span>}
