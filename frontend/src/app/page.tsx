@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
-import { ArrowRight, CheckCircle2, Shield, Zap, Sparkles } from "lucide-react";
+
 import FeaturedVehicles from "@/components/FeaturedVehicles";
 import FaqSection from "@/components/FaqSection";
 import MainHeader from "@/components/MainHeader";
