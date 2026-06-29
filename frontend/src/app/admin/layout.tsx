@@ -38,9 +38,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
           method: "GET",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`
           },
           credentials: "omit", // Using Bearer token instead of cookies for this flow
         });

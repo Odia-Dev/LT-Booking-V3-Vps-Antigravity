@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,42 +26,27 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const responseData = await res.json();
-      console.log("LOGIN RESPONSE", responseData);
 
-      if (!res.ok) {
-        throw new Error(responseData.message || responseData.errors?.[0]?.message || "Login failed");
+      const token =
+          responseData.token ||
+          responseData.data?.token ||
+          responseData.accessToken ||
+          responseData.data?.accessToken;
+
+      const user =
+          responseData.user ||
+          responseData.data?.user ||
+          responseData.data;
+
+      if(token){
+          localStorage.setItem("adminToken", token);
       }
 
-      if(responseData.success || responseData.token || responseData.data?.token){
-          const token =
-              responseData.token ||
-              responseData.data?.token ||
-              responseData.data?.accessToken ||
-              responseData.accessToken;
-
-          const user =
-              responseData.user ||
-              responseData.data?.user ||
-              responseData.data;
-
-          console.log("TOKEN FOUND:", token);
-          console.log("USER FOUND:", user);
-
-          if(token){
-              localStorage.setItem("adminToken", token);
-          }
-
-          if(user){
-              localStorage.setItem("adminUser", JSON.stringify(user));
-          }
-
-          setSuccess("Authenticated successfully. Redirecting to dashboard...");
-          setTimeout(() => {
-            window.location.href = "/admin/dashboard";
-          }, 1500);
-      } else {
-          throw new Error("Login response missing token");
+      if(user){
+          localStorage.setItem("adminUser", JSON.stringify(user));
       }
+
+      router.push("/admin/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid credentials. Please try again.";
       setError(msg);
