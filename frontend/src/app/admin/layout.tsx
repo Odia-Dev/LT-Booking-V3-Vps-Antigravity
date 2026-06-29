@@ -29,19 +29,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem("adminToken");
+        
+        if (!token) {
+          router.push("/admin/login");
+          return;
+        }
+
         const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Ensure admin_session cookie is sent
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          credentials: "omit", // Using Bearer token instead of cookies for this flow
         });
 
         if (res.status === 401) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
           router.replace("/admin/login");
           return;
         }
 
         const data = await res.json();
         if (!res.ok || data.user?.role !== "ADMIN") {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
           router.replace("/admin/login");
           return;
         }
@@ -49,6 +63,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setUser(data.user);
       } catch (err) {
         console.error("Auth check error:", err);
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
         router.replace("/admin/login");
       } finally {
         setLoading(false);
@@ -56,14 +72,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     checkAuth();
-  }, [router, apiBaseUrl]);
+  }, [pathname, router, apiBaseUrl]); // Added pathname to fix dependency
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+      
       await fetch(`${apiBaseUrl}/api/auth/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        credentials: "omit",
       });
       router.replace("/admin/login");
     } catch (err) {

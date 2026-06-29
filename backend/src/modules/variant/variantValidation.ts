@@ -10,7 +10,7 @@ export const createVariantSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
   bookingAmount: z.number().positive().optional(),
   engineSize: z.union([z.string(), z.number()]).optional(),
-  waitingPeriodWeeks: z.number().int().nonnegative().optional(),
+  waitingPeriod: z.string().optional(),
   specs: z.object({
     safetyFeatures: z.array(z.string()).optional(),
     comfortFeatures: z.array(z.string()).optional(),

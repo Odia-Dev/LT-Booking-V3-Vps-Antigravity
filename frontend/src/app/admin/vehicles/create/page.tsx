@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function CreateVehiclePage() {
   const router = useRouter();
@@ -210,16 +211,11 @@ export default function CreateVehiclePage() {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Hero Image URL</label>
-            <input
-              type="text"
-              placeholder="https://..."
-              value={heroImage}
-              onChange={(e) => setHeroImage(e.target.value)}
-              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
-            />
-          </div>
+          <ImageUpload
+            label="Hero Image"
+            value={heroImage}
+            onChange={setHeroImage}
+          />
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Sort Order</label>
@@ -246,16 +242,11 @@ export default function CreateVehiclePage() {
         <div className="border-t border-neutral-800 pt-6">
           <h4 className="text-xs uppercase font-extrabold tracking-widest text-[#eb0a1e] mb-4">Media Management</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Thumbnail URL</label>
-              <input
-                type="text"
-                placeholder="https://..."
+              <ImageUpload
+                label="Thumbnail"
                 value={thumbnail}
-                onChange={(e) => setThumbnail(e.target.value)}
-                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+                onChange={setThumbnail}
               />
-            </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Brochure PDF URL</label>
               <input

@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 
 export default function EditBranchPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const id = params?.id as string;
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -36,62 +35,62 @@ export default function EditBranchPage() {
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  // Slugify from name (only if slug is not edited)
   useEffect(() => {
-    if (name && !slug) {
-      const generated = name
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w\-]+/g, "")
-        .replace(/\-\-+/g, "-");
-      setSlug(generated);
-    }
-  }, [name, slug]);
-
-  useEffect(() => {
-    const fetchBranch = async () => {
+    if (!id) return;
+    const fetchExisting = async () => {
       try {
+        setLoading(true);
         const res = await fetch(`${apiBaseUrl}/api/branches/${id}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load branch details");
-
-        const b = data.branch;
-        setName(b.name);
-        setSlug(b.slug);
-        setCode(b.code);
-        setAddress(b.address);
-        setCity(b.city);
-        setDistrict(b.district);
-        setState(b.state);
-        setPincode(b.pincode);
-        setPhone(b.phone);
-        setEmail(b.email);
-        setGoogleMapsUrl(b.googleMapsUrl);
-        setWorkingHours(b.workingHours || "9:00 AM - 7:00 PM");
-        setLatitude(b.latitude !== undefined && b.latitude !== null ? String(b.latitude) : "");
-        setLongitude(b.longitude !== undefined && b.longitude !== null ? String(b.longitude) : "");
-        setSalesManager(b.salesManager || "");
-        setServiceManager(b.serviceManager || "");
-        setStatus(b.status || "ACTIVE");
-        setSortOrder(b.sortOrder !== undefined ? String(b.sortOrder) : "0");
-      } catch (err: unknown) {
-        setError((err as Error).message || "Failed to load branch details.");
+        if (res.ok && data.branch) {
+          const b = data.branch;
+          setName(b.name || "");
+          setCode(b.code || "");
+          setAddress(b.address || "");
+          setCity(b.city || "");
+          setDistrict(b.district || "");
+          setState(b.state || "");
+          setPincode(b.pincode || "");
+          setPhone(b.phone || "");
+          setEmail(b.email || "");
+          setGoogleMapsUrl(b.googleMapsUrl || "");
+          setWorkingHours(b.workingHours || "");
+          setLatitude(b.latitude ? String(b.latitude) : "");
+          setLongitude(b.longitude ? String(b.longitude) : "");
+          setSalesManager(b.salesManager || "");
+          setServiceManager(b.serviceManager || "");
+          setStatus(b.status || "ACTIVE");
+          setSortOrder(b.sortOrder ? String(b.sortOrder) : "0");
+        }
+      } catch (err) {
+        console.error("Failed to fetch branch:", err);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchBranch();
+    fetchExisting();
   }, [id, apiBaseUrl]);
+
+
+  // Auto slugify from name
+  useEffect(() => {
+    const generated = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-");
+    setSlug(generated);
+  }, [name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/branches/${id}`, {
+      const res = await fetch(`${apiBaseUrl}/api/admin/branches`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,34 +117,25 @@ export default function EditBranchPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update branch");
+      if (!res.ok) throw new Error(data.message || "Failed to create branch");
 
       setSuccess("Branch updated successfully. Redirecting...");
       setTimeout(() => {
         router.push("/admin/branches");
       }, 1500);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to update branch.");
+      setError((err as Error).message || "Failed to create branch.");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-16 text-center">
-        <div className="w-8 h-8 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mx-auto mb-4" />
-        <span className="text-xs uppercase tracking-widest text-neutral-500 font-mono">Loading details...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-white mb-2">Edit Branch</h1>
-          <p className="text-neutral-400 text-sm">Modify showroom configurations or manager options.</p>
+          <p className="text-neutral-400 text-sm">Add a new physical showroom or service center outlet.</p>
         </div>
         <Link
           href="/admin/branches"
@@ -194,12 +184,12 @@ export default function EditBranchPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Slug</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Slug (Generated)</label>
             <input
               type="text"
+              readOnly
               value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              className="w-full bg-[#09090b]/55 border border-neutral-800 rounded-lg px-4 py-3 text-sm text-neutral-500 focus:outline-none cursor-not-allowed"
             />
           </div>
 
@@ -383,10 +373,10 @@ export default function EditBranchPage() {
         <div className="pt-6 border-t border-neutral-800 flex justify-end">
           <button
             type="submit"
-            disabled={saving}
+            disabled={loading}
             className="px-6 py-3 bg-[#eb0a1e] hover:bg-[#c80818] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors disabled:opacity-40"
           >
-            {saving ? "Saving Changes..." : "Save Branch"}
+            {loading ? "Creating..." : "Save Branch"}
           </button>
         </div>
       </form>

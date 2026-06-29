@@ -128,7 +128,7 @@ export default function AdminBranchesPage() {
           <p className="text-neutral-400 text-sm">Configure physical showroom locations, manager details, and contact coordinates.</p>
         </div>
         <Link
-          href="/admin/branches/new"
+          href="/admin/branches/create"
           className="px-4 py-2.5 bg-[#eb0a1e] hover:bg-[#c80818] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors inline-block text-center"
         >
           + Add New Branch
@@ -239,7 +239,7 @@ export default function AdminBranchesPage() {
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/admin/branches/edit/${b.id}`}
+                        href={`/admin/branches/${b.id}/edit`}
                         className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-colors"
                       >
                         Edit

@@ -17,6 +17,7 @@ export class ColorService {
     vehicleId: string;
     name: string;
     colorCode: string;
+    image?: string | null;
     status?: string;
   }) {
     // Confirm vehicle exists
@@ -33,6 +34,7 @@ export class ColorService {
       vehicleId?: string;
       name?: string;
       colorCode?: string;
+      image?: string | null;
       status?: string;
     }
   ) {

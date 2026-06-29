@@ -32,6 +32,8 @@ import insuranceRoutes from "./modules/insurance/insuranceRoutes";
 import exchangeRoutes from "./modules/exchange/exchangeRoutes";
 import analyticsRoutes from "./modules/analytics/analyticsRoutes";
 import inventoryRoutes from "./modules/inventory/inventoryRoutes";
+import { adminRouter as adminUploadRoutes } from "./modules/upload/uploadRoutes";
+import { publicRouter as publicOfferRoutes, adminRouter as adminOfferRoutes } from "./modules/offer/offerRoutes";
 
 dotenv.config();
 
@@ -214,6 +216,9 @@ app.use("/api/admin/colors", adminColorRoutes);
 app.use("/api/branches", branchRoutes);
 app.use("/api/admin/branches", adminBranchRoutes);
 app.use("/api/public/branches", publicBranchesRouter);
+app.use("/api/admin/upload", adminUploadRoutes);
+app.use("/api/public/offers", publicOfferRoutes);
+app.use("/api/admin/offers", adminOfferRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/public/leads", publicLeadsRouter);
 app.use("/api/test-drives", testDriveRoutes);
@@ -227,9 +232,18 @@ app.use("/api/webhooks", webhookRoutes);
 // Serve uploaded delivery documents as static files (secured path)
 // Only accessible with valid auth — direct URL access requires the relative path
 app.use(
-  "/uploads",
+  "/uploads/delivery",
   helmet.noSniff(),
-  express.static(path.join(__dirname, "..", "uploads"), {
+  express.static(path.join(__dirname, "..", "uploads", "delivery"), {
+    dotfiles: "deny",
+    index: false,
+  })
+);
+
+app.use(
+  "/uploads/images",
+  helmet.crossOriginResourcePolicy({ policy: "cross-origin" }), // Allow external loading of images
+  express.static(path.join(__dirname, "..", "uploads", "images"), {
     dotfiles: "deny",
     index: false,
   })

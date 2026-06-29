@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 
 interface Vehicle {
@@ -12,11 +13,9 @@ interface Vehicle {
 export default function EditVariantPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
-
+  const id = params?.id as string;
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -61,6 +60,56 @@ export default function EditVariantPage() {
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+  useEffect(() => {
+    if (!id) return;
+    const fetchExisting = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${apiBaseUrl}/api/variants/${id}`);
+        const data = await res.json();
+        if (res.ok && data.variant) {
+          const v = data.variant;
+          setName(v.name || "");
+          setVehicleId(v.vehicleId || "");
+          setTransmission(v.transmission || "Manual");
+          setFuelType(v.fuelType || "Petrol");
+          setSeating(v.seating || 5);
+          setPrice(v.price ? String(v.price) : "");
+          setBookingAmount(v.bookingAmount ? String(v.bookingAmount) : "");
+          setStatus(v.status || "ACTIVE");
+          
+          setEngineSize(v.engineSize || "");
+          setWaitingPeriodWeeks(v.waitingPeriodWeeks ? String(v.waitingPeriodWeeks) : "");
+          
+          if (v.specs) {
+            setSafetyFeatures(v.specs.safetyFeatures?.join(", ") || "");
+            setComfortFeatures(v.specs.comfortFeatures?.join(", ") || "");
+            setExteriorFeatures(v.specs.exteriorFeatures?.join(", ") || "");
+            setInteriorFeatures(v.specs.interiorFeatures?.join(", ") || "");
+            setTechnologyFeatures(v.specs.technologyFeatures?.join(", ") || "");
+            setPerformanceFeatures(v.specs.performanceFeatures?.join(", ") || "");
+            setLength(v.specs.length || "");
+            setWidth(v.specs.width || "");
+            setHeight(v.specs.height || "");
+            setWheelbase(v.specs.wheelbase || "");
+            setGroundClearance(v.specs.groundClearance || "");
+            setBootSpace(v.specs.bootSpace || "");
+            setFuelTank(v.specs.fuelTank || "");
+            setTyres(v.specs.tyres || "");
+            setBrakes(v.specs.brakes || "");
+            setSuspension(v.specs.suspension || "");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch variant:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExisting();
+  }, [id, apiBaseUrl]);
+
+
   // Auto-generate slug from name
   useEffect(() => {
     const generated = name
@@ -74,67 +123,34 @@ export default function EditVariantPage() {
   }, [name]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchVehicles = async () => {
       try {
-        // Fetch vehicles
-        const vehRes = await fetch(`${apiBaseUrl}/api/vehicles`);
-        const vehData = await vehRes.json();
-        if (vehRes.ok) {
-          setVehicles(vehData.vehicles || []);
+        const res = await fetch(`${apiBaseUrl}/api/vehicles`);
+        const data = await res.json();
+        if (res.ok) {
+          setVehicles(data.vehicles || []);
+          if (data.vehicles && data.vehicles.length > 0) {
+            setVehicleId(data.vehicles[0].id);
+          }
         }
-
-        // Fetch variant
-        const varRes = await fetch(`${apiBaseUrl}/api/variants/${id}`);
-        const varData = await varRes.json();
-        if (!varRes.ok) throw new Error(varData.message || "Failed to load variant");
-
-        const v = varData.variant;
-        setName(v.name);
-        setVehicleId(v.vehicleId);
-        setPrice(String(v.price));
-        setFuelType(v.fuelType);
-        setTransmission(v.transmission);
-        setSeating(v.seating);
-        setStatus(v.status);
-        if (v.bookingAmount) setBookingAmount(String(v.bookingAmount));
-        if (v.engineSize) setEngineSize(String(v.engineSize));
-        if (v.waitingPeriodWeeks) setWaitingPeriodWeeks(String(v.waitingPeriodWeeks));
-
-        // Load specs
-        if (v.specs) {
-          const sp = v.specs;
-          if (Array.isArray(sp.safetyFeatures)) setSafetyFeatures(sp.safetyFeatures.join(", "));
-          if (Array.isArray(sp.comfortFeatures)) setComfortFeatures(sp.comfortFeatures.join(", "));
-          if (Array.isArray(sp.exteriorFeatures)) setExteriorFeatures(sp.exteriorFeatures.join(", "));
-          if (Array.isArray(sp.interiorFeatures)) setInteriorFeatures(sp.interiorFeatures.join(", "));
-          if (Array.isArray(sp.technologyFeatures)) setTechnologyFeatures(sp.technologyFeatures.join(", "));
-          if (Array.isArray(sp.performanceFeatures)) setPerformanceFeatures(sp.performanceFeatures.join(", "));
-
-          if (sp.length) setLength(sp.length);
-          if (sp.width) setWidth(sp.width);
-          if (sp.height) setHeight(sp.height);
-          if (sp.wheelbase) setWheelbase(sp.wheelbase);
-          if (sp.groundClearance) setGroundClearance(sp.groundClearance);
-          if (sp.bootSpace) setBootSpace(sp.bootSpace);
-          if (sp.fuelTank) setFuelTank(sp.fuelTank);
-          if (sp.tyres) setTyres(sp.tyres);
-          if (sp.brakes) setBrakes(sp.brakes);
-          if (sp.suspension) setSuspension(sp.suspension);
-        }
-      } catch (err: unknown) {
-        setError((err as Error).message || "Failed to load variant data.");
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error("Failed to load vehicles:", err);
       }
     };
-    if (id) fetchData();
-  }, [id, apiBaseUrl]);
+    fetchVehicles();
+  }, [apiBaseUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
     setError("");
     setSuccess("");
+
+    if (!vehicleId) {
+      setError("Please select a vehicle model.");
+      setLoading(false);
+      return;
+    }
 
     const parseFeatures = (text: string) => {
       return text
@@ -180,34 +196,25 @@ export default function EditVariantPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update variant");
+      if (!res.ok) throw new Error(data.message || "Failed to create variant");
 
       setSuccess("Variant updated successfully. Redirecting...");
       setTimeout(() => {
         router.push("/admin/variants");
       }, 1500);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to update variant.");
+      setError((err as Error).message || "Failed to create variant.");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-16 text-center">
-        <div className="w-8 h-8 border-2 border-dashed border-[#eb0a1e] rounded-full animate-spin mx-auto mb-4" />
-        <span className="text-xs uppercase tracking-widest text-neutral-500 font-mono">Loading variant details...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-white mb-2">Edit Variant</h1>
-          <p className="text-neutral-400 text-sm">Modify specifications and parameters for the selected variant model.</p>
+          <p className="text-neutral-400 text-sm">Add a specifications variant model to the vehicle catalog.</p>
         </div>
         <Link
           href="/admin/variants"
@@ -237,6 +244,7 @@ export default function EditVariantPage() {
             <input
               type="text"
               required
+              placeholder="e.g. 2.8L 4x4 AT"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -319,6 +327,7 @@ export default function EditVariantPage() {
             <input
               type="number"
               required
+              placeholder="e.g. 3343000"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -330,6 +339,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Booking Deposit (₹)</label>
             <input
               type="number"
+              placeholder="e.g. 50000"
               value={bookingAmount}
               onChange={(e) => setBookingAmount(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -341,6 +351,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Waiting Period (Weeks)</label>
             <input
               type="number"
+              placeholder="e.g. 4"
               value={waitingPeriodWeeks}
               onChange={(e) => setWaitingPeriodWeeks(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -352,6 +363,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Sort Order</label>
             <input
               type="number"
+              placeholder="e.g. 0"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -392,6 +404,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Engine Displacement (cc)</label>
             <input
               type="text"
+              placeholder="e.g. 2755"
               value={engineSize}
               onChange={(e) => setEngineSize(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -403,6 +416,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Mileage (km/l)</label>
             <input
               type="text"
+              placeholder="e.g. 14.4"
               value={mileage}
               onChange={(e) => setMileage(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -414,6 +428,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Max Power (PS)</label>
             <input
               type="text"
+              placeholder="e.g. 204"
               value={power}
               onChange={(e) => setPower(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -425,6 +440,7 @@ export default function EditVariantPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Max Torque (Nm)</label>
             <input
               type="text"
+              placeholder="e.g. 500"
               value={torque}
               onChange={(e) => setTorque(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
@@ -603,10 +619,10 @@ export default function EditVariantPage() {
         <div className="pt-6 border-t border-neutral-800 flex justify-end">
           <button
             type="submit"
-            disabled={saving}
+            disabled={loading}
             className="px-6 py-3 bg-[#eb0a1e] hover:bg-[#c80818] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors disabled:opacity-40"
           >
-            {saving ? "Saving Changes..." : "Save Variant"}
+            {loading ? "Creating..." : "Save Variant"}
           </button>
         </div>
       </form>

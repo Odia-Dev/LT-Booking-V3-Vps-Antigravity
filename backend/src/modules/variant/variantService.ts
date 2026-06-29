@@ -50,7 +50,7 @@ export class VariantService {
     status?: string;
     bookingAmount?: number;
     engineSize?: string | number;
-    waitingPeriodWeeks?: number;
+    waitingPeriod?: string;
     specs?: any;
   }): Promise<Variant> {
     // 1. Vehicle existence validation
@@ -106,11 +106,6 @@ export class VariantService {
       }
     }
 
-    // 9. Waiting period validation (if passed)
-    if (data.waitingPeriodWeeks !== undefined && data.waitingPeriodWeeks < 0) {
-      throw new Error("Waiting period cannot be negative");
-    }
-
     return this.repo.create({
       vehicleId: data.vehicleId,
       name: data.name,
@@ -135,7 +130,7 @@ export class VariantService {
       status?: string;
       bookingAmount?: number;
       engineSize?: string | number;
-      waitingPeriodWeeks?: number;
+      waitingPeriod?: string | null;
       specs?: any;
     }
   ): Promise<Variant> {
@@ -203,6 +198,7 @@ export class VariantService {
       transmission: data.transmission,
       seating: data.seating,
       status: data.status,
+      waitingPeriod: data.waitingPeriod,
       specs: data.specs,
     });
   }

@@ -48,6 +48,7 @@ export class VariantRepository {
     transmission: string;
     seating: number;
     status?: string;
+    waitingPeriod?: string;
     specs?: any;
   }): Promise<Variant> {
     return this.create(data);
@@ -61,6 +62,7 @@ export class VariantRepository {
     transmission: string;
     seating: number;
     status?: string;
+    waitingPeriod?: string | null;
     specs?: any;
   }): Promise<Variant> {
     return prisma.variant.create({
@@ -78,6 +80,7 @@ export class VariantRepository {
       transmission?: string;
       seating?: number;
       status?: string;
+      waitingPeriod?: string | null;
       specs?: any;
     }
   ): Promise<Variant> {
@@ -94,6 +97,7 @@ export class VariantRepository {
       transmission?: string;
       seating?: number;
       status?: string;
+      waitingPeriod?: string | null;
       specs?: any;
     }
   ): Promise<Variant> {

@@ -161,7 +161,7 @@ export default function AdminVariantsPage() {
           <p className="text-neutral-400 text-sm">Configure engine models, pricing specifications, and features details.</p>
         </div>
         <Link
-          href="/admin/variants/new"
+          href="/admin/variants/create"
           className="px-5 py-3 bg-[#eb0a1e] hover:bg-[#c80818] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap"
         >
           + Create New Variant
@@ -277,7 +277,7 @@ export default function AdminVariantsPage() {
                           🗐
                         </button>
                         <button
-                          onClick={() => router.push(`/admin/variants/edit/${v.id}`)}
+                          onClick={() => router.push(`/admin/variants/${v.id}/edit`)}
                           className="px-2.5 py-1.5 bg-neutral-800/60 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded text-xs transition-colors"
                         >
                           Edit

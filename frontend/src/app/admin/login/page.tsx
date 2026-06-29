@@ -23,16 +23,43 @@ export default function AdminLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      const responseData = await res.json();
+      console.log("LOGIN RESPONSE", responseData);
 
       if (!res.ok) {
-        throw new Error(data.message || data.errors?.[0]?.message || "Login failed");
+        throw new Error(responseData.message || responseData.errors?.[0]?.message || "Login failed");
       }
 
-      setSuccess("Authenticated successfully. Redirecting to dashboard...");
-      setTimeout(() => {
-        window.location.href = "/admin/dashboard";
-      }, 1500);
+      if(responseData.success || responseData.token || responseData.data?.token){
+          const token =
+              responseData.token ||
+              responseData.data?.token ||
+              responseData.data?.accessToken ||
+              responseData.accessToken;
+
+          const user =
+              responseData.user ||
+              responseData.data?.user ||
+              responseData.data;
+
+          console.log("TOKEN FOUND:", token);
+          console.log("USER FOUND:", user);
+
+          if(token){
+              localStorage.setItem("adminToken", token);
+          }
+
+          if(user){
+              localStorage.setItem("adminUser", JSON.stringify(user));
+          }
+
+          setSuccess("Authenticated successfully. Redirecting to dashboard...");
+          setTimeout(() => {
+            window.location.href = "/admin/dashboard";
+          }, 1500);
+      } else {
+          throw new Error("Login response missing token");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid credentials. Please try again.";
       setError(msg);

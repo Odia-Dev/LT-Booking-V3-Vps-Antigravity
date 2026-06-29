@@ -19,6 +19,7 @@ export class ColorRepository {
     vehicleId: string;
     name: string;
     colorCode: string;
+    image?: string | null;
     status?: string;
   }): Promise<VehicleColor> {
     return prisma.vehicleColor.create({
@@ -32,6 +33,7 @@ export class ColorRepository {
       vehicleId?: string;
       name?: string;
       colorCode?: string;
+      image?: string | null;
       status?: string;
     }
   ): Promise<VehicleColor> {

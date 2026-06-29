@@ -10,6 +10,7 @@ export const createColorSchema = z.object({
     .string()
     .regex(hexColorRegex, "Color code must be a valid hex color (e.g. #1C1C1E)"),
   status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
+  image: z.string().optional().or(z.literal("")),
 });
 
 export const updateColorSchema = createColorSchema.partial();
