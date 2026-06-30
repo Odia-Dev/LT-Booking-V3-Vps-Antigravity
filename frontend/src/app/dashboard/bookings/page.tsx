@@ -35,9 +35,13 @@ export default function CustomerBookingsPage() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        const token = localStorage.getItem("customerToken");
         const res = await fetch(`${apiBaseUrl}/api/dashboard/bookings`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           credentials: "include",
         });
         const data = await res.json();

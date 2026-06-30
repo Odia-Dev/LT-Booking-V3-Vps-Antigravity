@@ -50,9 +50,13 @@ export default function CustomerProfilePage() {
   useEffect(() => {
     const fetchProfileAndBranches = async () => {
       try {
+        const token = localStorage.getItem("customerToken");
         const fetchOptions = {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           credentials: "include" as const,
         };
 
@@ -111,10 +115,12 @@ export default function CustomerProfilePage() {
     setSuccess("");
 
     try {
+      const token = localStorage.getItem("customerToken");
       const res = await fetch(`${apiBaseUrl}/api/dashboard/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify({

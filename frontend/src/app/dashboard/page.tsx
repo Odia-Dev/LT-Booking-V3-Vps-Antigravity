@@ -53,9 +53,13 @@ export default function CustomerDashboardOverview() {
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
+        const token = localStorage.getItem("customerToken");
         const fetchOptions = {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           credentials: "include" as const,
         };
 
