@@ -83,9 +83,13 @@ export default function AdminBranchesPage() {
   const handleStatusToggle = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     try {
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${apiBaseUrl}/api/admin/branches/${id}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ status: newStatus }),
         credentials: "include",
       });
@@ -104,8 +108,12 @@ export default function AdminBranchesPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete/archive this branch?")) return;
     try {
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${apiBaseUrl}/api/admin/branches/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         credentials: "include",
       });
       const data = await res.json();

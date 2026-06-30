@@ -23,6 +23,7 @@ export default function EditBranchPage() {
   const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
   const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
   const [workingHours, setWorkingHours] = useState("9:00 AM - 7:00 PM");
@@ -52,6 +53,7 @@ export default function EditBranchPage() {
           setState(b.state || "");
           setPincode(b.pincode || "");
           setPhone(b.phone || "");
+          setWhatsapp(b.whatsapp || "");
           setEmail(b.email || "");
           setGoogleMapsUrl(b.googleMapsUrl || "");
           setWorkingHours(b.workingHours || "");
@@ -90,9 +92,13 @@ export default function EditBranchPage() {
     setSuccess("");
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/branches`, {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${apiBaseUrl}/api/admin/branches/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name,
           slug,
@@ -103,6 +109,7 @@ export default function EditBranchPage() {
           state,
           pincode,
           phone,
+          whatsapp: whatsapp || null,
           email,
           googleMapsUrl,
           workingHours,
@@ -117,14 +124,14 @@ export default function EditBranchPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create branch");
+      if (!res.ok) throw new Error(data.message || "Failed to update branch");
 
       setSuccess("Branch updated successfully. Redirecting...");
       setTimeout(() => {
         router.push("/admin/branches");
       }, 1500);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to create branch.");
+      setError((err as Error).message || "Failed to update branch.");
     } finally {
       setLoading(false);
     }
@@ -224,6 +231,17 @@ export default function EditBranchPage() {
               placeholder="e.g. +91 94370 12345"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">WhatsApp</label>
+            <input
+              type="text"
+              placeholder="e.g. +91 94370 12345"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
             />
           </div>

@@ -180,7 +180,7 @@ export default function AdminVehiclesPage() {
           <p className="text-neutral-400 text-sm">Add, update, or remove fleet inventory items.</p>
         </div>
         <Link
-          href="/admin/vehicles/new"
+          href="/admin/vehicles/create"
           className="px-5 py-3 bg-[#eb0a1e] hover:bg-[#c00717] text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-colors"
         >
           + Add Vehicle
