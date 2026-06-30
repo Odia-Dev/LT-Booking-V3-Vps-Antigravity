@@ -59,6 +59,7 @@ export class BranchService {
     state: string;
     pincode: string;
     phone: string;
+    whatsapp?: string | null;
     email: string;
     googleMapsUrl: string;
     workingHours?: string;
@@ -119,6 +120,7 @@ export class BranchService {
       state: data.state,
       pincode: data.pincode,
       phone: data.phone,
+      whatsapp: data.whatsapp,
       email: data.email,
       googleMapsUrl: data.googleMapsUrl,
       workingHours: data.workingHours || "9:00 AM - 7:00 PM",
@@ -146,6 +148,7 @@ export class BranchService {
       state?: string;
       pincode?: string;
       phone?: string;
+      whatsapp?: string | null;
       email?: string;
       googleMapsUrl?: string;
       workingHours?: string;

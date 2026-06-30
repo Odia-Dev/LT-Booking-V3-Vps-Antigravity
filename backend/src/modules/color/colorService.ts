@@ -17,15 +17,29 @@ export class ColorService {
     vehicleId: string;
     name: string;
     colorCode: string;
+    code?: string | null;
+    hexValue?: string | null;
     image?: string | null;
     status?: string;
+    isActive?: boolean;
+    sortOrder?: number;
   }) {
     // Confirm vehicle exists
     const vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
     if (!vehicle) {
       throw new Error("Vehicle not found");
     }
-    return repo.create(data);
+    return repo.create({
+      vehicleId: data.vehicleId,
+      name: data.name,
+      colorCode: data.colorCode,
+      code: data.code,
+      hexValue: data.hexValue || data.colorCode,
+      image: data.image,
+      status: data.status || "ACTIVE",
+      isActive: data.isActive ?? true,
+      sortOrder: data.sortOrder || 0,
+    });
   }
 
   async updateColor(
@@ -34,8 +48,12 @@ export class ColorService {
       vehicleId?: string;
       name?: string;
       colorCode?: string;
+      code?: string | null;
+      hexValue?: string | null;
       image?: string | null;
       status?: string;
+      isActive?: boolean;
+      sortOrder?: number;
     }
   ) {
     const existing = await repo.findById(id);

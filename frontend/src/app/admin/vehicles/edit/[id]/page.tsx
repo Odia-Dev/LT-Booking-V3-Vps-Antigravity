@@ -28,6 +28,22 @@ export default function EditVehiclePage() {
   const [startingPrice, setStartingPrice] = useState("");
   const [bookingAmount, setBookingAmount] = useState("");
 
+  // New Specs & Flags States
+  const [modelCode, setModelCode] = useState("");
+  const [onRoadPrice, setOnRoadPrice] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [fuelType, setFuelType] = useState("");
+  const [transmission, setTransmission] = useState("");
+  const [mileage, setMileage] = useState("");
+  const [engine, setEngine] = useState("");
+  const [seatingCapacity, setSeatingCapacity] = useState("");
+  const [bootSpace, setBootSpace] = useState("");
+  const [groundClearance, setGroundClearance] = useState("");
+  const [warranty, setWarranty] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+  const [seoKeywords, setSeoKeywords] = useState("");
+
   // New Media Fields
   const [thumbnail, setThumbnail] = useState("");
   const [brochure, setBrochure] = useState("");
@@ -62,13 +78,27 @@ export default function EditVehiclePage() {
         setSlug(v.slug);
         setCategory(v.category);
         setDescription(v.description || "");
+        setShortDescription(v.shortDescription || "");
         setHeroImage(v.heroImage || "");
         setStatus(v.status || "ACTIVE");
         setSeoTitle(v.seoTitle || "");
         setSeoDescription(v.seoDescription || "");
+        setSeoKeywords(v.seoKeywords || "");
         setSortOrder(v.sortOrder !== undefined ? String(v.sortOrder) : "0");
         setStartingPrice(v.startingPrice !== undefined ? String(v.startingPrice) : "");
+        setOnRoadPrice(v.onRoadPrice !== undefined ? String(v.onRoadPrice) : "");
         setBookingAmount(v.bookingAmount !== undefined ? String(v.bookingAmount) : "");
+        setModelCode(v.modelCode || "");
+        setFuelType(v.fuelType || "");
+        setTransmission(v.transmission || "");
+        setMileage(v.mileage || "");
+        setEngine(v.engine || "");
+        setSeatingCapacity(v.seatingCapacity !== undefined ? String(v.seatingCapacity) : "");
+        setBootSpace(v.bootSpace || "");
+        setGroundClearance(v.groundClearance || "");
+        setWarranty(v.warranty || "");
+        setIsFeatured(v.isFeatured || false);
+        setIsActive(v.isActive !== undefined ? v.isActive : true);
         setThumbnail(v.thumbnail || "");
         setBrochure(v.brochure || "");
         setYoutubeUrl(v.youtubeUrl || "");
@@ -119,6 +149,7 @@ export default function EditVehiclePage() {
           slug,
           category,
           description,
+          shortDescription: shortDescription || undefined,
           heroImage: heroImage || undefined,
           thumbnail: thumbnail || undefined,
           brochure: brochure || undefined,
@@ -127,9 +158,22 @@ export default function EditVehiclePage() {
           status,
           seoTitle: seoTitle || undefined,
           seoDescription: seoDescription || undefined,
+          seoKeywords: seoKeywords || undefined,
           sortOrder: sortOrder ? Number(sortOrder) : undefined,
           startingPrice: startingPrice ? Number(startingPrice) : undefined,
+          onRoadPrice: onRoadPrice ? Number(onRoadPrice) : undefined,
           bookingAmount: bookingAmount ? Number(bookingAmount) : undefined,
+          modelCode: modelCode || undefined,
+          fuelType: fuelType || undefined,
+          transmission: transmission || undefined,
+          mileage: mileage || undefined,
+          engine: engine || undefined,
+          seatingCapacity: seatingCapacity ? Number(seatingCapacity) : undefined,
+          bootSpace: bootSpace || undefined,
+          groundClearance: groundClearance || undefined,
+          warranty: warranty || undefined,
+          isFeatured,
+          isActive,
         }),
         credentials: "include",
       });
@@ -236,6 +280,17 @@ export default function EditVehiclePage() {
           </div>
 
           <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Model Code</label>
+            <input
+              type="text"
+              placeholder="e.g. TGN160R"
+              value={modelCode}
+              onChange={(e) => setModelCode(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Starting Price (₹)</label>
             <input
               type="number"
@@ -247,12 +302,111 @@ export default function EditVehiclePage() {
           </div>
 
           <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">On-Road Price (₹)</label>
+            <input
+              type="number"
+              placeholder="e.g. 3850000"
+              value={onRoadPrice}
+              onChange={(e) => setOnRoadPrice(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Booking Deposit (₹)</label>
             <input
               type="number"
               placeholder="e.g. 50000"
               value={bookingAmount}
               onChange={(e) => setBookingAmount(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Fuel Type</label>
+            <input
+              type="text"
+              placeholder="e.g. Petrol, Diesel, Hybrid"
+              value={fuelType}
+              onChange={(e) => setFuelType(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Transmission</label>
+            <input
+              type="text"
+              placeholder="e.g. Manual, Automatic"
+              value={transmission}
+              onChange={(e) => setTransmission(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Mileage</label>
+            <input
+              type="text"
+              placeholder="e.g. 14.2 kmpl"
+              value={mileage}
+              onChange={(e) => setMileage(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Engine Specs</label>
+            <input
+              type="text"
+              placeholder="e.g. 2755 cc, 4 Cylinders"
+              value={engine}
+              onChange={(e) => setEngine(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Seating Capacity</label>
+            <input
+              type="number"
+              placeholder="e.g. 7"
+              value={seatingCapacity}
+              onChange={(e) => setSeatingCapacity(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Boot Space</label>
+            <input
+              type="text"
+              placeholder="e.g. 296 Litres"
+              value={bootSpace}
+              onChange={(e) => setBootSpace(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Ground Clearance</label>
+            <input
+              type="text"
+              placeholder="e.g. 220 mm"
+              value={groundClearance}
+              onChange={(e) => setGroundClearance(e.target.value)}
+              className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Warranty</label>
+            <input
+              type="text"
+              placeholder="e.g. 3 Years / 100,000 km"
+              value={warranty}
+              onChange={(e) => setWarranty(e.target.value)}
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
             />
           </div>
@@ -272,15 +426,47 @@ export default function EditVehiclePage() {
               className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
             />
           </div>
+
+          <div className="flex items-center gap-6 p-3 bg-neutral-950 rounded-lg border border-neutral-800 md:col-span-2">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+                className="w-4 h-4 rounded border-neutral-800 text-[#eb0a1e] focus:ring-0 focus:ring-offset-0 bg-[#09090b]"
+              />
+              Featured Vehicle
+            </label>
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="w-4 h-4 rounded border-neutral-800 text-[#eb0a1e] focus:ring-0 focus:ring-offset-0 bg-[#09090b]"
+              />
+              Active on Site
+            </label>
+          </div>
         </div>
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Description</label>
           <textarea
             rows={4}
-            placeholder="Short details on specs, engine, efficiency..."
+            placeholder="Detailed overview on specifications, engine, efficiency..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Short Description</label>
+          <textarea
+            rows={2}
+            placeholder="A brief single sentence summary of the car."
+            value={shortDescription}
+            onChange={(e) => setShortDescription(e.target.value)}
             className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
           />
         </div>
@@ -391,6 +577,16 @@ export default function EditVehiclePage() {
                 placeholder="e.g. Secure your SUV online with deposit payment."
                 value={seoDescription}
                 onChange={(e) => setSeoDescription(e.target.value)}
+                className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Meta Keywords</label>
+              <input
+                type="text"
+                placeholder="e.g. toyota, fortuner, bookings, odisha"
+                value={seoKeywords}
+                onChange={(e) => setSeoKeywords(e.target.value)}
                 className="w-full bg-[#09090b] border border-neutral-800 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neutral-700"
               />
             </div>

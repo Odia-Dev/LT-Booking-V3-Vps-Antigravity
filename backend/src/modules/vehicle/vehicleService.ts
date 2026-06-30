@@ -43,17 +43,31 @@ export class VehicleService {
     slug?: string;
     category: string;
     description?: string;
+    shortDescription?: string;
     heroImage?: string;
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    seoKeywords?: string;
     sortOrder?: number;
     startingPrice?: number;
+    onRoadPrice?: number;
     bookingAmount?: number;
     thumbnail?: string;
     gallery?: string[];
     brochure?: string;
     youtubeUrl?: string;
+    modelCode?: string;
+    fuelType?: string;
+    transmission?: string;
+    mileage?: string;
+    engine?: string;
+    seatingCapacity?: number;
+    bootSpace?: string;
+    groundClearance?: string;
+    warranty?: string;
+    isFeatured?: boolean;
+    isActive?: boolean;
   }): Promise<Vehicle> {
     const slug = data.slug || this.slugify(data.name);
 
@@ -85,6 +99,9 @@ export class VehicleService {
     if (data.startingPrice !== undefined && data.startingPrice < 0) {
       throw new Error("Starting price cannot be negative");
     }
+    if (data.onRoadPrice !== undefined && data.onRoadPrice < 0) {
+      throw new Error("On-road price cannot be negative");
+    }
     if (data.bookingAmount !== undefined && data.bookingAmount < 0) {
       throw new Error("Booking deposit amount cannot be negative");
     }
@@ -94,7 +111,9 @@ export class VehicleService {
       slug,
       category: data.category,
       description: data.description,
+      shortDescription: data.shortDescription,
       startingPrice: data.startingPrice,
+      onRoadPrice: data.onRoadPrice,
       bookingAmount: data.bookingAmount,
       heroImage: data.heroImage,
       thumbnail: data.thumbnail,
@@ -102,8 +121,21 @@ export class VehicleService {
       brochure: data.brochure,
       youtubeUrl: data.youtubeUrl,
       status: data.status || "ACTIVE",
+      sortOrder: data.sortOrder || 0,
       seoTitle,
       seoDescription,
+      seoKeywords: data.seoKeywords,
+      modelCode: data.modelCode,
+      fuelType: data.fuelType,
+      transmission: data.transmission,
+      mileage: data.mileage,
+      engine: data.engine,
+      seatingCapacity: data.seatingCapacity,
+      bootSpace: data.bootSpace,
+      groundClearance: data.groundClearance,
+      warranty: data.warranty,
+      isFeatured: data.isFeatured ?? false,
+      isActive: data.isActive ?? true,
     });
   }
 
@@ -114,17 +146,31 @@ export class VehicleService {
       slug?: string;
       category?: string;
       description?: string;
+      shortDescription?: string;
       heroImage?: string;
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      seoKeywords?: string;
       sortOrder?: number;
       startingPrice?: number;
+      onRoadPrice?: number;
       bookingAmount?: number;
       thumbnail?: string;
       gallery?: string[];
       brochure?: string;
       youtubeUrl?: string;
+      modelCode?: string;
+      fuelType?: string;
+      transmission?: string;
+      mileage?: string;
+      engine?: string;
+      seatingCapacity?: number;
+      bootSpace?: string;
+      groundClearance?: string;
+      warranty?: string;
+      isFeatured?: boolean;
+      isActive?: boolean;
     }
   ): Promise<Vehicle> {
     const vehicle = await this.repo.findById(id);
@@ -161,6 +207,9 @@ export class VehicleService {
     if (data.startingPrice !== undefined && data.startingPrice < 0) {
       throw new Error("Starting price cannot be negative");
     }
+    if (data.onRoadPrice !== undefined && data.onRoadPrice < 0) {
+      throw new Error("On-road price cannot be negative");
+    }
     if (data.bookingAmount !== undefined && data.bookingAmount < 0) {
       throw new Error("Booking deposit amount cannot be negative");
     }
@@ -170,7 +219,9 @@ export class VehicleService {
       slug: slug || undefined,
       category: data.category,
       description: data.description,
+      shortDescription: data.shortDescription,
       startingPrice: data.startingPrice,
+      onRoadPrice: data.onRoadPrice,
       bookingAmount: data.bookingAmount,
       heroImage: data.heroImage,
       thumbnail: data.thumbnail,
@@ -178,8 +229,21 @@ export class VehicleService {
       brochure: data.brochure,
       youtubeUrl: data.youtubeUrl,
       status: data.status,
+      sortOrder: data.sortOrder,
       seoTitle: data.seoTitle,
       seoDescription: data.seoDescription,
+      seoKeywords: data.seoKeywords,
+      modelCode: data.modelCode,
+      fuelType: data.fuelType,
+      transmission: data.transmission,
+      mileage: data.mileage,
+      engine: data.engine,
+      seatingCapacity: data.seatingCapacity,
+      bootSpace: data.bootSpace,
+      groundClearance: data.groundClearance,
+      warranty: data.warranty,
+      isFeatured: data.isFeatured,
+      isActive: data.isActive,
     });
   }
 

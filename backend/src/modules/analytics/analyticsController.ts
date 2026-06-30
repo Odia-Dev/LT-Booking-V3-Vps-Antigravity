@@ -41,6 +41,17 @@ export const getDashboardAnalytics = async (req: Request, res: Response) => {
     const totalLeads = await prisma.lead.count({ where: leadFilters });
     const totalTestDrives = await prisma.testDrive.count({ where: testDriveFilters });
     const totalBookings = await prisma.booking.count({ where: bookingFilters });
+    const totalDeliveries = await prisma.delivery.count({ where: { status: "DELIVERED" } });
+    const totalVehicles = await prisma.vehicle.count({ where: { status: { not: "ARCHIVED" } } });
+    const activeOffers = await prisma.offer.count({
+      where: {
+        isActive: true,
+        OR: [
+          { endDate: null },
+          { endDate: { gte: new Date() } }
+        ]
+      }
+    });
     
     const revenueAgg = await prisma.payment.aggregate({
       where: paymentFilters,
@@ -184,6 +195,9 @@ export const getDashboardAnalytics = async (req: Request, res: Response) => {
           totalTestDrives,
           totalBookings,
           totalRevenue,
+          totalVehicles,
+          activeOffers,
+          totalDeliveries,
           bookingConversionPct: bookingConversionPct.toFixed(2),
           paymentConversionPct: paymentConversionPct.toFixed(2),
         },

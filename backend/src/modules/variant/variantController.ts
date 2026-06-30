@@ -1,8 +1,35 @@
 import { Request, Response } from "express";
 import { VariantService } from "./variantService";
 import { createVariantSchema, updateVariantSchema, updateVariantStatusSchema } from "./variantValidation";
+import { prisma } from "../../config/db";
 
 const service = new VariantService();
+
+export async function bulkUpdateStatus(req: Request, res: Response): Promise<void> {
+  try {
+    const { ids, status } = req.body;
+    if (!Array.isArray(ids) || !status) {
+      res.status(400).json({ success: false, message: "Invalid payload. 'ids' (array) and 'status' are required." });
+      return;
+    }
+    const allowedStatus = ["ACTIVE", "INACTIVE", "ARCHIVED"];
+    if (!allowedStatus.includes(status.toUpperCase())) {
+      res.status(400).json({ success: false, message: "Invalid status type. Allowed: ACTIVE, INACTIVE, ARCHIVED" });
+      return;
+    }
+
+    await prisma.variant.updateMany({
+      where: { id: { in: ids } },
+      data: { status: status.toUpperCase(), isActive: status.toUpperCase() === "ACTIVE" },
+    });
+
+    res.status(200).json({ success: true, message: `Successfully updated status to ${status} for ${ids.length} variants.` });
+  } catch (error: any) {
+    console.error("bulkUpdateStatus error:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to bulk update status" });
+  }
+}
+
 
 export async function listVariants(req: Request, res: Response): Promise<void> {
   try {

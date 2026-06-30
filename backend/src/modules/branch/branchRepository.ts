@@ -19,6 +19,7 @@ export class BranchRepository {
     state: string;
     pincode: string;
     phone: string;
+    whatsapp?: string | null;
     email: string;
     googleMapsUrl: string;
     workingHours?: string;
@@ -49,6 +50,7 @@ export class BranchRepository {
       state?: string;
       pincode?: string;
       phone?: string;
+      whatsapp?: string | null;
       email?: string;
       googleMapsUrl?: string;
       workingHours?: string;

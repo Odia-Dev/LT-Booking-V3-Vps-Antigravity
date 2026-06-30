@@ -22,6 +22,7 @@ model Branch {
   state          String
   pincode        String
   phone          String
+  whatsapp       String?
   email          String
   googleMapsUrl  String
   workingHours   String   @default("9:00 AM - 7:00 PM")
@@ -50,24 +51,38 @@ model Branch {
 // Vehicle Model: Car Lineups (e.g. Fortuner, Innova Crysta, Glanza)
 // -----------------------------------------------------------------------------
 model Vehicle {
-  id             String   @id @default(uuid())
-  name           String
-  slug           String   @unique
-  category       String
-  description    String?
-  heroImage      String?
-  status         String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED, UPCOMING
-  seoTitle       String?
-  seoDescription String?
-  thumbnail      String?
-  gallery        Json?
-  brochure       String?
-  youtubeUrl     String?
-  startingPrice  Float?
-  bookingAmount  Float?
-  sortOrder      Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  slug             String   @unique
+  modelCode        String?
+  category         String
+  startingPrice    Float?
+  onRoadPrice      Float?
+  bookingAmount    Float?
+  description      String?
+  shortDescription String?
+  fuelType         String?
+  transmission     String?
+  mileage          String?
+  engine           String?
+  seatingCapacity  Int?
+  bootSpace        String?
+  groundClearance  String?
+  warranty         String?
+  heroImage        String?
+  thumbnail        String?
+  gallery          Json?
+  brochure         String?
+  youtubeUrl       String?
+  isFeatured       Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  status           String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED, UPCOMING
+  sortOrder        Int      @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  seoKeywords      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   variants            Variant[]
   colors              VehicleColor[]
@@ -83,18 +98,24 @@ model Vehicle {
 // Variant Model: Specific models specs (e.g. Innova VX, Fortuner Legender)
 // -----------------------------------------------------------------------------
 model Variant {
-  id           String   @id @default(uuid())
-  vehicleId    String
-  name         String // e.g. "2.8L 4x4 AT"
-  price        Float // Ex-Showroom price for this variant
-  fuelType     String // Petrol, Diesel, Hybrid, Electric
-  transmission String // Manual, Automatic
-  seating      Int      @default(5) // seating capacity
-  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
-  waitingPeriod String? @default("Ready Delivery") // E.g., "3-4 Weeks"
-  specs        Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(uuid())
+  vehicleId     String
+  name          String // e.g. "2.8L 4x4 AT"
+  price         Float // Ex-Showroom price for this variant
+  onRoadPrice   Float?   @default(0)
+  fuelType      String // Petrol, Diesel, Hybrid, Electric
+  transmission  String // Manual, Automatic
+  seating       Int      @default(5) // seating capacity
+  mileage       String?
+  engine        String?
+  features      Json? // List of features
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  waitingPeriod String?  @default("Ready Delivery") // E.g., "3-4 Weeks"
+  specs         Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   vehicle       Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   leads         Lead[]
@@ -113,8 +134,12 @@ model VehicleColor {
   vehicleId String
   name      String // e.g., "Attitude Black"
   colorCode String // hex code e.g. "#1C1C1E"
+  code      String? // E.g. "218"
+  hexValue  String? // E.g. "#1C1C1E"
   image     String? // URL to car image in this color
   status    String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -581,6 +606,12 @@ model Offer {
   vehicleId      String?
   variantId      String?
   status         String    @default("ACTIVE") // ACTIVE, INACTIVE, EXPIRED
+  startDate      DateTime?
+  endDate        DateTime?
+  bannerImage    String?
+  ctaText        String?
+  ctaLink        String?
+  isActive       Boolean   @default(true)
   validUntil     DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

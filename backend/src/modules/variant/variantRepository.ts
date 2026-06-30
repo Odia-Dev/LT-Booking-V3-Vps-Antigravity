@@ -44,10 +44,16 @@ export class VariantRepository {
     vehicleId: string;
     name: string;
     price: number;
+    onRoadPrice?: number;
     fuelType: string;
     transmission: string;
     seating: number;
+    mileage?: string;
+    engine?: string;
+    features?: any;
     status?: string;
+    isActive?: boolean;
+    sortOrder?: number;
     waitingPeriod?: string;
     specs?: any;
   }): Promise<Variant> {
@@ -58,10 +64,16 @@ export class VariantRepository {
     vehicleId: string;
     name: string;
     price: number;
+    onRoadPrice?: number;
     fuelType: string;
     transmission: string;
     seating: number;
+    mileage?: string;
+    engine?: string;
+    features?: any;
     status?: string;
+    isActive?: boolean;
+    sortOrder?: number;
     waitingPeriod?: string | null;
     specs?: any;
   }): Promise<Variant> {
@@ -76,10 +88,16 @@ export class VariantRepository {
       vehicleId?: string;
       name?: string;
       price?: number;
+      onRoadPrice?: number;
       fuelType?: string;
       transmission?: string;
       seating?: number;
+      mileage?: string;
+      engine?: string;
+      features?: any;
       status?: string;
+      isActive?: boolean;
+      sortOrder?: number;
       waitingPeriod?: string | null;
       specs?: any;
     }
@@ -93,10 +111,16 @@ export class VariantRepository {
       vehicleId?: string;
       name?: string;
       price?: number;
+      onRoadPrice?: number;
       fuelType?: string;
       transmission?: string;
       seating?: number;
+      mileage?: string;
+      engine?: string;
+      features?: any;
       status?: string;
+      isActive?: boolean;
+      sortOrder?: number;
       waitingPeriod?: string | null;
       specs?: any;
     }
@@ -188,11 +212,13 @@ export class VariantRepository {
   }
 
   async updateSortOrder(id: string, sortOrder: number): Promise<Variant> {
-    // Variant schema does not support sortOrder; return unchanged variant mapping.
     const exists = await this.findById(id);
     if (!exists) {
       throw new Error("Variant not found");
     }
-    return exists;
+    return prisma.variant.update({
+      where: { id },
+      data: { sortOrder },
+    });
   }
 }

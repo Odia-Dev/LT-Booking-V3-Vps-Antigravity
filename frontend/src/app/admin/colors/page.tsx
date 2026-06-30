@@ -41,7 +41,7 @@ export default function AdminColorsPage() {
          const cRes = await fetch(`${apiBaseUrl}/api/vehicles/${v.id}/colors`);
          if (cRes.ok) {
            const cData = await cRes.json();
-           const vColors = cData.colors.map((c: Record<string, unknown>) => ({ ...c, vehicle: { id: v.id, name: v.name } }));
+           const vColors = cData.colors.map((c: VehicleColor) => ({ ...c, vehicle: { id: v.id, name: v.name } }));
            allColors = [...allColors, ...vColors];
          }
       }

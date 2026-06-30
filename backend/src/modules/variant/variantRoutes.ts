@@ -10,6 +10,7 @@ import {
   deleteVariant,
   getPublicVariantsByVehicleSlug,
   getPublicVariantBySlug,
+  bulkUpdateStatus,
 } from "./variantController";
 import { authMiddleware, requireRole } from "../../middleware/auth";
 
@@ -31,6 +32,7 @@ const adminRouter = Router();
 adminRouter.use(authMiddleware as any);
 adminRouter.use(requireRole(["ADMIN"]) as any);
 adminRouter.post("/", createVariant);
+adminRouter.patch("/bulk-status", bulkUpdateStatus);
 adminRouter.put("/:id", updateVariant);
 adminRouter.patch("/:id/status", updateVariantStatus);
 adminRouter.delete("/:id", deleteVariant);

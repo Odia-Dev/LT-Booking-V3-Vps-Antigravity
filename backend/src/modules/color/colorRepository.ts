@@ -5,7 +5,7 @@ export class ColorRepository {
   async findManyByVehicleId(vehicleId: string): Promise<VehicleColor[]> {
     return prisma.vehicleColor.findMany({
       where: { vehicleId },
-      orderBy: { name: "asc" },
+      orderBy: { sortOrder: "asc" },
     });
   }
 
@@ -19,8 +19,12 @@ export class ColorRepository {
     vehicleId: string;
     name: string;
     colorCode: string;
+    code?: string | null;
+    hexValue?: string | null;
     image?: string | null;
     status?: string;
+    isActive?: boolean;
+    sortOrder?: number;
   }): Promise<VehicleColor> {
     return prisma.vehicleColor.create({
       data,
@@ -33,8 +37,12 @@ export class ColorRepository {
       vehicleId?: string;
       name?: string;
       colorCode?: string;
+      code?: string | null;
+      hexValue?: string | null;
       image?: string | null;
       status?: string;
+      isActive?: boolean;
+      sortOrder?: number;
     }
   ): Promise<VehicleColor> {
     return prisma.vehicleColor.update({

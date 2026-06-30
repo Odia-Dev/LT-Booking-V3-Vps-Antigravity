@@ -3,7 +3,27 @@ import { prisma } from "../../config/db";
 
 export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
+    const now = new Date();
+    const where: any = {};
+
+    if (req.originalUrl.includes("/public/")) {
+      where.isActive = true;
+      where.OR = [
+        { endDate: null },
+        { endDate: { gte: now } }
+      ];
+      where.AND = [
+        {
+          OR: [
+            { startDate: null },
+            { startDate: { lte: now } }
+          ]
+        }
+      ];
+    }
+
     const offers = await prisma.offer.findMany({
+      where,
       include: {
         vehicle: { select: { name: true } },
         variant: { select: { name: true } },
@@ -29,6 +49,12 @@ export const createOffer = async (req: Request, res: Response): Promise<void> =>
       vehicleId,
       variantId,
       status,
+      startDate,
+      endDate,
+      bannerImage,
+      ctaText,
+      ctaLink,
+      isActive,
       validUntil,
     } = req.body;
 
@@ -43,6 +69,12 @@ export const createOffer = async (req: Request, res: Response): Promise<void> =>
         vehicleId: vehicleId || null,
         variantId: variantId || null,
         status: status || "ACTIVE",
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : (validUntil ? new Date(validUntil) : null),
+        bannerImage,
+        ctaText,
+        ctaLink,
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
         validUntil: validUntil ? new Date(validUntil) : null,
       },
     });
@@ -67,6 +99,12 @@ export const updateOffer = async (req: Request, res: Response): Promise<void> =>
       vehicleId,
       variantId,
       status,
+      startDate,
+      endDate,
+      bannerImage,
+      ctaText,
+      ctaLink,
+      isActive,
       validUntil,
     } = req.body;
 
@@ -82,6 +120,12 @@ export const updateOffer = async (req: Request, res: Response): Promise<void> =>
         vehicleId: vehicleId || null,
         variantId: variantId || null,
         status,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : (validUntil ? new Date(validUntil) : null),
+        bannerImage,
+        ctaText,
+        ctaLink,
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
         validUntil: validUntil ? new Date(validUntil) : null,
       },
     });

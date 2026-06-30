@@ -9,7 +9,11 @@ export const createColorSchema = z.object({
   colorCode: z
     .string()
     .regex(hexColorRegex, "Color code must be a valid hex color (e.g. #1C1C1E)"),
+  code: z.string().optional(),
+  hexValue: z.string().regex(hexColorRegex, "Hex value must be a valid hex color (e.g. #1C1C1E)").optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
   image: z.string().optional().or(z.literal("")),
 });
 

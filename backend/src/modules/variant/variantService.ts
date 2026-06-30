@@ -44,10 +44,16 @@ export class VariantService {
     vehicleId: string;
     name: string;
     price: number;
+    onRoadPrice?: number;
     fuelType: string;
     transmission: string;
     seating: number;
+    mileage?: string;
+    engine?: string;
+    features?: any;
     status?: string;
+    isActive?: boolean;
+    sortOrder?: number;
     bookingAmount?: number;
     engineSize?: string | number;
     waitingPeriod?: string;
@@ -110,11 +116,18 @@ export class VariantService {
       vehicleId: data.vehicleId,
       name: data.name,
       price: data.price,
+      onRoadPrice: data.onRoadPrice,
       fuelType: data.fuelType,
       transmission: data.transmission,
       seating: data.seating,
+      mileage: data.mileage,
+      engine: data.engine,
+      features: data.features,
       status: data.status || "ACTIVE",
+      isActive: data.isActive ?? true,
+      sortOrder: data.sortOrder || 0,
       specs: data.specs,
+      waitingPeriod: data.waitingPeriod,
     });
   }
 
@@ -124,10 +137,16 @@ export class VariantService {
       vehicleId?: string;
       name?: string;
       price?: number;
+      onRoadPrice?: number;
       fuelType?: string;
       transmission?: string;
       seating?: number;
+      mileage?: string;
+      engine?: string;
+      features?: any;
       status?: string;
+      isActive?: boolean;
+      sortOrder?: number;
       bookingAmount?: number;
       engineSize?: string | number;
       waitingPeriod?: string | null;
@@ -194,10 +213,16 @@ export class VariantService {
       vehicleId: data.vehicleId,
       name: data.name,
       price: data.price,
+      onRoadPrice: data.onRoadPrice,
       fuelType: data.fuelType,
       transmission: data.transmission,
       seating: data.seating,
+      mileage: data.mileage,
+      engine: data.engine,
+      features: data.features,
       status: data.status,
+      isActive: data.isActive,
+      sortOrder: data.sortOrder,
       waitingPeriod: data.waitingPeriod,
       specs: data.specs,
     });

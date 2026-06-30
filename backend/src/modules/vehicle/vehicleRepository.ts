@@ -95,6 +95,7 @@ export class VehicleRepository {
     slug: string;
     category: string;
     description?: string;
+    shortDescription?: string;
     heroImage?: string;
     thumbnail?: string;
     gallery?: any;
@@ -103,9 +104,22 @@ export class VehicleRepository {
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    seoKeywords?: string;
     startingPrice?: number;
+    onRoadPrice?: number;
     bookingAmount?: number;
     sortOrder?: number;
+    modelCode?: string;
+    fuelType?: string;
+    transmission?: string;
+    mileage?: string;
+    engine?: string;
+    seatingCapacity?: number;
+    bootSpace?: string;
+    groundClearance?: string;
+    warranty?: string;
+    isFeatured?: boolean;
+    isActive?: boolean;
   }): Promise<Vehicle> {
     return this.create(data);
   }
@@ -115,6 +129,7 @@ export class VehicleRepository {
     slug: string;
     category: string;
     description?: string;
+    shortDescription?: string;
     heroImage?: string;
     thumbnail?: string;
     gallery?: any;
@@ -123,9 +138,22 @@ export class VehicleRepository {
     status?: string;
     seoTitle?: string;
     seoDescription?: string;
+    seoKeywords?: string;
     startingPrice?: number;
+    onRoadPrice?: number;
     bookingAmount?: number;
     sortOrder?: number;
+    modelCode?: string;
+    fuelType?: string;
+    transmission?: string;
+    mileage?: string;
+    engine?: string;
+    seatingCapacity?: number;
+    bootSpace?: string;
+    groundClearance?: string;
+    warranty?: string;
+    isFeatured?: boolean;
+    isActive?: boolean;
   }): Promise<Vehicle> {
     return prisma.vehicle.create({
       data,
@@ -139,6 +167,7 @@ export class VehicleRepository {
       slug?: string;
       category?: string;
       description?: string;
+      shortDescription?: string;
       heroImage?: string;
       thumbnail?: string;
       gallery?: any;
@@ -147,9 +176,22 @@ export class VehicleRepository {
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      seoKeywords?: string;
       startingPrice?: number;
+      onRoadPrice?: number;
       bookingAmount?: number;
       sortOrder?: number;
+      modelCode?: string;
+      fuelType?: string;
+      transmission?: string;
+      mileage?: string;
+      engine?: string;
+      seatingCapacity?: number;
+      bootSpace?: string;
+      groundClearance?: string;
+      warranty?: string;
+      isFeatured?: boolean;
+      isActive?: boolean;
     }
   ): Promise<Vehicle> {
     return this.update(id, data);
@@ -162,6 +204,7 @@ export class VehicleRepository {
       slug?: string;
       category?: string;
       description?: string;
+      shortDescription?: string;
       heroImage?: string;
       thumbnail?: string;
       gallery?: any;
@@ -170,9 +213,22 @@ export class VehicleRepository {
       status?: string;
       seoTitle?: string;
       seoDescription?: string;
+      seoKeywords?: string;
       startingPrice?: number;
+      onRoadPrice?: number;
       bookingAmount?: number;
       sortOrder?: number;
+      modelCode?: string;
+      fuelType?: string;
+      transmission?: string;
+      mileage?: string;
+      engine?: string;
+      seatingCapacity?: number;
+      bootSpace?: string;
+      groundClearance?: string;
+      warranty?: string;
+      isFeatured?: boolean;
+      isActive?: boolean;
     }
   ): Promise<Vehicle> {
     return prisma.vehicle.update({

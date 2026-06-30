@@ -9,6 +9,7 @@ export const createBranchSchema = z.object({
   state: z.string().min(2, "State is required"),
   pincode: z.string().regex(/^\d{6}$/, "Pincode must be exactly 6 digits"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  whatsapp: z.string().optional().nullable(),
   email: z.string().email("Invalid email format"),
   googleMapsUrl: z.string().url("Invalid Google Maps URL format"),
   workingHours: z.string().optional(),
